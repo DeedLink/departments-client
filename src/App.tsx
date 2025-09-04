@@ -4,9 +4,11 @@ import SignupPage from "./pages/SignupPage";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
-    </Routes>
+    <div className="font-spectral w-full min-h-screen h-full bg-black">
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+      </Routes>
+    </div>
   );
 }

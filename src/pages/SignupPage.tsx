@@ -3,7 +3,7 @@ import { User, Mail, Shield, Lock, Wallet } from "lucide-react";
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 via-teal-800 to-green-700 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
 
         <div className="p-8 text-center">
