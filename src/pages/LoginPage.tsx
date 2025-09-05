@@ -1,13 +1,14 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Lock, Mail, Wallet } from "lucide-react";
+import { useWallet } from "../contexts/WalletContext";
+import { compressAddress } from "../utils/functions";
 
 export default function LoginPage() {
-  const navigate = useNavigate();
+  const { account, connect, disconnect } = useWallet();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        
         <div className="p-8 text-center">
           <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-emerald-600" />
@@ -16,11 +17,26 @@ export default function LoginPage() {
         </div>
 
         <div className="px-8 pb-8 space-y-6">
-
-          <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]">
-            <Wallet className="w-5 h-5" />
-            0xf39f...2266
-          </button>
+          <div className="group">
+            {account ? (
+              <button
+                onClick={disconnect}
+                className="w-full bg-emerald-500 hover:bg-red-600 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] group"
+              >
+                <Wallet className="w-5 h-5" />
+                <span className="group-hover:hidden">{compressAddress(account)}</span>
+                <span className="hidden group-hover:inline">Disconnect</span>
+              </button>
+            ) : (
+              <button
+                onClick={connect}
+                className="cursor-pointer w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
+              >
+                <Wallet className="w-5 h-5" />
+                Connect Wallet
+              </button>
+            )}
+          </div>
 
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -46,7 +62,10 @@ export default function LoginPage() {
 
           <p className="text-center text-gray-600">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-emerald-600 font-medium hover:underline">
+            <Link
+              to="/signup"
+              className="text-emerald-600 font-medium hover:underline"
+            >
               Sign Up
             </Link>
           </p>
