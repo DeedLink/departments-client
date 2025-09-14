@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, Mail, Wallet } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
-import { compressAddress } from "../utils/functions";
+import { compressAddress, isValidEmail, isValidPassword } from "../utils/functions";
 import { useState } from "react";
 import { loginUser } from "../api/api";
 import { useToast } from "../contexts/ToastContext";
@@ -15,6 +15,26 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
+      if(!account) {
+        showToast("Please connect your wallet first.", "error");
+        return;
+      }
+
+      else if (!email || !password) {
+        showToast("Please fill in all fields.", "error");
+        return;
+      }
+
+      else if (isValidPassword(password) === false) {
+        showToast("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.", "error");
+        return;
+      }
+
+      else if (isValidEmail(email) === false) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+      }
+
       await loginUser({ email, password, walletAddress: account || "" });
       showToast("Login successful!", "success");
       navigate("/surveyor");
@@ -77,7 +97,13 @@ export default function LoginPage() {
             />
           </div>
 
-          <button onClick={handleLogin} className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-4 rounded-xl font-medium transition-all transform hover:scale-[1.02]">
+          <button
+            onClick={handleLogin}
+            disabled={!(account && isValidPassword(password) && isValidEmail(email))}
+            className={`w-full py-4 rounded-xl font-medium transition-all transform 
+              bg-green-500 text-gray-700 hover:bg-green-600 hover:scale-[1.02]
+              ${!(account && isValidPassword(password) && isValidEmail(email)) ? "opacity-50 cursor-not-allowed hover:scale-100 hover:bg-gray-200" : "cursor-pointer"}`}
+          >
             Login
           </button>
 
