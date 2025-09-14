@@ -5,6 +5,7 @@ import { WalletProvider } from "./contexts/WalletContext";
 import { LoginProvider } from "./contexts/LoginContext";
 import SurveyorHome from "./pages/surveyor/SurveyorHome";
 import { ToastProvider } from "./contexts/ToastContext";
+import Sidebar from "./components/sidebar";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       <ToastProvider>
         <LoginProvider>
           <WalletProvider>
+            <Sidebar/>
             <Routes>
               <Route path="/" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />

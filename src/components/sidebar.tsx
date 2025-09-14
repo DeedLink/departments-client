@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useLogin } from "../contexts/LoginContext";
+import { useLocation } from "react-router-dom";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useLogin();
+  const { pathname } = useLocation();
 
   const navItems = [
     { name: "Home", href: "#" },
@@ -10,6 +14,10 @@ const Sidebar = () => {
     { name: "Services", href: "#" },
     { name: "Contact", href: "#" },
   ];
+
+  if(!user || user.role !== "surveyor" || user.kycStatus !== "verified" || !user.walletAddress || pathname === "/" || pathname === "/signup") {
+    return null;
+  };
 
   return (
     <div className="flex">

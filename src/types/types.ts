@@ -59,7 +59,7 @@ export interface User {
   nic: string;
   kycDocumentHash?: string;
   kycStatus: "pending" | "verified" | "rejected";
-  role: "user" | "registrar" | "admin";
+  role: "user" | "registrar" | "admin"| "notary" | "lawyer" | "surveyor" | "IVSL";
   createdAt: string;
   updatedAt: string;
 }
