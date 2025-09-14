@@ -5,9 +5,11 @@ import { compressAddress, isValidEmail, isValidPassword } from "../utils/functio
 import { useState } from "react";
 import { loginUser } from "../api/api";
 import { useToast } from "../contexts/ToastContext";
+import { useLogin } from "../contexts/LoginContext";
 
 export default function LoginPage() {
   const { account, connect, disconnect } = useWallet();
+  const { setToken, setUser } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -35,7 +37,9 @@ export default function LoginPage() {
         return;
       }
 
-      await loginUser({ email, password, walletAddress: account || "" });
+      const res = await loginUser({ email, password, walletAddress: account || "" });
+      setUser(res.user);
+      setToken(res.token);
       showToast("Login successful!", "success");
       navigate("/surveyor");
     } catch (error) {
