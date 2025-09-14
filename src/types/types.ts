@@ -71,7 +71,7 @@ export interface RegisterRequest {
   password?: string;
   walletAddress?: string;
   signature?: string;
-  role?: "user" | "registrar" | "admin";
+  role?: "user" | "registrar" | "admin" | "notary" | "lawyer" | "surveyor" | "IVSL";
 }
 
 export interface LoginRequest {
