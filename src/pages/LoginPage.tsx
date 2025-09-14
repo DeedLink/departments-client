@@ -4,20 +4,22 @@ import { useWallet } from "../contexts/WalletContext";
 import { compressAddress } from "../utils/functions";
 import { useState } from "react";
 import { loginUser } from "../api/api";
+import { useToast } from "../contexts/ToastContext";
 
 export default function LoginPage() {
   const { account, connect, disconnect } = useWallet();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async () => {
     try {
-      const res = await loginUser({ email, password, walletAddress: account || "" });
-      console.log("Login successful:", res);
+      await loginUser({ email, password, walletAddress: account || "" });
+      showToast("Login successful!", "success");
       navigate("/surveyor");
     } catch (error) {
-      console.error("Login failed:", error);
+      showToast("Login failed. Please check your credentials.", "error");
     }
   };
 
