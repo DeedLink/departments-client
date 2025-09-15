@@ -1,14 +1,13 @@
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useLogin } from "../contexts/LoginContext";
 import { useLocation } from "react-router-dom";
 
 interface SidebarProps {
-  sidebarwidth: number;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-const Sidebar = ({ sidebarwidth }: SidebarProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user } = useLogin();
   const { pathname } = useLocation();
 
@@ -31,7 +30,7 @@ const Sidebar = ({ sidebarwidth }: SidebarProps) => {
   }
 
   return (
-    <div className="flex">
+    <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden p-3 text-white bg-black fixed top-4 left-4 z-50 rounded-lg"
@@ -40,25 +39,32 @@ const Sidebar = ({ sidebarwidth }: SidebarProps) => {
       </button>
 
       <div
-        style={{ width: sidebarwidth }}
-        className={`fixed top-0 left-0 h-full bg-blue text-white transform transition-transform duration-300 z-40
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        className={`
+          bg-blue text-white z-40 transition-all duration-300
+          lg:relative lg:block
+          ${isOpen ?
+            'fixed lg:relative top-0 left-0 h-full w-64 translate-x-0' : 
+            'fixed lg:relative top-0 left-0 h-full w-64 -translate-x-full lg:translate-x-0 lg:w-0'
+          }
+        `}
       >
-        <div className="p-6 text-2xl font-bold border-b border-gray-700">
-          My Sidebar
+        <div className={`h-full ${!isOpen ? 'lg:hidden' : ''}`}>
+          <div className="p-6 text-2xl font-bold border-b border-gray-700">
+            My Sidebar
+          </div>
+          <ul className="flex flex-col p-4 space-y-2">
+            {navItems.map((item) => (
+              <li key={item.name}>
+                <a
+                  href={item.href}
+                  className="block px-4 py-2 rounded-lg hover:bg-green-500 active:bg-red-600 whitespace-nowrap"
+                >
+                  {item.name}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="flex flex-col p-4 space-y-2">
-          {navItems.map((item) => (
-            <li key={item.name}>
-              <a
-                href={item.href}
-                className="block px-4 py-2 rounded-lg hover:bg-green-500 active:bg-red-600"
-              >
-                {item.name}
-              </a>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
