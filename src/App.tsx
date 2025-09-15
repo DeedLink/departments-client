@@ -12,20 +12,19 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="font-spectral w-full min-h-screen h-full bg-black">
+    <div className="font-spectral w-full min-h-screen h-full" style={{ backgroundImage: `url('/images/bg.png')`, backgroundSize: 'cover' }}>
       <ToastProvider>
         <LoginProvider>
           <WalletProvider>
             <div className="flex min-h-screen">
               <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
               {sidebarOpen && (
-                <div 
+                <div
                   className="lg:hidden fixed inset-0 backdrop-blur-sm z-30"
                   onClick={() => setSidebarOpen(false)}
                 />
               )}
-              
-              <div className="bg-white flex-1 min-h-screen relative z-10">
+              <div className="flex-1 min-h-screen relative z-10">
                 <Routes>
                   <Route path="/" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
