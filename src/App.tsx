@@ -6,8 +6,9 @@ import { WalletProvider } from "./contexts/WalletContext";
 import { LoginProvider } from "./contexts/LoginContext";
 import SurveyorHome from "./pages/surveyor/SurveyorHome";
 import { ToastProvider } from "./contexts/ToastContext";
-import Sidebar from "./components/sidebar";
+import Sidebar from "./components/SideBar";
 import { LoaderProvider } from "./contexts/LoaderContext";
+import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function App() {
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/surveyor" element={<SurveyorHome />} />
+                    <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
                   </Routes>
                 </LoaderProvider>
               </div>
