@@ -9,7 +9,7 @@ const Sidebar = () => {
   const { pathname } = useLocation();
 
   const navItems = [
-    { name: "Home", href: "#" },
+    { name: "Survey Home", href: "/surveyor/home" },
     { name: "About", href: "#" },
     { name: "Services", href: "#" },
     { name: "Contact", href: "#" },
