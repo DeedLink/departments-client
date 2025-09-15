@@ -44,11 +44,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           lg:relative lg:block
           ${isOpen ?
             'fixed lg:relative top-0 left-0 h-full w-64 translate-x-0' : 
-            'fixed lg:relative top-0 left-0 h-full w-64 -translate-x-full lg:translate-x-0 lg:w-0'
+            'fixed lg:relative top-0 left-0 h-full w-64 -translate-x-full lg:translate-x-0'
           }
         `}
       >
-        <div className={`h-full ${!isOpen ? 'lg:hidden' : ''}`}>
+        <div className={`h-full`}>
           <div className="p-6 text-2xl font-bold border-b border-gray-700">
             My Sidebar
           </div>
