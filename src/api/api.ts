@@ -98,3 +98,9 @@ export const getUsers = async (): Promise<User[]> => {
   const res: AxiosResponse<User[]> = await api.get("/");
   return res.data;
 };
+
+// Get Role
+export const getRole = async (): Promise<{ role: string }> => {
+  const res: AxiosResponse<{ role: string }> = await api.get(`/role`);
+  return res.data;
+}
