@@ -1,7 +1,8 @@
 import { Menu, X } from "lucide-react";
 import { useLogin } from "../contexts/LoginContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useWallet } from "../contexts/WalletContext";
+import { useToast } from "../contexts/ToastContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,10 +14,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { pathname } = useLocation();
   const { disconnect } = useWallet();
   const { logout } = useLogin();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogout = () => {
     disconnect();
     logout();
+    navigate('/');
+    showToast("Logged out successfully", "success");
   }
 
   const navItems = [
