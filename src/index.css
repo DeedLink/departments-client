@@ -3,6 +3,11 @@
 @theme {
     --font-spectral: "Spectral", serif;
     --max-width-boundary: 1920px;
+    --color-yellow: #FFED00;
+    --color-blue: #0F6292;
+    --color-green: #16FF00;
+    --color-background: #000000;
+
   }
   
 

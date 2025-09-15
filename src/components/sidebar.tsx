@@ -29,7 +29,7 @@ const Sidebar = () => {
       </button>
 
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-black text-white transform transition-transform duration-300 z-40
+        className={`fixed top-0 left-0 h-full w-64 bg-blue text-white transform transition-transform duration-300 z-40
         ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="p-6 text-2xl font-bold border-b border-gray-700">
