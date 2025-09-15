@@ -1,6 +1,7 @@
 import { Menu, X } from "lucide-react";
 import { useLogin } from "../contexts/LoginContext";
 import { useLocation } from "react-router-dom";
+import { useWallet } from "../contexts/WalletContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,6 +11,13 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user } = useLogin();
   const { pathname } = useLocation();
+  const { disconnect } = useWallet();
+  const { logout } = useLogin();
+
+  const handleLogout = () => {
+    disconnect();
+    logout();
+  }
 
   const navItems = [
     { name: "Survey Home", href: "/surveyor" },
@@ -49,21 +57,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         `}
       >
         <div className={`h-full`}>
-          <div className="p-6 text-2xl font-bold border-b border-gray-700">
+          <div className="p-6 text-2xl font-bold border-b border-gray-700 h-fit">
             My Sidebar
           </div>
-          <ul className="flex flex-col p-4 space-y-2">
-            {navItems.map((item) => (
-              <li key={item.name}>
-                <a
-                  href={item.href}
-                  className="block px-4 py-2 rounded-lg hover:bg-green-500 active:bg-red-600 whitespace-nowrap"
-                >
-                  {item.name}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col justify-between h-[calc(100%-96px)]">
+            <ul className="flex flex-col p-4 space-y-2">
+              {navItems.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className="block px-4 py-2 rounded-lg hover:bg-green-500 active:bg-red-600 whitespace-nowrap"
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div className="p-4">
+              <button onClick={handleLogout} className="px-4 py-2 w-full rounded-xl bg-red-400 cursor-pointer hover:bg-red-600">Logout</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
