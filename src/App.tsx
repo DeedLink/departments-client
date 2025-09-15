@@ -7,6 +7,7 @@ import { LoginProvider } from "./contexts/LoginContext";
 import SurveyorHome from "./pages/surveyor/SurveyorHome";
 import { ToastProvider } from "./contexts/ToastContext";
 import Sidebar from "./components/sidebar";
+import { LoaderProvider } from "./contexts/LoaderContext";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,11 +26,13 @@ export default function App() {
                 />
               )}
               <div className="flex-1 min-h-screen relative z-10">
-                <Routes>
-                  <Route path="/" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route path="/surveyor" element={<SurveyorHome />} />
-                </Routes>
+                <LoaderProvider>
+                  <Routes>
+                    <Route path="/" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/surveyor" element={<SurveyorHome />} />
+                  </Routes>
+                </LoaderProvider>
               </div>
             </div>
           </WalletProvider>

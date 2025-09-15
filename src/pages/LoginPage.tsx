@@ -2,10 +2,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Lock, Mail, Wallet } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress, isValidEmail, isValidPassword } from "../utils/functions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { loginUser } from "../api/api";
 import { useToast } from "../contexts/ToastContext";
 import { useLogin } from "../contexts/LoginContext";
+import { useLoader } from "../contexts/LoaderContext";
 
 export default function LoginPage() {
   const { account, connect, disconnect } = useWallet();
@@ -14,6 +15,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { showLoader, hideLoader } = useLoader();
+
+  useEffect(() => {
+    showLoader();
+    const timer = setTimeout(() => {
+      hideLoader();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  },[]);
 
   const handleLogin = async () => {
     try {

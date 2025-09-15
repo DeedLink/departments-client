@@ -2,9 +2,21 @@ import { Link } from "react-router-dom";
 import { User, Mail, Shield, Lock, Wallet } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress } from "../utils/functions";
+import { useLoader } from "../contexts/LoaderContext";
+import { useEffect } from "react";
 
 export default function SignupPage() {
   const { account, connect, disconnect } = useWallet();
+  const { showLoader, hideLoader } = useLoader();
+
+  useEffect(() => {
+    showLoader();
+    const timer = setTimeout(() => {
+      hideLoader();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  },[]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
