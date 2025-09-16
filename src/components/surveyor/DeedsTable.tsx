@@ -51,68 +51,101 @@ const DeedsTable = () => {
   };
 
   return (
-    <div className="p-4 bg-white shadow rounded-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <div className="p-2 sm:p-4 bg-white shadow rounded-lg">
+      <div className="flex flex-col gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by name or deed number..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded w-full md:w-1/3"
+          className="border px-3 py-2 rounded w-full text-sm"
         />
       </div>
+      
+      <div className="block md:hidden space-y-3">
+        {paginatedDeeds.map((deed) => (
+          <div key={deed.deedNumber} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-semibold text-sm">{deed.deedNumber}</h3>
+              <span className="text-xs text-gray-500">{deed.landType}</span>
+            </div>
+            <div className="space-y-1 text-sm text-gray-700 mb-3">
+              <p><strong>Owner:</strong> {deed.ownerFullName}</p>
+              <p><strong>Value:</strong> {deed.value.toLocaleString()}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => setSelectedDeed(deed)}
+                className="w-full px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm"
+              >
+                Open Details
+              </button>
+              <button
+                onClick={() => handleOpenSurvey(deed)}
+                className="w-full px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
+              >
+                View Survey
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <table className="w-full border border-gray-200">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 border">Deed Number</th>
-            <th className="p-2 border">Owner</th>
-            <th className="p-2 border">Land Type</th>
-            <th className="p-2 border">Value</th>
-            <th className="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedDeeds.map((deed) => (
-            <tr key={deed.deedNumber} className="text-center">
-              <td className="p-2 border">{deed.deedNumber}</td>
-              <td className="p-2 border">{deed.ownerFullName}</td>
-              <td className="p-2 border">{deed.landType}</td>
-              <td className="p-2 border">{deed.value.toLocaleString()}</td>
-              <td className="p-2 border flex justify-center gap-2">
-                <button
-                  onClick={() => setSelectedDeed(deed)}
-                  className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Open
-                </button>
-                <button
-                  onClick={() => handleOpenSurvey(deed)}
-                  className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700"
-                >
-                  Survey
-                </button>
-              </td>
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full border border-gray-200">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-3 border text-left">Deed Number</th>
+              <th className="p-3 border text-left">Owner</th>
+              <th className="p-3 border text-left">Land Type</th>
+              <th className="p-3 border text-left">Value</th>
+              <th className="p-3 border text-center">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {paginatedDeeds.map((deed) => (
+              <tr key={deed.deedNumber} className="hover:bg-gray-50">
+                <td className="p-3 border">{deed.deedNumber}</td>
+                <td className="p-3 border">{deed.ownerFullName}</td>
+                <td className="p-3 border">{deed.landType}</td>
+                <td className="p-3 border">{deed.value.toLocaleString()}</td>
+                <td className="p-3 border">
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() => setSelectedDeed(deed)}
+                      className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm"
+                    >
+                      Open
+                    </button>
+                    <button
+                      onClick={() => handleOpenSurvey(deed)}
+                      className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
+                    >
+                      Survey
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <div className="flex justify-center items-center gap-2 mt-4">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
         <button
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="w-full sm:w-auto px-4 py-2 border rounded disabled:opacity-50 text-sm"
         >
-          Prev
+          Previous
         </button>
-        <span>
+        <span className="text-sm px-2">
           Page {page} of {totalPages}
         </span>
         <button
           disabled={page === totalPages}
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="w-full sm:w-auto px-4 py-2 border rounded disabled:opacity-50 text-sm"
         >
           Next
         </button>
