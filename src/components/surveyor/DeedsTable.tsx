@@ -1,14 +1,7 @@
 import { useState, useMemo } from "react";
+import DeedPopup from "./DeedPopup";
 
-interface Deed {
-  id: number;
-  user: string;
-  deedName: string;
-  status: "Signed" | "Not Signed" | "Rejected";
-  date: string;
-}
-
-const mockDeeds: Deed[] = [
+const mockDeeds: any[] = [
   { id: 1, user: "Alice", deedName: "Deed A", status: "Signed", date: "2025-09-01" },
   { id: 2, user: "Bob", deedName: "Deed B", status: "Not Signed", date: "2025-09-05" },
   { id: 3, user: "Charlie", deedName: "Deed C", status: "Rejected", date: "2025-09-10" },
@@ -20,6 +13,7 @@ const DeedsTable = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | "Signed" | "Not Signed" | "Rejected">("All");
   const [page, setPage] = useState(1);
+  const [selectedDeed, setSelectedDeed] = useState<any | null>(null); // popup state
   const rowsPerPage = 3;
 
   const filteredDeeds = useMemo(() => {
@@ -72,6 +66,7 @@ const DeedsTable = () => {
             <th className="p-2 border">Deed</th>
             <th className="p-2 border">Status</th>
             <th className="p-2 border">Date</th>
+            <th className="p-2 border">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -92,6 +87,14 @@ const DeedsTable = () => {
                 {deed.status}
               </td>
               <td className="p-2 border">{deed.date}</td>
+              <td className="p-2 border">
+                <button
+                  onClick={() => setSelectedDeed(deed)}
+                  className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Open
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -116,6 +119,8 @@ const DeedsTable = () => {
           Next
         </button>
       </div>
+
+      <DeedPopup deed={selectedDeed} onClose={() => setSelectedDeed(null)} />
     </div>
   );
 };
