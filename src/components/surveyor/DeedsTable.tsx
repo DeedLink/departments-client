@@ -2,11 +2,15 @@ import { useState, useMemo } from "react";
 import DeedPopup from "./DeedPopup";
 import type { Deed } from "../../types/deed";
 import { mockDeeds } from "../../constants/deeds";
+import SurveyPlan from "./SurveyPlan";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
+  const [surveyPoints, setSurveyPoints] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+
   const rowsPerPage = 10;
 
   const filteredDeeds = useMemo(() => {
@@ -26,15 +30,24 @@ const DeedsTable = () => {
   );
 
   const handleSign = (deed: Deed) => {
-    console.log('Signing deed:', deed.deedNumber);
+    console.log("Signing deed:", deed.deedNumber);
   };
 
   const handleReject = (deed: Deed) => {
-    console.log('Rejecting deed:', deed.deedNumber);
+    console.log("Rejecting deed:", deed.deedNumber);
   };
 
   const handleSignAndPass = (deed: Deed) => {
-    console.log('Signing and passing deed:', deed.deedNumber);
+    console.log("Signing and passing deed:", deed.deedNumber);
+  };
+
+  const handleOpenSurvey = (deed: Deed) => {
+    if (deed.location && deed.location.length > 0) {
+      setSurveyPoints(deed.location);
+      setIsSurveyOpen(true);
+    } else {
+      alert("No survey plan available for this deed.");
+    }
   };
 
   return (
@@ -56,7 +69,7 @@ const DeedsTable = () => {
             <th className="p-2 border">Owner</th>
             <th className="p-2 border">Land Type</th>
             <th className="p-2 border">Value</th>
-            <th className="p-2 border">Action</th>
+            <th className="p-2 border">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -66,12 +79,18 @@ const DeedsTable = () => {
               <td className="p-2 border">{deed.ownerFullName}</td>
               <td className="p-2 border">{deed.landType}</td>
               <td className="p-2 border">{deed.value.toLocaleString()}</td>
-              <td className="p-2 border">
+              <td className="p-2 border flex justify-center gap-2">
                 <button
                   onClick={() => setSelectedDeed(deed)}
                   className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Open
+                </button>
+                <button
+                  onClick={() => handleOpenSurvey(deed)}
+                  className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700"
+                >
+                  Survey
                 </button>
               </td>
             </tr>
@@ -99,12 +118,18 @@ const DeedsTable = () => {
         </button>
       </div>
 
-      <DeedPopup 
-        deed={selectedDeed} 
+      <DeedPopup
+        deed={selectedDeed}
         onClose={() => setSelectedDeed(null)}
         onSign={handleSign}
         onReject={handleReject}
         onSignAndPass={handleSignAndPass}
+      />
+
+      <SurveyPlan
+        points={surveyPoints}
+        isOpen={isSurveyOpen}
+        onClose={() => setIsSurveyOpen(false)}
       />
     </div>
   );

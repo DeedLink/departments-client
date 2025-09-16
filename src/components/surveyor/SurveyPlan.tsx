@@ -13,6 +13,8 @@ L.Icon.Default.mergeOptions({
 
 interface SurveyPlanProps {
   points: { latitude: number; longitude: number }[];
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
@@ -26,12 +28,28 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   return null;
 };
 
-const SurveyPlan: React.FC<SurveyPlanProps> = ({ points }) => {
+const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, isOpen, onClose }) => {
+  if (!isOpen) return null;
+
   if (!points || points.length === 0) {
     return (
-      <div className="p-4">
-        <h2 className="text-2xl font-bold mb-4">Survey Plan</h2>
-        <p>No survey data available.</p>
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-2xl p-6 shadow-lg w-full max-w-lg text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-xl font-bold mb-2">Survey Plan</h2>
+          <p className="text-gray-600">No survey data available.</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Close
+          </button>
+        </div>
       </div>
     );
   }
@@ -40,9 +58,20 @@ const SurveyPlan: React.FC<SurveyPlanProps> = ({ points }) => {
   const center = coords[0];
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Survey Plan</h2>
-      <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl overflow-hidden w-full max-w-4xl h-[600px] relative shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 z-10"
+        >
+          ✕
+        </button>
         <MapContainer
           center={center}
           zoom={16}
