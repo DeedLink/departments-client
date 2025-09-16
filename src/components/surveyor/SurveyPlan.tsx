@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Polygon, Popup, useMap } from "react-l
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
+import type { Sides } from "../../types/deed";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -13,6 +14,7 @@ L.Icon.Default.mergeOptions({
 
 interface SurveyPlanProps {
   points: { latitude: number; longitude: number }[];
+  sides?: Sides;
   isOpen: boolean;
   onClose: () => void;
 }

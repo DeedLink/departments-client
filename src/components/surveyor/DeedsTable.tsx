@@ -10,6 +10,7 @@ const DeedsTable = () => {
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const [surveyPoints, setSurveyPoints] = useState<{ latitude: number; longitude: number }[]>([]);
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [sidesOfTheDeed, setSidesOfTheDeed] = useState<Deed["sides"] | undefined>(undefined);
 
   const rowsPerPage = 10;
 
@@ -45,6 +46,7 @@ const DeedsTable = () => {
     if (deed.location && deed.location.length > 0) {
       setSurveyPoints(deed.location);
       setIsSurveyOpen(true);
+      setSidesOfTheDeed(deed.sides);
     } else {
       alert("No survey plan available for this deed.");
     }
@@ -161,6 +163,7 @@ const DeedsTable = () => {
 
       <SurveyPlan
         points={surveyPoints}
+        sides={sidesOfTheDeed}
         isOpen={isSurveyOpen}
         onClose={() => setIsSurveyOpen(false)}
       />
