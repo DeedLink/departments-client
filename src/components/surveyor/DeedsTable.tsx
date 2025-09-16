@@ -1,33 +1,46 @@
 import { useState, useMemo } from "react";
 import DeedPopup from "./DeedPopup";
+import type { Deed } from "../../types/deed";
 
-const mockDeeds: any[] = [
-  { id: 1, user: "Alice", deedName: "Deed A", status: "Signed", date: "2025-09-01" },
-  { id: 2, user: "Bob", deedName: "Deed B", status: "Not Signed", date: "2025-09-05" },
-  { id: 3, user: "Charlie", deedName: "Deed C", status: "Rejected", date: "2025-09-10" },
-  { id: 4, user: "Alice", deedName: "Deed D", status: "Signed", date: "2025-09-12" },
-  { id: 5, user: "Bob", deedName: "Deed E", status: "Not Signed", date: "2025-09-14" },
+const mockDeeds: Deed[] = [
+  {
+    deedNumber: "D001",
+    deedType: { deedType: "Sale", deedNumber: "D001" },
+    title: [],
+    owners: [{ address: "0xabc123", share: 100 }],
+    value: 500000,
+    location: [{ longitude: 80.2, latitude: 6.9 }],
+    landType: "Highland",
+    timestamp: Date.now(),
+    ownerFullName: "Alice",
+    ownerNIC: "123456789V",
+    ownerAddress: "Colombo",
+    ownerPhone: "0771234567",
+    landTitleNumber: "LT-001",
+    landAddress: "Main Street, Colombo",
+    landArea: 20,
+    landSizeUnit: "Perches",
+    district: "Colombo",
+    division: "Colombo 01",
+    registrationDate: new Date("2025-09-01"),
+  },
 ];
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Signed" | "Not Signed" | "Rejected">("All");
   const [page, setPage] = useState(1);
-  const [selectedDeed, setSelectedDeed] = useState<any | null>(null); // popup state
+  const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const rowsPerPage = 3;
 
   const filteredDeeds = useMemo(() => {
     return mockDeeds.filter((deed) => {
       const matchesSearch =
-        deed.user.toLowerCase().includes(search.toLowerCase()) ||
-        deed.deedName.toLowerCase().includes(search.toLowerCase());
+        deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
+        deed.deedNumber.toLowerCase().includes(search.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "All" ? true : deed.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [search, statusFilter]);
+  }, [search]);
 
   const totalPages = Math.ceil(filteredDeeds.length / rowsPerPage);
   const paginatedDeeds = filteredDeeds.slice(
@@ -40,53 +53,30 @@ const DeedsTable = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <input
           type="text"
-          placeholder="Search by user or deed..."
+          placeholder="Search by name or deed number..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border px-3 py-2 rounded w-full md:w-1/3"
         />
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="border px-3 py-2 rounded w-full md:w-1/4"
-        >
-          <option value="All">All Status</option>
-          <option value="Signed">Signed</option>
-          <option value="Not Signed">Not Signed</option>
-          <option value="Rejected">Rejected</option>
-        </select>
       </div>
 
       <table className="w-full border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
-            <th className="p-2 border">ID</th>
-            <th className="p-2 border">User</th>
-            <th className="p-2 border">Deed</th>
-            <th className="p-2 border">Status</th>
-            <th className="p-2 border">Date</th>
+            <th className="p-2 border">Deed Number</th>
+            <th className="p-2 border">Owner</th>
+            <th className="p-2 border">Land Type</th>
+            <th className="p-2 border">Value</th>
             <th className="p-2 border">Action</th>
           </tr>
         </thead>
         <tbody>
           {paginatedDeeds.map((deed) => (
-            <tr key={deed.id} className="text-center">
-              <td className="p-2 border">{deed.id}</td>
-              <td className="p-2 border">{deed.user}</td>
-              <td className="p-2 border">{deed.deedName}</td>
-              <td
-                className={`p-2 border font-medium ${
-                  deed.status === "Signed"
-                    ? "text-green-600"
-                    : deed.status === "Rejected"
-                    ? "text-red-600"
-                    : "text-yellow-600"
-                }`}
-              >
-                {deed.status}
-              </td>
-              <td className="p-2 border">{deed.date}</td>
+            <tr key={deed.deedNumber} className="text-center">
+              <td className="p-2 border">{deed.deedNumber}</td>
+              <td className="p-2 border">{deed.ownerFullName}</td>
+              <td className="p-2 border">{deed.landType}</td>
+              <td className="p-2 border">{deed.value.toLocaleString()}</td>
               <td className="p-2 border">
                 <button
                   onClick={() => setSelectedDeed(deed)}
