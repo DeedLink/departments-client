@@ -62,7 +62,7 @@ export type Deed = {
   location: LocationPoint[];
   sides?: Sides;
   deedNumber: string;
-  landType: "Paddy land" | "Highland";
+  landType: "Paddy land" | "Highland" | String;
   timestamp: number;
 
   ownerFullName: string;

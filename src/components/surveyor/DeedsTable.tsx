@@ -1,36 +1,13 @@
 import { useState, useMemo } from "react";
 import DeedPopup from "./DeedPopup";
 import type { Deed } from "../../types/deed";
-
-const mockDeeds: Deed[] = [
-  {
-    deedNumber: "D001",
-    deedType: { deedType: "Sale", deedNumber: "D001" },
-    title: [],
-    owners: [{ address: "0xabc123", share: 100 }],
-    value: 500000,
-    location: [{ longitude: 80.2, latitude: 6.9 }],
-    landType: "Highland",
-    timestamp: Date.now(),
-    ownerFullName: "Alice",
-    ownerNIC: "123456789V",
-    ownerAddress: "Colombo",
-    ownerPhone: "0771234567",
-    landTitleNumber: "LT-001",
-    landAddress: "Main Street, Colombo",
-    landArea: 20,
-    landSizeUnit: "Perches",
-    district: "Colombo",
-    division: "Colombo 01",
-    registrationDate: new Date("2025-09-01"),
-  },
-];
+import { mockDeeds } from "../../constants/deeds";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
-  const rowsPerPage = 3;
+  const rowsPerPage = 10;
 
   const filteredDeeds = useMemo(() => {
     return mockDeeds.filter((deed) => {
@@ -47,6 +24,18 @@ const DeedsTable = () => {
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
+
+  const handleSign = (deed: Deed) => {
+    console.log('Signing deed:', deed.deedNumber);
+  };
+
+  const handleReject = (deed: Deed) => {
+    console.log('Rejecting deed:', deed.deedNumber);
+  };
+
+  const handleSignAndPass = (deed: Deed) => {
+    console.log('Signing and passing deed:', deed.deedNumber);
+  };
 
   return (
     <div className="p-4 bg-white shadow rounded-lg">
@@ -110,7 +99,13 @@ const DeedsTable = () => {
         </button>
       </div>
 
-      <DeedPopup deed={selectedDeed} onClose={() => setSelectedDeed(null)} />
+      <DeedPopup 
+        deed={selectedDeed} 
+        onClose={() => setSelectedDeed(null)}
+        onSign={handleSign}
+        onReject={handleReject}
+        onSignAndPass={handleSignAndPass}
+      />
     </div>
   );
 };
