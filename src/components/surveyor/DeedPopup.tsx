@@ -7,9 +7,8 @@ const DeedPopup = ({ deed, onClose }: DeedPopupProps) => {
   if (!deed) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-600 hover:text-black"
