@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Polygon, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polygon, Popup, useMap, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
@@ -30,7 +30,25 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   return null;
 };
 
-const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, isOpen, onClose }) => {
+function offsetPolygonSide(
+  a: [number, number],
+  b: [number, number],
+  scale: number
+): [number, number][] {
+  const dx = b[1] - a[1];
+  const dy = b[0] - a[0];
+  const length = Math.sqrt(dx * dx + dy * dy);
+  const ox = (-dy / length) * scale * length;
+  const oy = (dx / length) * scale * length;
+  return [
+    a,
+    b,
+    [b[0] + oy, b[1] + ox],
+    [a[0] + oy, a[1] + ox],
+  ];
+}
+
+const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, sides, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   if (!points || points.length === 0) {
@@ -68,7 +86,6 @@ const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, isOpen, onClose }) => {
         className="bg-white rounded-lg sm:rounded-2xl overflow-hidden w-full h-full sm:h-[600px] max-w-5xl relative shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm z-10 p-3 sm:p-4 border-b flex justify-between items-center">
           <h3 className="font-semibold text-sm sm:text-base">Survey Plan</h3>
           <button
@@ -79,7 +96,6 @@ const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, isOpen, onClose }) => {
           </button>
         </div>
         
-        {/* Map Container */}
         <div className="w-full h-full pt-12 sm:pt-16">
           <MapContainer
             center={center}
@@ -105,14 +121,40 @@ const SurveyPlan: React.FC<SurveyPlanProps> = ({ points, isOpen, onClose }) => {
               </Marker>
             ))}
             {coords.length > 1 && (
-              <Polygon 
-                positions={coords} 
-                pathOptions={{ 
-                  color: "green", 
-                  fillOpacity: 0.3,
-                  weight: 2 
-                }} 
-              />
+              <>
+                <Polygon 
+                  positions={coords} 
+                  pathOptions={{ color: "green", fillOpacity: 0.2, weight: 2 }} 
+                />
+                {sides && coords.length >= 4 && (
+                  <>
+                    <Polygon
+                      positions={offsetPolygonSide(coords[0], coords[1], 0.3)}
+                      pathOptions={{ color: "red", fillOpacity: 0.3 }}
+                    >
+                      <Tooltip permanent direction="top">{sides.North}</Tooltip>
+                    </Polygon>
+                    <Polygon
+                      positions={offsetPolygonSide(coords[1], coords[2], 0.3)}
+                      pathOptions={{ color: "blue", fillOpacity: 0.3 }}
+                    >
+                      <Tooltip permanent direction="right">{sides.East}</Tooltip>
+                    </Polygon>
+                    <Polygon
+                      positions={offsetPolygonSide(coords[2], coords[3], 0.3)}
+                      pathOptions={{ color: "orange", fillOpacity: 0.3 }}
+                    >
+                      <Tooltip permanent direction="bottom">{sides.South}</Tooltip>
+                    </Polygon>
+                    <Polygon
+                      positions={offsetPolygonSide(coords[3], coords[0], 0.3)}
+                      pathOptions={{ color: "purple", fillOpacity: 0.3 }}
+                    >
+                      <Tooltip permanent direction="left">{sides.West}</Tooltip>
+                    </Polygon>
+                  </>
+                )}
+              </>
             )}
           </MapContainer>
         </div>
