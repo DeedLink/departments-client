@@ -13,6 +13,8 @@ L.Icon.Default.mergeOptions({
 
 interface SurveyEditorProps {
   onSave: (points: { latitude: number; longitude: number }[], sides: Sides) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 function ClickHandler({ setPoints }: { setPoints: React.Dispatch<React.SetStateAction<[number, number][]>> }) {
@@ -24,7 +26,9 @@ function ClickHandler({ setPoints }: { setPoints: React.Dispatch<React.SetStateA
   return null;
 }
 
-const SurveyEditor: React.FC<SurveyEditorProps> = ({ onSave }) => {
+const SurveyEditor: React.FC<SurveyEditorProps> = ({ onSave, isOpen, onClose }) => {
+  if (!isOpen) return null;
+
   const [points, setPoints] = useState<[number, number][]>([]);
   const [sides, setSides] = useState<Sides>({
     North: "",
@@ -57,95 +61,99 @@ const SurveyEditor: React.FC<SurveyEditorProps> = ({ onSave }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 bg-gray-100 border-b">
-        <h2 className="text-lg font-semibold mb-3">Set Boundaries</h2>
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="text"
-            name="North"
-            placeholder="North"
-            value={sides.North}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-          <input
-            type="text"
-            name="South"
-            placeholder="South"
-            value={sides.South}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-          <input
-            type="text"
-            name="East"
-            placeholder="East"
-            value={sides.East}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-          <input
-            type="text"
-            name="West"
-            placeholder="West"
-            value={sides.West}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white w-11/12 h-5/6 rounded-lg shadow-lg overflow-hidden flex flex-col">
+        <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Set Boundaries</h2>
+          <button onClick={onClose} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+            Close
+          </button>
         </div>
-
-        <h2 className="text-lg font-semibold mt-4 mb-2">Polygon Points</h2>
-        <button
-          onClick={addPointManually}
-          className="mb-2 px-3 py-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-800"
-        >
-          Add Point
-        </button>
-        <div className="space-y-2">
-          {points.map(([lat, lng], i) => (
-            <div key={i} className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col md:flex-row flex-1">
+          <div className="p-4 md:w-1/3 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               <input
-                type="number"
-                step="0.000001"
-                value={lat}
-                onChange={(e) => handleCoordChange(i, "lat", e.target.value)}
-                placeholder="Latitude"
+                type="text"
+                name="North"
+                placeholder="North"
+                value={sides.North}
+                onChange={handleChange}
                 className="border p-2 rounded"
               />
               <input
-                type="number"
-                step="0.000001"
-                value={lng}
-                onChange={(e) => handleCoordChange(i, "lng", e.target.value)}
-                placeholder="Longitude"
+                type="text"
+                name="South"
+                placeholder="South"
+                value={sides.South}
+                onChange={handleChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="East"
+                placeholder="East"
+                value={sides.East}
+                onChange={handleChange}
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                name="West"
+                placeholder="West"
+                value={sides.West}
+                onChange={handleChange}
                 className="border p-2 rounded"
               />
             </div>
-          ))}
+            <h2 className="text-lg font-semibold mb-2">Polygon Points</h2>
+            <button
+              onClick={addPointManually}
+              className="mb-2 px-3 py-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-800"
+            >
+              Add Point
+            </button>
+            <div className="space-y-2">
+              {points.map(([lat, lng], i) => (
+                <div key={i} className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lat}
+                    onChange={(e) => handleCoordChange(i, "lat", e.target.value)}
+                    placeholder="Latitude"
+                    className="border p-2 rounded"
+                  />
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lng}
+                    onChange={(e) => handleCoordChange(i, "lng", e.target.value)}
+                    placeholder="Longitude"
+                    className="border p-2 rounded"
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleSave}
+              className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Save Survey
+            </button>
+          </div>
+          <div className="flex-1">
+            <MapContainer center={[6.9271, 79.8612]} zoom={13} className="w-full h-full">
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <ClickHandler setPoints={setPoints} />
+              {points.map((p, i) => (
+                <Marker key={i} position={p} />
+              ))}
+              {points.length >= 3 && (
+                <Polygon positions={points} pathOptions={{ color: "green", fillOpacity: 0.4 }} />
+              )}
+            </MapContainer>
+          </div>
         </div>
-
-        <button
-          onClick={handleSave}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Save Survey
-        </button>
-      </div>
-
-      <div className="flex-1">
-        <MapContainer center={[6.9271, 79.8612]} zoom={13} className="w-full h-full">
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <ClickHandler setPoints={setPoints} />
-
-          {points.map((p, i) => (
-            <Marker key={i} position={p} />
-          ))}
-
-          {points.length >= 3 && (
-            <Polygon positions={points} pathOptions={{ color: "green", fillOpacity: 0.4 }} />
-          )}
-        </MapContainer>
       </div>
     </div>
   );

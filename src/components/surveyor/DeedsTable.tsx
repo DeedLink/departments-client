@@ -3,6 +3,7 @@ import DeedPopup from "./DeedPopup";
 import type { Deed } from "../../types/deed";
 import { mockDeeds } from "../../constants/deeds";
 import SurveyPlan from "./SurveyPlan";
+import SurveyEditor from "./SurveyEditor";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -10,6 +11,7 @@ const DeedsTable = () => {
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const [surveyPoints, setSurveyPoints] = useState<{ latitude: number; longitude: number }[]>([]);
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [isSurveyEditorOpen, setIsSurveyEditorOpen] = useState(false);
   const [sidesOfTheDeed, setSidesOfTheDeed] = useState<Deed["sides"] | undefined>(undefined);
 
   const rowsPerPage = 10;
@@ -46,6 +48,16 @@ const DeedsTable = () => {
     if (deed.location && deed.location.length > 0) {
       setSurveyPoints(deed.location);
       setIsSurveyOpen(true);
+      setSidesOfTheDeed(deed.sides);
+    } else {
+      alert("No survey plan available for this deed.");
+    }
+  };
+
+  const handleEditOpenSurvey = (deed: Deed) => {
+    if (deed.location && deed.location.length > 0) {
+      setSurveyPoints(deed.location);
+      setIsSurveyEditorOpen(true);
       setSidesOfTheDeed(deed.sides);
     } else {
       alert("No survey plan available for this deed.");
@@ -123,6 +135,12 @@ const DeedsTable = () => {
                       onClick={() => handleOpenSurvey(deed)}
                       className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
                     >
+                      Plan
+                    </button>
+                    <button
+                      onClick={() => handleEditOpenSurvey(deed)}
+                      className="px-3 py-1 rounded bg-yellow-600 text-white hover:bg-green-700 text-sm"
+                    >
                       Survey
                     </button>
                   </div>
@@ -166,6 +184,18 @@ const DeedsTable = () => {
         sides={sidesOfTheDeed}
         isOpen={isSurveyOpen}
         onClose={() => setIsSurveyOpen(false)}
+      />
+
+      <SurveyEditor
+        isOpen={isSurveyEditorOpen}
+        onSave={(points, sides) => {
+          console.log("Saved survey points:", points);
+          console.log("Saved sides:", sides);
+          setSurveyPoints(points);
+          setSidesOfTheDeed(sides);
+          setIsSurveyEditorOpen(false);
+        }}
+        onClose={() => setIsSurveyEditorOpen(false)}
       />
     </div>
   );

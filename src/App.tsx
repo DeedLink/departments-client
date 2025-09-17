@@ -9,6 +9,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 import Sidebar from "./components/SideBar";
 import { LoaderProvider } from "./contexts/LoaderContext";
 import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
+import SurveyEditor from "./components/surveyor/SurveyEditor";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
