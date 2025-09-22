@@ -62,8 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         `}
       >
         <div className={`h-full`}>
-          <div className="p-6 text-2xl font-bold border-b border-gray-700 h-fit">
-            My Sidebar
+          <div className="p-6 text-2xl font-bold border-b border-gray-700 h-fit ml-12 lg:ml-0 capitalize">
+            {user.role}
           </div>
           <div className="flex flex-col justify-between h-[calc(100%-96px)]">
             <ul className="flex flex-col p-4 space-y-2">
