@@ -10,18 +10,23 @@ const SurveyPlanPage = () => {
 
   const fetchPlan = async()=>{
     try {
-      if(deedNumber){
+      if (deedNumber) {
         const res = await getPlanByDeedNumber(deedNumber);
-        if(res){
+        console.log(res);
+        if (res.success) {
           setPlan(res.data);
+        } else {
+          //showToast(res.message || "Plan not found", "error");
         }
-      }
-      else {
+      } else {
         showToast("deedNumber missing", "error");
       }
-    }
-    catch {
-      showToast("error fetching plan", "error");
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        showToast("Plan not found", "error");
+      } else {
+        showToast("Error fetching plan", "error");
+      }
     }
   }
 
