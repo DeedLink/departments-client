@@ -133,3 +133,9 @@ export const getDeedById = async (deedId: string): Promise<any> => {
   const res: AxiosResponse<any> = await deedApi.get(`/${deedId}`);
   return res.data;
 };
+
+// Get deeds by surveyor wallet address (protected)
+export const getDeedBySurveyorWalletAddress = async (walletAddress: string): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await deedApi.get(`/surveyor/${walletAddress}`);
+  return res.data;
+};

@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DeedPopup from "./DeedPopup";
 import type { Deed } from "../../types/deed";
-import { mockDeeds } from "../../constants/deeds";
 import SurveyPlan from "./SurveyPlan";
 import SurveyEditor from "./SurveyEditor";
+import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { useWallet } from "../../contexts/WalletContext";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -13,18 +14,33 @@ const DeedsTable = () => {
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const [isSurveyEditorOpen, setIsSurveyEditorOpen] = useState(false);
   const [sidesOfTheDeed, setSidesOfTheDeed] = useState<Deed["sides"] | undefined>(undefined);
+  const [ deeds, setDeeds ] = useState<Deed[]>([]);
+  const { account } = useWallet();
 
   const rowsPerPage = 10;
 
+  useEffect(() => {
+    const fetchDeeds = async () => {
+      try {
+        const response = await getDeedBySurveyorWalletAddress(account || "");
+        setDeeds(response);
+      } catch (error) {
+        console.error("Error fetching deeds:", error);
+      }
+    };
+
+    fetchDeeds();
+  }, [account]);
+
   const filteredDeeds = useMemo(() => {
-    return mockDeeds.filter((deed) => {
+    return deeds.filter((deed) => {
       const matchesSearch =
         deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
         deed.deedNumber.toLowerCase().includes(search.toLowerCase());
 
       return matchesSearch;
     });
-  }, [search]);
+  }, [search, account, deeds]);
 
   const totalPages = Math.ceil(filteredDeeds.length / rowsPerPage);
   const paginatedDeeds = filteredDeeds.slice(
