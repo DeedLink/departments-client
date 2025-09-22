@@ -5,6 +5,7 @@ import SurveyPlan from "./SurveyPlan";
 import SurveyEditor from "./SurveyEditor";
 import { getDeedBySurveyorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
+import { useToast } from "../../contexts/ToastContext";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -16,6 +17,7 @@ const DeedsTable = () => {
   const [sidesOfTheDeed, setSidesOfTheDeed] = useState<Deed["sides"] | undefined>(undefined);
   const [ deeds, setDeeds ] = useState<Deed[]>([]);
   const { account } = useWallet();
+  const { showToast } = useToast();
 
   const rowsPerPage = 10;
 
@@ -66,7 +68,7 @@ const DeedsTable = () => {
       setIsSurveyOpen(true);
       setSidesOfTheDeed(deed.sides);
     } else {
-      alert("No survey plan available for this deed.");
+      showToast("No survey plan available for this deed.", "error");
     }
   };
 
@@ -76,7 +78,7 @@ const DeedsTable = () => {
       setIsSurveyEditorOpen(true);
       setSidesOfTheDeed(deed.sides);
     } else {
-      alert("No survey plan available for this deed.");
+      showToast("No survey plan available for this deed.", "error");
     }
   };
 
