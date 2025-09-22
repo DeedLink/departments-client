@@ -49,6 +49,10 @@ export default function LoginPage() {
       }
 
       const res = await loginUser({ email, password, walletAddress: account || "" });
+      if(res.user.role !== "surveyor") {
+        showToast("Access denied. Not a surveyor account.", "error");
+        return;
+      }
       setUser(res.user);
       setToken(res.token);
       showToast("Login successful!", "success");
