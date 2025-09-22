@@ -139,3 +139,30 @@ export const getDeedBySurveyorWalletAddress = async (walletAddress: string): Pro
   const res: AxiosResponse<any[]> = await deedApi.get(`/surveyor/${walletAddress}`);
   return res.data;
 };
+
+// Plan related api calls
+
+export const getPlansByDeedId = async (deedId: string): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await deedApi.get(`/${deedId}/plans`);
+  return res.data;
+};
+
+export const getPlanByAssingedSurveyor = async (deedId: string, surveyorAddress: string): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.get(`/${deedId}/plans/surveyor/${surveyorAddress}`);
+  return res.data;
+};
+
+export const createPlan = async (deedId: string, planData: any): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.post(`/${deedId}/plans`, planData);
+  return res.data;
+};
+
+export const updatePlan = async (deedId: string, planId: string, planData: any): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.put(`/${deedId}/plans/${planId}`, planData);
+  return res.data;
+};
+
+export const deletePlan = async (deedId: string, planId: string): Promise<{ message: string }> => {
+  const res: AxiosResponse<{ message: string }> = await deedApi.delete(`/${deedId}/plans/${planId}`);
+  return res.data;
+};
