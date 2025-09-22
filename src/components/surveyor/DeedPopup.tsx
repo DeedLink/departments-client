@@ -27,7 +27,7 @@ const DeedPopup = ({ deed, onClose, onSign, onReject, onSignAndPass }: Props) =>
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xl z-50 p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xl z-50 p-4 lg:ml-64">
       <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md lg:max-w-lg relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
