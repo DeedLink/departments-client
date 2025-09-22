@@ -146,7 +146,7 @@ const DeedsTable = () => {
                       Plan
                     </button>
                     <button
-                      onClick={() => navigate(`/surveyor/plan/${deed._id}`)}
+                      onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
                       className="px-3 py-1 rounded bg-yellow-600 text-white hover:bg-green-700 text-sm"
                     >
                       Survey
