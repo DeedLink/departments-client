@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { connectWallet } from "./wallet";
 import PropertyNFTABI from "./abis/PropertyNFT.json";
-import FractionalTokenFactoryABI from "./abis/FractionalTokenFactory.json";
+import FractionalTokenFactoryABI from "./abis/FractionTokenFactory.json";
 import FractionalTokenABI from "./abis/FractionalToken.json";
 
 // Deployed contract addresses
