@@ -34,7 +34,7 @@ export default function App() {
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/surveyor" element={<SurveyorHome />} />
                     <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
-                    <Route path="/surveyor/plan/:deedId" element={<SurveyPlanPage/>} />
+                    <Route path="/surveyor/plan/:deedNumber" element={<SurveyPlanPage/>} />
                   </Routes>
                 </LoaderProvider>
               </div>
