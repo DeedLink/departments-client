@@ -9,7 +9,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 import Sidebar from "./components/SideBar";
 import { LoaderProvider } from "./contexts/LoaderContext";
 import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
-import SurveyEditor from "./components/surveyor/SurveyEditor";
+import SurveyPlanPage from "./pages/surveyor/SurveyPlanPage";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +34,7 @@ export default function App() {
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/surveyor" element={<SurveyorHome />} />
                     <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
+                    <Route path="/surveyor/plan/:deedId" element={<SurveyPlanPage/>} />
                   </Routes>
                 </LoaderProvider>
               </div>

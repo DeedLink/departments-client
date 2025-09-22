@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import DeedPopup from "./DeedPopup";
 import type { Deed } from "../../types/deed";
 import SurveyPlan from "./SurveyPlan";
-import SurveyEditor from "./SurveyEditor";
 import { getDeedBySurveyorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
+import { useNavigate } from "react-router-dom";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -13,11 +13,11 @@ const DeedsTable = () => {
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const [surveyPoints, setSurveyPoints] = useState<{ latitude: number; longitude: number }[]>([]);
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
-  const [isSurveyEditorOpen, setIsSurveyEditorOpen] = useState(false);
   const [sidesOfTheDeed, setSidesOfTheDeed] = useState<Deed["sides"] | undefined>(undefined);
   const [ deeds, setDeeds ] = useState<Deed[]>([]);
   const { account } = useWallet();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const rowsPerPage = 10;
 
@@ -66,16 +66,6 @@ const DeedsTable = () => {
     if (deed.location && deed.location.length > 0) {
       setSurveyPoints(deed.location);
       setIsSurveyOpen(true);
-      setSidesOfTheDeed(deed.sides);
-    } else {
-      showToast("No survey plan available for this deed.", "error");
-    }
-  };
-
-  const handleEditOpenSurvey = (deed: Deed) => {
-    if (deed.location && deed.location.length > 0) {
-      setSurveyPoints(deed.location);
-      setIsSurveyEditorOpen(true);
       setSidesOfTheDeed(deed.sides);
     } else {
       showToast("No survey plan available for this deed.", "error");
@@ -156,7 +146,7 @@ const DeedsTable = () => {
                       Plan
                     </button>
                     <button
-                      onClick={() => handleEditOpenSurvey(deed)}
+                      onClick={() => navigate(`/surveyor/plan/${deed._id}`)}
                       className="px-3 py-1 rounded bg-yellow-600 text-white hover:bg-green-700 text-sm"
                     >
                       Survey
@@ -202,18 +192,6 @@ const DeedsTable = () => {
         sides={sidesOfTheDeed}
         isOpen={isSurveyOpen}
         onClose={() => setIsSurveyOpen(false)}
-      />
-
-      <SurveyEditor
-        isOpen={isSurveyEditorOpen}
-        onSave={(points, sides) => {
-          console.log("Saved survey points:", points);
-          console.log("Saved sides:", sides);
-          setSurveyPoints(points);
-          setSidesOfTheDeed(sides);
-          setIsSurveyEditorOpen(false);
-        }}
-        onClose={() => setIsSurveyEditorOpen(false)}
       />
     </div>
   );

@@ -142,27 +142,55 @@ export const getDeedBySurveyorWalletAddress = async (walletAddress: string): Pro
 
 // Plan related api calls
 
-export const getPlansByDeedId = async (deedId: string): Promise<any[]> => {
-  const res: AxiosResponse<any[]> = await deedApi.get(`/${deedId}/plans`);
+const SURVEY_PLAN_API_URL = import.meta.env.VITE_SURVEY_PLAN_API_URL || "http://localhost:5003/api/plans";
+
+const planApi = axios.create({
+  baseURL: SURVEY_PLAN_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+planApi.interceptors.request.use((config) => {
+  const token = getItem("local", "token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Get plan by deed ID (protected)
+export const getPlanByDeedId = async (deedId: string): Promise<any> => {
+  const res: AxiosResponse<any> = await planApi.get(`/deed/${deedId}`);
   return res.data;
 };
 
-export const getPlanByAssingedSurveyor = async (deedId: string, surveyorAddress: string): Promise<any> => {
-  const res: AxiosResponse<any> = await deedApi.get(`/${deedId}/plans/surveyor/${surveyorAddress}`);
+// Get plans by surveyor wallet address (protected)
+export const getPlanBySeurveyorWalletAddress = async (walletAddress: string): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await planApi.get(`/surveyor/${walletAddress}`);
   return res.data;
 };
 
-export const createPlan = async (deedId: string, planData: any): Promise<any> => {
-  const res: AxiosResponse<any> = await deedApi.post(`/${deedId}/plans`, planData);
+// Get all plans (admin only)
+export const getAllPlans = async (): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await planApi.get(`/`);
   return res.data;
 };
 
-export const updatePlan = async (deedId: string, planId: string, planData: any): Promise<any> => {
-  const res: AxiosResponse<any> = await deedApi.put(`/${deedId}/plans/${planId}`, planData);
+// Create a new plan (surveyor only)
+export const createPlan = async (data: any): Promise<any> => {
+  const res: AxiosResponse<any> = await planApi.post(`/`, data);
   return res.data;
 };
 
-export const deletePlan = async (deedId: string, planId: string): Promise<{ message: string }> => {
-  const res: AxiosResponse<{ message: string }> = await deedApi.delete(`/${deedId}/plans/${planId}`);
+// Update a plan (surveyor only)
+export const updatePlan = async (planId: string, data: any): Promise<any> => {
+  const res: AxiosResponse<any> = await planApi.put(`/${planId}`, data);
+  return res.data;
+};
+
+// Delete a plan (admin only)
+export const deletePlan = async (planId: string): Promise<{ message: string }> => {
+  const res: AxiosResponse<{ message: string }> = await planApi.delete(`/${planId}`);
   return res.data;
 };
