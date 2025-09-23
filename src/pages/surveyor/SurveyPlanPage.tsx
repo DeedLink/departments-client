@@ -577,7 +577,7 @@ const SurveyPlanPage = () => {
               {plan.coordinates.length > 0 && (
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-300 mb-3">Latest Points</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
                     {plan.coordinates.slice(-5).map((coord, index) => {
                       const lat = Array.isArray(coord) ? coord[0] : (coord as any).lat || 0;
                       const lng = Array.isArray(coord) ? coord[1] : (coord as any).lng || 0;
