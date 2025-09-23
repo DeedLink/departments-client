@@ -190,7 +190,6 @@ const SurveyPlanPage = () => {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="bg-gray-800 rounded-xl shadow-2xl mb-4 sm:mb-6 border border-gray-700">
           <div className="flex overflow-x-auto">
             {[
@@ -215,8 +214,8 @@ const SurveyPlanPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2 order-2 lg:order-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-full">
+          <div className="lg:col-span-2 order-2 lg:order-1 h-full">
             {activeTab === 'map' && (
               <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
@@ -427,7 +426,7 @@ const SurveyPlanPage = () => {
             )}
 
             {activeTab === 'summary' && (
-              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700">
+              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 h-full">
                 <h2 className="text-xl font-semibold mb-6 text-white">Plan Summary</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
@@ -545,9 +544,8 @@ const SurveyPlanPage = () => {
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
-            <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 sticky top-4 border border-gray-700">
+          <div className="lg:col-span-1 order-1 lg:order-2 h-full">
+            <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 sticky top-4 h-full">
               <h3 className="text-lg font-semibold mb-4 text-white">Quick Overview</h3>
               
               <div className="space-y-4">
