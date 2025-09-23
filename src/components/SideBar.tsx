@@ -1,4 +1,7 @@
 import { Menu, X, Home, FileText, Settings, Phone, LogOut } from "lucide-react";
+import { useLogin } from "../contexts/LoginContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import { compressAddress } from "../utils/functions";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -6,15 +9,13 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  const user = {
-    role: "surveyor",
-    kycStatus: "verified",
-    walletAddress: "0x1234...5678"
-  };
-  const pathname = "/surveyor";
+  const { user, logout } = useLogin();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    console.log("Logging out...");
+    logout();
+    navigate('/')
   }
 
   const navItems = [
@@ -91,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <div className="text-xs text-gray-400 mb-1">Wallet Status</div>
                 <div className="text-sm font-medium text-green-400">Connected</div>
                 <div className="text-xs text-gray-400 font-mono mt-1">
-                  {user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}
+                  {compressAddress(user.walletAddress)}
                 </div>
               </div>
               
