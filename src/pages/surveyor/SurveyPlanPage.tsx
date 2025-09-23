@@ -6,6 +6,8 @@ import { useToast } from "../../contexts/ToastContext";
 import type { Plan } from "../../types/plan";
 import L from "leaflet";
 import { MapPin, Save, Plus, Trash2, Move, RotateCcw, Calculator, Map, FileText, User, Calendar, X } from "lucide-react";
+import { calculatePolygonArea } from "../../utils/functions";
+import { useLoader } from "../../contexts/LoaderContext";
 
 const defaultPlan: Plan = {
   planId: "",
@@ -30,21 +32,6 @@ const MapClickHandler = ({ onAddPoint }: { onAddPoint: (latlng: [number, number]
   return null;
 };
 
-const calculatePolygonArea = (coordinates: [number, number][]): number => {
-  if (coordinates.length < 3) return 0;
-  
-  let area = 0;
-  const n = coordinates.length;
-  
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    area += coordinates[i][0] * coordinates[j][1];
-    area -= coordinates[j][0] * coordinates[i][1];
-  }
-  
-  return Math.abs(area) / 2 * 111320 * 111320;
-};
-
 const SurveyPlanPage = () => {
   const { deedNumber } = useParams<{ deedNumber: string }>();
   const [plan, setPlan] = useState<Plan>(defaultPlan);
@@ -53,8 +40,8 @@ const SurveyPlanPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'map' | 'details' | 'summary'>('map');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { showToast } = useToast();
+  const { showLoader, hideLoader } = useLoader();
 
   const fetchPlan = async () => {
     setIsLoading(true);
@@ -86,7 +73,7 @@ const SurveyPlanPage = () => {
   }, [deedNumber]);
 
   const addPoint = (point: [number, number]) => {
-    setPlan((prev) => {
+    setPlan((prev:any) => {
       const newCoordinates = [...(prev.coordinates || []), point];
       const calculatedArea = newCoordinates.length >= 3 ? Math.round(calculatePolygonArea(newCoordinates)) : 0;
       return {
@@ -98,8 +85,8 @@ const SurveyPlanPage = () => {
   };
 
   const removePoint = (index: number) => {
-    setPlan((prev) => {
-      const newCoordinates = prev.coordinates.filter((_, i) => i !== index);
+    setPlan((prev:any) => {
+      const newCoordinates = prev.coordinates.filter((_:any, i:any) => i !== index);
       const calculatedArea = newCoordinates.length >= 3 ? Math.round(calculatePolygonArea(newCoordinates)) : 0;
       return {
         ...prev,
@@ -149,20 +136,15 @@ const SurveyPlanPage = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-xl shadow-2xl p-8 text-center border border-gray-700">
-          <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading survey plan...</p>
-        </div>
-      </div>
-    );
+    showLoader(); 
+    setTimeout(() => {
+      hideLoader();
+    }, 3000);
   }
 
   return (
     <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
-        {/* Header */}
         <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex-1">
@@ -234,7 +216,6 @@ const SurveyPlanPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 order-2 lg:order-1">
             {activeTab === 'map' && (
               <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700">
@@ -268,7 +249,7 @@ const SurveyPlanPage = () => {
                     {plan.coordinates.map((point, idx) => (
                       <Marker
                         key={idx}
-                        position={point as [number, number]}
+                        position={point as any}
                         icon={L.icon({
                           iconUrl: "https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png",
                           iconSize: [25, 41],
@@ -282,7 +263,7 @@ const SurveyPlanPage = () => {
 
                     {plan.coordinates.length > 1 && (
                       <Polyline 
-                        positions={[...plan.coordinates, plan.coordinates[0]] as [number, number][]} 
+                        positions={[...plan.coordinates, plan.coordinates[0]] as any[]} 
                         color="#10B981" 
                         weight={3}
                       />
