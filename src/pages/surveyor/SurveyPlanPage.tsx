@@ -5,7 +5,7 @@ import { getPlanByDeedNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Plan } from "../../types/plan";
 import L from "leaflet";
-import { MapPin, Save, Plus, Trash2, Move, RotateCcw, Calculator, Map, FileText, User, Calendar, X } from "lucide-react";
+import { Save, Trash2, Calculator, Map, FileText, Calendar } from "lucide-react";
 import { calculatePolygonArea } from "../../utils/functions";
 import { useLoader } from "../../contexts/LoaderContext";
 
@@ -143,7 +143,7 @@ const SurveyPlanPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
         <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
