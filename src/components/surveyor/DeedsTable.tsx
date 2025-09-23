@@ -128,7 +128,7 @@ const DeedsTable = () => {
         ))}
       </div>
 
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto p-4">
         <table className="w-full">
           <thead>
             <tr className="bg-gray-800 border-b border-gray-200">
@@ -139,7 +139,7 @@ const DeedsTable = () => {
               <th className="px-4 py-3 text-center font-medium text-white">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y">
             {paginatedDeeds.map((deed) => (
               <tr key={deed.deedNumber} className="hover:bg-gray-50 hover:text-black text-white transition-colors">
                 <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
