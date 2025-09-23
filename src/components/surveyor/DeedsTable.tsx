@@ -74,8 +74,8 @@ const DeedsTable = () => {
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-gray-800 to-gray-800">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      <div className="p-4 sm:p-6 border-b border-gray-200">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -96,13 +96,13 @@ const DeedsTable = () => {
               <span className="text-xs text-gray-600 px-2 py-1 bg-gray-200 rounded-full">{deed.landType}</span>
             </div>
             <div className="space-y-2 text-sm mb-4">
-              <p className="text-white"><span className="text-white font-medium">Owner:</span> {deed.ownerFullName}</p>
-              <p className="text-white"><span className="text-white font-medium">Value:</span> LKR {deed.value.toLocaleString()}</p>
+              <p className="text-black"><span className="text-black font-medium">Owner:</span> {deed.ownerFullName}</p>
+              <p className="text-black"><span className="text-black font-medium">Value:</span> LKR {deed.value.toLocaleString()}</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => setSelectedDeed(deed)}
-                className="w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <Eye className="w-4 h-4" />
                 Open Details
@@ -110,14 +110,14 @@ const DeedsTable = () => {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleOpenSurvey(deed)}
-                  className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Map className="w-4 h-4" />
                   View Plan
                 </button>
                 <button
                   onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                  className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <FileText className="w-4 h-4" />
                   Survey
@@ -130,18 +130,18 @@ const DeedsTable = () => {
 
       <div className="hidden md:block overflow-x-auto p-4">
         <table className="w-full">
-          <thead>
-            <tr className="bg-gray-800 border-b border-gray-200">
-              <th className="px-4 py-3 text-left font-medium text-white">Deed Number</th>
-              <th className="px-4 py-3 text-left font-medium text-white">Owner</th>
-              <th className="px-4 py-3 text-left font-medium text-white">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-white">Value (LKR)</th>
-              <th className="px-4 py-3 text-center font-medium text-white">Actions</th>
+          <thead className="">
+            <tr className="border border-gray-200 bg-green-50">
+              <th className="px-4 py-3 text-left font-medium text-black">Deed Number</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Owner</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Value (LKR)</th>
+              <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {paginatedDeeds.map((deed) => (
-              <tr key={deed.deedNumber} className="hover:bg-gray-50 hover:text-black text-white transition-colors">
+              <tr key={deed.deedNumber} className="hover:bg-gray-50 hover:text-black text-black transition-colors">
                 <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
                 <td className="px-4 py-3">{deed.ownerFullName}</td>
                 <td className="px-4 py-3">{deed.landType}</td>
@@ -150,7 +150,7 @@ const DeedsTable = () => {
                   <div className="flex justify-center gap-2">
                     <button
                       onClick={() => setSelectedDeed(deed)}
-                      className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-black transition-colors flex items-center gap-1 shadow-sm"
                       title="Open Details"
                     >
                       <Eye className="w-3 h-3" />
@@ -158,7 +158,7 @@ const DeedsTable = () => {
                     </button>
                     <button
                       onClick={() => handleOpenSurvey(deed)}
-                      className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-black transition-colors flex items-center gap-1 shadow-sm"
                       title="View Survey Plan"
                     >
                       <Map className="w-3 h-3" />
@@ -166,7 +166,7 @@ const DeedsTable = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                      className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-black transition-colors flex items-center gap-1 shadow-sm"
                       title="Create Survey"
                     >
                       <FileText className="w-3 h-3" />
@@ -184,12 +184,12 @@ const DeedsTable = () => {
         <div className="p-8 text-center">
           <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 text-lg font-medium">No deeds found</p>
-          <p className="text-white text-sm mt-1">Try adjusting your search criteria</p>
+          <p className="text-black text-sm mt-1">Try adjusting your search criteria</p>
         </div>
       )}
 
       {totalPages > 0 && (
-        <div className="p-4 border-t border-gray-200 bg-gray-800">
+        <div className="p-4 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <button
               disabled={page === 1}
@@ -201,10 +201,10 @@ const DeedsTable = () => {
             </button>
             
             <div className="flex items-center gap-2">
-              <span className="text-white text-sm font-medium">
+              <span className="text-black text-sm font-medium">
                 Page {page} of {totalPages}
               </span>
-              <span className="text-white text-xs">
+              <span className="text-black text-xs">
                 ({filteredDeeds.length} total)
               </span>
             </div>

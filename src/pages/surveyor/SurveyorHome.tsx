@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, MapPin, Award } from "lucide-react";
+import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award } from "lucide-react";
 
 const SurveyorHome = () => {
   const user = {
