@@ -206,11 +206,8 @@ const SurveyorHome = () => {
                 <p className="text-sm text-gray-500 mt-1">Days per survey</p>
               </div>
             </div>
-
-            {/* Recent Activity & Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Recent Activity */}
+            
+            <div className="grid grid-cols-1 gap-6">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200">
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-900">Recent Activity</h3>
