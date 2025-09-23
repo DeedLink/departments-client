@@ -15,7 +15,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="font-spectral w-full min-h-screen h-full" style={{ backgroundImage: `url('/images/bg.png')`, backgroundSize: 'cover' }}>
+    <div
+      className="font-spectral w-full min-h-screen overflow-hidden"
+      style={{ backgroundImage: `url('/images/bg.png')`, backgroundSize: "cover" }}
+    >
       <ToastProvider>
         <LoginProvider>
           <WalletProvider>
@@ -27,14 +30,14 @@ export default function App() {
                   onClick={() => setSidebarOpen(false)}
                 />
               )}
-              <div className="flex-1 min-h-screen relative z-10">
+              <div className="flex-1 h-screen relative z-10 overflow-y-auto">
                 <LoaderProvider>
                   <Routes>
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/surveyor" element={<SurveyorHome />} />
                     <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
-                    <Route path="/surveyor/plan/:deedId" element={<SurveyPlanPage/>} />
+                    <Route path="/surveyor/plan/:deedNumber" element={<SurveyPlanPage />} />
                   </Routes>
                 </LoaderProvider>
               </div>

@@ -15,9 +15,14 @@ const SurveyorDeeds = () => {
   },[]);
 
   return (
-    <div className="text-black p-6">
-      <h1 className="text-2xl font-bold mb-4">Surveyor Deeds</h1>
-      <DeedsTable />
+    <div className="min-h-screen p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Surveyor Deeds</h1>
+          <p className="text-black">Manage and review property deed surveys</p>
+        </div>
+        <DeedsTable />
+      </div>
     </div>
   );
 };

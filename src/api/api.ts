@@ -160,8 +160,10 @@ planApi.interceptors.request.use((config) => {
 });
 
 // Get plan by deed ID (protected)
-export const getPlanByDeedId = async (deedId: string): Promise<any> => {
-  const res: AxiosResponse<any> = await planApi.get(`/deed/${deedId}`);
+export const getPlanByDeedNumber = async (deedNumber: string): Promise<any> => {
+  const res = await planApi.get(`/deed/${deedNumber}`, {
+    validateStatus: () => true,
+  });
   return res.data;
 };
 
