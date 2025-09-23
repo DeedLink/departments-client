@@ -430,23 +430,23 @@ const SurveyPlanPage = () => {
                 <h2 className="text-xl font-semibold mb-6 text-white">Plan Summary</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                  <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-900/50 to-blue-800/50 rounded-xl border border-blue-700/50">
-                    <div className="text-sm text-gray-300 mb-1">Total Area</div>
-                    <div className="text-xl sm:text-2xl font-bold text-blue-400">
+                  <div className="p-4 sm:p-6 bg-green-400 rounded-xl">
+                    <div className="text-sm text-black mb-1">Total Area</div>
+                    <div className="text-xl sm:text-2xl font-bold text-black">
                       {plan.areaSize.toLocaleString()} {plan.areaType}
                     </div>
                   </div>
                   
-                  <div className="p-4 sm:p-6 bg-gradient-to-br from-green-900/50 to-green-800/50 rounded-xl border border-green-700/50">
-                    <div className="text-sm text-gray-300 mb-1">Boundary Points</div>
-                    <div className="text-xl sm:text-2xl font-bold text-green-400">
+                  <div className="p-4 sm:p-6 bg-green-400 rounded-xl">
+                    <div className="text-sm text-black mb-1">Boundary Points</div>
+                    <div className="text-xl sm:text-2xl font-bold text-black">
                       {plan.coordinates.length}
                     </div>
                   </div>
                   
-                  <div className="p-4 sm:p-6 bg-gradient-to-br from-purple-900/50 to-purple-800/50 rounded-xl border border-purple-700/50">
-                    <div className="text-sm text-gray-300 mb-1">Plan Status</div>
-                    <div className="text-lg font-semibold capitalize text-purple-400">
+                  <div className="p-4 sm:p-6 bg-green-400 rounded-xl">
+                    <div className="text-sm text-black mb-1">Plan Status</div>
+                    <div className="ttext-xl sm:text-2xl font-semibold capitalize text-black">
                       {isNew ? 'New Plan' : plan.status}
                     </div>
                   </div>
@@ -549,26 +549,26 @@ const SurveyPlanPage = () => {
               <h3 className="text-lg font-semibold mb-4 text-white">Quick Overview</h3>
               
               <div className="space-y-4">
-                <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-900/50 to-blue-800/50 rounded-lg border border-blue-700/50">
-                  <div className="text-xs text-blue-400 font-medium mb-1">DEED NUMBER</div>
-                  <div className="text-sm font-mono font-bold text-blue-200">{deedNumber}</div>
+                <div className="p-3 sm:p-4 bg-black rounded-lg">
+                  <div className="text-xs text-white font-medium mb-1">DEED NUMBER</div>
+                  <div className="text-sm font-mono font-bold text-white">{deedNumber}</div>
                 </div>
                 
-                <div className="p-3 sm:p-4 bg-gradient-to-r from-green-900/50 to-green-800/50 rounded-lg border border-green-700/50">
-                  <div className="text-xs text-green-400 font-medium mb-1">BOUNDARY POINTS</div>
-                  <div className="text-xl font-bold text-green-200">{plan.coordinates.length}</div>
+                <div className="p-3 sm:p-4 bg-black rounded-lg">
+                  <div className="text-xs text-white font-medium mb-1">BOUNDARY POINTS</div>
+                  <div className="text-xl font-bold text-white">{plan.coordinates.length}</div>
                 </div>
                 
-                <div className="p-3 sm:p-4 bg-gradient-to-r from-purple-900/50 to-purple-800/50 rounded-lg border border-purple-700/50">
-                  <div className="text-xs text-purple-400 font-medium mb-1">CALCULATED AREA</div>
-                  <div className="text-sm font-bold text-purple-200">
+                <div className="p-3 sm:p-4 bg-black rounded-lg">
+                  <div className="text-xs text-white font-medium mb-1">CALCULATED AREA</div>
+                  <div className="text-sm font-bold text-white">
                     {plan.areaSize > 0 ? `${plan.areaSize.toLocaleString()} ${plan.areaType}` : 'Not calculated'}
                   </div>
                 </div>
                 
-                <div className="p-3 sm:p-4 bg-gradient-to-r from-yellow-900/50 to-yellow-800/50 rounded-lg border border-yellow-700/50">
-                  <div className="text-xs text-yellow-400 font-medium mb-1">FORM STATUS</div>
-                  <div className="text-sm font-bold text-yellow-200">
+                <div className="p-3 sm:p-4 bg-black rounded-lg">
+                  <div className="text-xs text-white font-medium mb-1">FORM STATUS</div>
+                  <div className="text-sm font-bold text-white">
                     {Object.keys(errors).length === 0 ? 'Ready to save' : 'Needs attention'}
                   </div>
                 </div>
