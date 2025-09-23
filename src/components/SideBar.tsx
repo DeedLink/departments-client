@@ -1,8 +1,4 @@
-import { Menu, X } from "lucide-react";
-import { useLogin } from "../contexts/LoginContext";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useWallet } from "../contexts/WalletContext";
-import { useToast } from "../contexts/ToastContext";
+import { Menu, X, Home, FileText, Settings, Phone, LogOut } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,25 +6,22 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  const { user } = useLogin();
-  const { pathname } = useLocation();
-  const { disconnect } = useWallet();
-  const { logout } = useLogin();
-  const navigate = useNavigate();
-  const { showToast } = useToast();
+  const user = {
+    role: "surveyor",
+    kycStatus: "verified",
+    walletAddress: "0x1234...5678"
+  };
+  const pathname = "/surveyor";
 
   const handleLogout = () => {
-    disconnect();
-    logout();
-    navigate('/');
-    showToast("Logged out successfully", "success");
+    console.log("Logging out...");
   }
 
   const navItems = [
-    { name: "Survey Home", href: "/surveyor" },
-    { name: "Deeds", href: "/surveyor/deeds" },
-    { name: "Services", href: "#" },
-    { name: "Contact", href: "#" },
+    { name: "Survey Home", href: "/surveyor", icon: Home },
+    { name: "Deeds", href: "/surveyor/deeds", icon: FileText },
+    { name: "Services", href: "#", icon: Settings },
+    { name: "Contact", href: "#", icon: Phone },
   ];
 
   if (
@@ -46,14 +39,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden p-3 text-white bg-black fixed top-4 left-4 z-50 rounded-lg"
+        className="lg:hidden p-3 text-white bg-gray-800 hover:bg-gray-700 fixed top-4 left-4 z-50 rounded-lg border border-gray-600 transition-colors shadow-lg"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       <div
         className={`
-          bg-blue text-white z-40 transition-all duration-300
+          bg-gray-800 border-r border-gray-700 text-white z-40 transition-all duration-300 shadow-2xl
           lg:relative lg:block
           ${isOpen ?
             'fixed lg:relative top-0 left-0 h-full w-64 translate-x-0' : 
@@ -61,29 +54,65 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           }
         `}
       >
-        <div className={`h-full`}>
-          <div className="p-6 text-2xl font-bold border-b border-gray-700 h-fit ml-12 lg:ml-0 capitalize">
-            {user.role}
+        <div className="h-full flex flex-col">
+          <div className="p-6 border-b border-gray-700 ml-12 lg:ml-0">
+            <h2 className="text-xl font-bold capitalize text-white flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              {user.role}
+            </h2>
+            <p className="text-sm text-gray-400 mt-1">Licensed Professional</p>
           </div>
-          <div className="flex flex-col justify-between h-[calc(100%-96px)]">
-            <ul className="flex flex-col p-4 space-y-2">
-              {navItems.map((item) => (
-                <li key={item.name}>
+
+          <div className="flex-1 flex flex-col justify-between">
+            <nav className="flex flex-col p-4 space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                
+                return (
                   <a
+                    key={item.name}
                     href={item.href}
-                    className="block px-4 py-2 rounded-lg hover:bg-green-500 active:bg-red-600 whitespace-nowrap"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-green-600 text-white shadow-lg' 
+                        : 'hover:bg-gray-700 text-gray-300 hover:text-white'
+                    }`}
                   >
-                    {item.name}
+                    <Icon size={18} />
+                    <span className="font-medium">{item.name}</span>
                   </a>
-                </li>
-              ))}
-            </ul>
-            <div className="p-4">
-              <button onClick={handleLogout} className="px-4 py-2 w-full rounded-xl bg-red-400 cursor-pointer hover:bg-red-600">Logout</button>
+                );
+              })}
+            </nav>
+
+            <div className="p-4 border-t border-gray-700">
+              <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+                <div className="text-xs text-gray-400 mb-1">Wallet Status</div>
+                <div className="text-sm font-medium text-green-400">Connected</div>
+                <div className="text-xs text-gray-400 font-mono mt-1">
+                  {user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}
+                </div>
+              </div>
+              
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg"
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
     </div>
   );
 };
