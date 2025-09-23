@@ -453,51 +453,51 @@ const SurveyPlanPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-white">Plan Information</h3>
+                  <div className="space-y-4 border rounded-xl p-4 bg-green-200">
+                    <h3 className="text-lg font-medium text-black">Plan Information</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Plan ID</span>
-                        <span className="font-medium text-gray-200">{plan.planId || 'Not set'}</span>
+                        <span className="text-black">Plan ID</span>
+                        <span className="font-medium text-black">{plan.planId || 'Not set'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Deed Number</span>
-                        <span className="font-medium text-gray-200">{deedNumber}</span>
+                        <span className="text-black">Deed Number</span>
+                        <span className="font-medium text-black">{deedNumber}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Created By</span>
-                        <span className="font-medium text-gray-200">{plan.createdBy || 'Not set'}</span>
+                        <span className="text-black">Created By</span>
+                        <span className="font-medium text-black">{plan.createdBy || 'Not set'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-700">
-                        <span className="text-gray-400">Signed By</span>
-                        <span className="font-medium text-gray-200">{plan.signedBy || 'Not set'}</span>
+                        <span className="text-black">Signed By</span>
+                        <span className="font-medium text-black">{plan.signedBy || 'Not set'}</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-white">Validation Status</h3>
+                  <div className="space-y-4 order rounded-xl p-4 bg-green-200">
+                    <h3 className="text-lg font-medium text-black">Validation Status</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Plan ID</span>
+                        <span className="text-black">Plan ID</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.planId ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-red-600/20 text-red-400 border border-red-600/30'}`}>
                           {plan.planId ? 'Valid' : 'Required'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Created By</span>
+                        <span className="text-black">Created By</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.createdBy ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-red-600/20 text-red-400 border border-red-600/30'}`}>
                           {plan.createdBy ? 'Valid' : 'Required'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Boundary Points</span>
+                        <span className="text-black">Boundary Points</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.coordinates.length >= 3 ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-red-600/20 text-red-400 border border-red-600/30'}`}>
                           {plan.coordinates.length >= 3 ? 'Valid' : 'Min 3 required'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Area Calculation</span>
+                        <span className="text-black">Area Calculation</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.areaSize > 0 ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-yellow-600/20 text-yellow-400 border border-yellow-600/30'}`}>
                           {plan.areaSize > 0 ? 'Calculated' : 'Pending'}
                         </span>
