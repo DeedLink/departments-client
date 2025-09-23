@@ -30,7 +30,7 @@ const SurveyorHome = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white p-4 sm:p-6">
+    <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Welcome Header */}
@@ -206,7 +206,7 @@ const SurveyorHome = () => {
                 <p className="text-sm text-gray-500 mt-1">Days per survey</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 gap-6">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200">
                 <div className="p-6 border-b border-gray-200">
