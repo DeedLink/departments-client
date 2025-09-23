@@ -74,13 +74,13 @@ const DeedsTable = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-gray-800 to-gray-800">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search by name or deed number..."
+            placeholder="Searwhitech by name or deed number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors shadow-sm"
@@ -96,8 +96,8 @@ const DeedsTable = () => {
               <span className="text-xs text-gray-600 px-2 py-1 bg-gray-200 rounded-full">{deed.landType}</span>
             </div>
             <div className="space-y-2 text-sm mb-4">
-              <p className="text-gray-700"><span className="text-gray-500 font-medium">Owner:</span> {deed.ownerFullName}</p>
-              <p className="text-gray-700"><span className="text-gray-500 font-medium">Value:</span> LKR {deed.value.toLocaleString()}</p>
+              <p className="text-white"><span className="text-white font-medium">Owner:</span> {deed.ownerFullName}</p>
+              <p className="text-white"><span className="text-white font-medium">Value:</span> LKR {deed.value.toLocaleString()}</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
@@ -131,21 +131,21 @@ const DeedsTable = () => {
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-100 border-b border-gray-200">
-              <th className="px-4 py-3 text-left font-medium text-gray-700">Deed Number</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">Owner</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-700">Value (LKR)</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-700">Actions</th>
+            <tr className="bg-gray-800 border-b border-gray-200">
+              <th className="px-4 py-3 text-left font-medium text-white">Deed Number</th>
+              <th className="px-4 py-3 text-left font-medium text-white">Owner</th>
+              <th className="px-4 py-3 text-left font-medium text-white">Land Type</th>
+              <th className="px-4 py-3 text-left font-medium text-white">Value (LKR)</th>
+              <th className="px-4 py-3 text-center font-medium text-white">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {paginatedDeeds.map((deed) => (
-              <tr key={deed.deedNumber} className="hover:bg-gray-50 transition-colors">
+              <tr key={deed.deedNumber} className="hover:bg-gray-50 hover:text-black text-white transition-colors">
                 <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
-                <td className="px-4 py-3 text-gray-900">{deed.ownerFullName}</td>
-                <td className="px-4 py-3 text-gray-700">{deed.landType}</td>
-                <td className="px-4 py-3 text-gray-700 font-mono">{deed.value.toLocaleString()}</td>
+                <td className="px-4 py-3">{deed.ownerFullName}</td>
+                <td className="px-4 py-3">{deed.landType}</td>
+                <td className="px-4 py-3font-mono">{deed.value.toLocaleString()}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-center gap-2">
                     <button
@@ -184,27 +184,27 @@ const DeedsTable = () => {
         <div className="p-8 text-center">
           <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 text-lg font-medium">No deeds found</p>
-          <p className="text-gray-500 text-sm mt-1">Try adjusting your search criteria</p>
+          <p className="text-white text-sm mt-1">Try adjusting your search criteria</p>
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+      {totalPages > 0 && (
+        <div className="p-4 border-t border-gray-200 bg-gray-800">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
-              className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-0 disabled:cursor-not-allowed text-black hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
             </button>
             
             <div className="flex items-center gap-2">
-              <span className="text-gray-600 text-sm font-medium">
+              <span className="text-white text-sm font-medium">
                 Page {page} of {totalPages}
               </span>
-              <span className="text-gray-500 text-xs">
+              <span className="text-white text-xs">
                 ({filteredDeeds.length} total)
               </span>
             </div>
@@ -212,7 +212,7 @@ const DeedsTable = () => {
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-0 disabled:cursor-not-allowed text-black hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               Next
               <ChevronRight className="w-4 h-4" />
