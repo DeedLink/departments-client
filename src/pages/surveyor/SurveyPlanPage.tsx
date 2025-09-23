@@ -311,7 +311,7 @@ const SurveyPlanPage = () => {
             )}
 
             {activeTab === 'details' && (
-              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700">
+              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 h-full">
                 <h2 className="text-xl font-semibold mb-6 text-white">Plan Details</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -418,7 +418,7 @@ const SurveyPlanPage = () => {
                     value={plan.details || ""}
                     onChange={(e) => setPlan({ ...plan, details: e.target.value })}
                     rows={5}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none text-white placeholder-gray-400"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none text-white placeholder-gray-400 h-full"
                     placeholder="Enter detailed description, notes, restrictions, or special conditions for this survey plan..."
                   />
                 </div>
