@@ -1,19 +1,14 @@
 import { useEffect } from "react";
 import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award } from "lucide-react";
+import { useLogin } from "../../contexts/LoginContext";
+import { useWallet } from "../../contexts/WalletContext";
+import { compressAddress } from "../../utils/functions";
 
 const SurveyorHome = () => {
-  const user = {
-    "_id": "68c62b41af6d9afed8ae698e",
-    "name": "Registar Completion",
-    "email": "dondulshan@gmail.com",
-    "walletAddress": "0x976ea74026e726554db657fa54763abd0c3a0aa9",
-    "nic": "200020002000",
-    "kycStatus": "verified",
-    "role": "surveyor",
-    "createdAt": "2025-09-14T02:41:05.497Z",
-    "updatedAt": "2025-09-14T02:42:29.768Z",
-    "licensedSurveyorNumber": "LCS2025AAA001"
-  };
+  const { user } = useLogin();
+  const { account } = useWallet();
+
+  if(!user) return;
 
   const analytics = {
     totalDeeds: 45,
@@ -114,7 +109,7 @@ const SurveyorHome = () => {
                       <p className="text-xs text-green-600 font-medium">Wallet Status</p>
                       <p className="text-sm font-bold text-green-700">Connected</p>
                       <p className="text-xs font-mono text-gray-600 mt-1">
-                        {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                        {compressAddress(account ?? "")}
                       </p>
                     </div>
                   </div>

@@ -62,6 +62,7 @@ export interface User {
   role: "user" | "registrar" | "admin"| "notary" | "lawyer" | "surveyor" | "IVSL";
   createdAt: string;
   updatedAt: string;
+  licensedSurveyorNumber?: string;
 }
 
 export interface RegisterRequest {
