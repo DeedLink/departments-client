@@ -1,3 +1,5 @@
+import type { AnalaticsType } from "../types/analatics";
+
 export const compressAddress = (address : string) => {
   return `${address.slice(0, 6)}`+'...'+`${address.slice(-4)}`
 }
@@ -34,3 +36,17 @@ export const calculatePolygonArea = (coordinates: [number, number][]): number =>
   
   return Math.abs(area) / 2 * 111320 * 111320;
 };
+
+export const calculateAnalatics = (data:any[]) =>{
+  console.log(data);
+  const analatics: AnalaticsType = {
+    totalDeeds: data?.length ?? 0,
+    signedDeeds: 0,
+    rejectedDeeds: 0,
+    pendingDeeds: 0,
+    monthlyGrowth: 0,
+    completionRate: 0,
+    avgProcessingTime: 0
+  }
+  return analatics;
+}

@@ -1,27 +1,39 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
-import { compressAddress } from "../../utils/functions";
+import { calculateAnalatics, compressAddress } from "../../utils/functions";
+import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { type AnalaticsType } from "../../types/analatics";
+
+const sampleAnalatics: AnalaticsType = {
+  totalDeeds:0,
+  signedDeeds: 0,
+  rejectedDeeds: 0,
+  pendingDeeds: 0,
+  monthlyGrowth: 0,
+  completionRate: 0,
+  avgProcessingTime: 0
+}
 
 const SurveyorHome = () => {
   const { user } = useLogin();
   const { account } = useWallet();
+  const [ analytics, setAnalatics ] = useState<AnalaticsType>(sampleAnalatics);
 
   if(!user) return;
 
-  const analytics = {
-    totalDeeds: 45,
-    signedDeeds: 32,
-    rejectedDeeds: 3,
-    pendingDeeds: 10,
-    monthlyGrowth: 12.5,
-    completionRate: 91.2,
-    avgProcessingTime: 2.4
-  };
+  const fetchRelatedDeeds=async()=>{
+    if(account){
+      const res = await getDeedBySurveyorWalletAddress(account);
+      console.log(res);
+      setAnalatics(calculateAnalatics(res));
+    }
+  }
 
   useEffect(() => {
     console.log("Dashboard loaded");
+    fetchRelatedDeeds();
   }, []);
 
   return (
