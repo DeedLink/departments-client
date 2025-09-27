@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
 import { createPlan, getPlanByDeedNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
-import type { Plan } from "../../types/plan";
+import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
 import { Trash2 } from "lucide-react";
 import { calculatePolygonArea } from "../../utils/functions";
@@ -53,6 +53,7 @@ const SurveyPlanPage = () => {
 
   const fetchPlan = async () => {
     setIsLoading(true);
+    console.log("0");
     try {
       if (deedNumber) {
         const res = await getPlanByDeedNumber(deedNumber);
@@ -60,11 +61,15 @@ const SurveyPlanPage = () => {
           setPlan(res.data);
           setIsNew(false);
         }
+        else if(!res.success) {
+          showToast("No existing plan. Creating new one.", "info");
+          setPlan({ ...defaultPlan, deedNumber: deedNumber || "" });
+          setIsNew(true);
+        }
       } else {
         showToast("Deed number missing", "error");
       }
     } catch (error: any) {
-      console.log("hi");
       if (error.response?.status === 404) {
         showToast("No existing plan. Creating new one.", "info");
         setPlan({ ...defaultPlan, deedNumber: deedNumber || "" });
@@ -81,10 +86,21 @@ const SurveyPlanPage = () => {
     fetchPlan();
   }, [deedNumber]);
 
+  const coordinateToLatLng = (coord: Coordinate): [number, number] => {
+    return [coord.latitude, coord.longitude];
+  };
+
+  const latLngToCoordinate = (latlng: [number, number]): Coordinate => {
+    return { latitude: latlng[0], longitude: latlng[1] };
+  };
+
   const addPoint = (point: [number, number]) => {
-    setPlan((prev:any) => {
-      const newCoordinates = [...(prev.coordinates || []), point];
-      const calculatedArea = newCoordinates.length >= 3 ? Math.round(calculatePolygonArea(newCoordinates)) : 0;
+    setPlan((prev) => {
+      const newCoordinate = latLngToCoordinate(point);
+      const newCoordinates = [...prev.coordinates, newCoordinate];
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
       return {
         ...prev,
         coordinates: newCoordinates,
@@ -94,9 +110,11 @@ const SurveyPlanPage = () => {
   };
 
   const removePoint = (index: number) => {
-    setPlan((prev:any) => {
-      const newCoordinates = prev.coordinates.filter((_:any, i:any) => i !== index);
-      const calculatedArea = newCoordinates.length >= 3 ? Math.round(calculatePolygonArea(newCoordinates)) : 0;
+    setPlan((prev) => {
+      const newCoordinates = prev.coordinates.filter((_, i) => i !== index);
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
       return {
         ...prev,
         coordinates: newCoordinates,
@@ -161,7 +179,7 @@ const SurveyPlanPage = () => {
 
   useEffect(()=>{
     console.log("plan: ",plan);
-  },[])
+  },[plan])
 
   return (
     <div className="min-h-screen">
@@ -200,10 +218,10 @@ const SurveyPlanPage = () => {
 
                     <MapClickHandler onAddPoint={addPoint} />
 
-                    {plan.coordinates.map((point, idx) => (
+                    {plan.coordinates.map((coord, idx) => (
                       <Marker
                         key={idx}
-                        position={point as any}
+                        position={coordinateToLatLng(coord)}
                         icon={L.icon({
                           iconUrl: "https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png",
                           iconSize: [25, 41],
@@ -217,7 +235,7 @@ const SurveyPlanPage = () => {
 
                     {plan.coordinates.length > 1 && (
                       <Polyline 
-                        positions={[...plan.coordinates, plan.coordinates[0]] as any[]} 
+                        positions={[...plan.coordinates.map(coordinateToLatLng), coordinateToLatLng(plan.coordinates[0])]} 
                         color="#10B981" 
                         weight={3}
                       />
@@ -241,25 +259,20 @@ const SurveyPlanPage = () => {
 
                 {plan.coordinates.length > 0 && (
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {plan.coordinates.map((coord, index) => {
-                      const lat = Array.isArray(coord) ? coord[0] : (coord as any).lat || 0;
-                      const lng = Array.isArray(coord) ? coord[1] : (coord as any).lng || 0;
-                      
-                      return (
-                        <div key={index} className="bg-gray-700 p-3 rounded-lg border border-gray-600">
-                          <div className="text-xs text-gray-400">Point {index + 1}</div>
-                          <div className="text-sm font-mono text-gray-200">
-                            {lat.toFixed(4)}, {lng.toFixed(4)}
-                          </div>
-                          <button
-                            onClick={() => removePoint(index)}
-                            className="text-red-400 hover:text-red-300 text-xs mt-1"
-                          >
-                            Remove
-                          </button>
+                    {plan.coordinates.map((coord, index) => (
+                      <div key={index} className="bg-gray-700 p-3 rounded-lg border border-gray-600">
+                        <div className="text-xs text-gray-400">Point {index + 1}</div>
+                        <div className="text-sm font-mono text-gray-200">
+                          {coord.latitude.toFixed(4)}, {coord.longitude.toFixed(4)}
                         </div>
-                      );
-                    })}
+                        <button
+                          onClick={() => removePoint(index)}
+                          className="text-red-400 hover:text-red-300 text-xs mt-1"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -458,7 +471,7 @@ const SurveyPlanPage = () => {
                   
                   <div className="p-4 sm:p-6 bg-green-400 rounded-xl">
                     <div className="text-sm text-black mb-1">Plan Status</div>
-                    <div className="ttext-xl sm:text-2xl font-semibold capitalize text-black">
+                    <div className="text-xl sm:text-2xl font-semibold capitalize text-black">
                       {isNew ? 'New Plan' : plan.status}
                     </div>
                   </div>
@@ -564,21 +577,16 @@ const SurveyPlanPage = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
-                          {plan.coordinates.map((coord, index) => {
-                            const lat = Array.isArray(coord) ? coord[0] : (coord as any).lat || 0;
-                            const lng = Array.isArray(coord) ? coord[1] : (coord as any).lng || 0;
-                            
-                            return (
-                              <tr key={index} className="hover:bg-gray-750">
-                                <td className="px-4 py-3 font-medium text-green-400">Point {index + 1}</td>
-                                <td className="px-4 py-3 font-mono text-gray-200">{lat.toFixed(6)}</td>
-                                <td className="px-4 py-3 font-mono text-gray-200">{lng.toFixed(6)}</td>
-                                <td className="px-4 py-3 text-gray-400 font-mono text-xs hidden sm:table-cell">
-                                  {lat.toFixed(6)}, {lng.toFixed(6)}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          {plan.coordinates.map((coord, index) => (
+                            <tr key={index} className="hover:bg-gray-750">
+                              <td className="px-4 py-3 font-medium text-green-400">Point {index + 1}</td>
+                              <td className="px-4 py-3 font-mono text-gray-200">{coord.latitude.toFixed(6)}</td>
+                              <td className="px-4 py-3 font-mono text-gray-200">{coord.longitude.toFixed(6)}</td>
+                              <td className="px-4 py-3 text-gray-400 font-mono text-xs hidden sm:table-cell">
+                                {coord.latitude.toFixed(6)}, {coord.longitude.toFixed(6)}
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
@@ -622,19 +630,14 @@ const SurveyPlanPage = () => {
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-300 mb-3">Latest Points</h4>
                   <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
-                    {plan.coordinates.slice(-5).map((coord, index) => {
-                      const lat = Array.isArray(coord) ? coord[0] : (coord as any).lat || 0;
-                      const lng = Array.isArray(coord) ? coord[1] : (coord as any).lng || 0;
-                      
-                      return (
-                        <div key={index} className="text-xs p-3 bg-gray-700 rounded border border-gray-600">
-                          <div className="font-medium text-gray-200">Point {plan.coordinates.length - 4 + index}</div>
-                          <div className="text-gray-400 font-mono mt-1">
-                            {lat.toFixed(4)}, {lng.toFixed(4)}
-                          </div>
+                    {plan.coordinates.slice(-5).map((coord, index) => (
+                      <div key={index} className="text-xs p-3 bg-gray-700 rounded border border-gray-600">
+                        <div className="font-medium text-gray-200">Point {plan.coordinates.length - 4 + index}</div>
+                        <div className="text-gray-400 font-mono mt-1">
+                          {coord.latitude.toFixed(4)}, {coord.longitude.toFixed(4)}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
