@@ -7,6 +7,7 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
 import DeedPopup from "./DeedPopup";
+import { getNFTPropertyDetails } from "../../web3.0/contractService";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -27,6 +28,8 @@ const DeedsTable = () => {
       try {
         const response = await getDeedBySurveyorWalletAddress(account || "");
         setDeeds(response);
+        const nft_response = await getNFTPropertyDetails(0);
+        console.log(nft_response);
       } catch (error) {
         console.error("Error fetching deeds:", error);
       }

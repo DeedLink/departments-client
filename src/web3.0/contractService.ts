@@ -48,6 +48,12 @@ export async function approveNFT(to: string, tokenId: number) {
   return await tx.wait();
 }
 
+export async function getNFTPropertyDetails(tokenId: number) {
+  const nft = await getPropertyNFTContract();
+  const [owner, ipfsURI, dbURI] = await nft.getProperty(tokenId);
+  return { owner, ipfsURI, dbURI };
+}
+
 export async function getNFTURI(tokenId: number) {
   const nft = await getPropertyNFTContract();
   return await nft.tokenURI(tokenId);
