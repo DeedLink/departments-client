@@ -5,10 +5,11 @@ import { getPlanByDeedNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Plan } from "../../types/plan";
 import L from "leaflet";
-import { Trash2, Calculator, Map, FileText } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { calculatePolygonArea } from "../../utils/functions";
 import { useLoader } from "../../contexts/LoaderContext";
 import SurveyPlanPageHeader from "../../components/surveyPlanPage/surveyplanpageheader";
+import SurveyPlanPageTabSelector from "../../components/surveyPlanPage/surveyplanpagetabselector";
 
 const defaultPlan: Plan = {
   planId: "",
@@ -157,30 +158,8 @@ const SurveyPlanPage = () => {
     <div className="min-h-screen">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
         <SurveyPlanPageHeader handleSave={handleSave} isSaving={isSaving} isNew={isNew} deedNumber={deedNumber} plan={plan}/>
-        <div className="bg-gray-800 rounded-xl shadow-2xl mb-4 sm:mb-6 border border-gray-700">
-          <div className="flex overflow-x-auto">
-            {[
-              { key: 'map', label: 'Boundary Map', icon: Map, shortLabel: 'Map' },
-              { key: 'details', label: 'Plan Details', icon: FileText, shortLabel: 'Details' },
-              { key: 'summary', label: 'Summary', icon: Calculator, shortLabel: 'Summary' }
-            ].map(({ key, label, icon: Icon, shortLabel }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key as any)}
-                className={`flex-1 min-w-0 px-3 sm:px-6 py-3 sm:py-4 text-center font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap ${
-                  activeTab === key
-                    ? 'text-green-400 border-b-2 border-green-400 bg-gray-750'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-750'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{label}</span>
-                <span className="sm:hidden">{shortLabel}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
+        <SurveyPlanPageTabSelector activeTab={activeTab} setActiveTab={setActiveTab}/>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-full">
           <div className="lg:col-span-2 order-2 lg:order-1 h-full">
             {activeTab === 'map' && (
