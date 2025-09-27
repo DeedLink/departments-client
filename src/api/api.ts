@@ -1,6 +1,7 @@
 import axios, { type AxiosResponse } from "axios";
 import { getItem, setItem } from "../storage/storage";
 import type { AuthResponse, KYCUploadResponse, LoginRequest, RegisterRequest, User, userStatusNotRegisteredResponse, userStatusResponse, VerifyKYCRequest } from "../types/types";
+import type { Plan } from "../types/plan";
 
 const USER_API_URL = import.meta.env.VITE_USER_API_URL || "http://localhost:5000/api/users";
 const DEED_API_URL = import.meta.env.VITE_DEED_API_URL || "http://localhost:5001/api/deeds";
@@ -180,7 +181,7 @@ export const getAllPlans = async (): Promise<any[]> => {
 };
 
 // Create a new plan (surveyor only)
-export const createPlan = async (data: any): Promise<any> => {
+export const createPlan = async (data: Plan): Promise<any> => {
   const res: AxiosResponse<any> = await planApi.post(`/`, data);
   return res.data;
 };

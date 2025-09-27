@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { getPlanByDeedNumber } from "../../api/api";
+import { createPlan, getPlanByDeedNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Plan } from "../../types/plan";
 import L from "leaflet";
@@ -64,6 +64,7 @@ const SurveyPlanPage = () => {
         showToast("Deed number missing", "error");
       }
     } catch (error: any) {
+      console.log("hi");
       if (error.response?.status === 404) {
         showToast("No existing plan. Creating new one.", "info");
         setPlan({ ...defaultPlan, deedNumber: deedNumber || "" });
@@ -135,8 +136,15 @@ const SurveyPlanPage = () => {
       }
       
       console.log("created plan: ", plan);
-      showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
-      setIsNew(false);
+      try{
+        const res = await createPlan(plan);
+        console.log(res);
+        showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
+        setIsNew(false);
+      }
+      catch{
+        showToast("Error creating plan", "error");
+      }
     } catch (error) {
       showToast("Error saving plan", "error");
     } finally {
