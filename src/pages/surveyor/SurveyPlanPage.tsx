@@ -15,6 +15,12 @@ const defaultPlan: Plan = {
   createdBy: "",
   documentURI: "",
   coordinates: [],
+    sides: { 
+    North: "",
+    South: "",
+    East: "",
+    West: ""
+  },
   areaSize: 0,
   areaType: "Square Meter",
   status: "active",
@@ -141,6 +147,10 @@ const SurveyPlanPage = () => {
       hideLoader();
     }, 3000);
   }
+
+  useEffect(()=>{
+    console.log("plan: ",plan);
+  },[])
 
   return (
     <div className="min-h-screen">
@@ -411,6 +421,63 @@ const SurveyPlanPage = () => {
                 </div>
 
                 <div className="mt-6">
+                  <h3 className="text-lg font-medium text-gray-300 mb-4">Boundary Sides</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        North Side
+                      </label>
+                      <input
+                        type="text"
+                        value={plan.sides.North}
+                        onChange={(e) => setPlan({ ...plan, sides: { ...plan.sides, North: e.target.value } })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
+                        placeholder="North boundary description"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        South Side
+                      </label>
+                      <input
+                        type="text"
+                        value={plan.sides.South}
+                        onChange={(e) => setPlan({ ...plan, sides: { ...plan.sides, South: e.target.value } })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
+                        placeholder="South boundary description"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        East Side
+                      </label>
+                      <input
+                        type="text"
+                        value={plan.sides.East}
+                        onChange={(e) => setPlan({ ...plan, sides: { ...plan.sides, East: e.target.value } })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
+                        placeholder="East boundary description"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        West Side
+                      </label>
+                      <input
+                        type="text"
+                        value={plan.sides.West}
+                        onChange={(e) => setPlan({ ...plan, sides: { ...plan.sides, West: e.target.value } })}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
+                        placeholder="West boundary description"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Additional Details
                   </label>
@@ -505,6 +572,38 @@ const SurveyPlanPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {(plan.sides.North || plan.sides.South || plan.sides.East || plan.sides.West) && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-4 text-white">Boundary Sides</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {plan.sides.North && (
+                        <div className="p-4 bg-gray-700 rounded-lg border border-gray-600">
+                          <div className="text-sm font-medium text-green-400 mb-1">North Side</div>
+                          <div className="text-gray-200">{plan.sides.North}</div>
+                        </div>
+                      )}
+                      {plan.sides.South && (
+                        <div className="p-4 bg-gray-700 rounded-lg border border-gray-600">
+                          <div className="text-sm font-medium text-green-400 mb-1">South Side</div>
+                          <div className="text-gray-200">{plan.sides.South}</div>
+                        </div>
+                      )}
+                      {plan.sides.East && (
+                        <div className="p-4 bg-gray-700 rounded-lg border border-gray-600">
+                          <div className="text-sm font-medium text-green-400 mb-1">East Side</div>
+                          <div className="text-gray-200">{plan.sides.East}</div>
+                        </div>
+                      )}
+                      {plan.sides.West && (
+                        <div className="p-4 bg-gray-700 rounded-lg border border-gray-600">
+                          <div className="text-sm font-medium text-green-400 mb-1">West Side</div>
+                          <div className="text-gray-200">{plan.sides.West}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {plan.coordinates.length > 0 && (
                   <div className="mt-8">

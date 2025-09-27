@@ -3,12 +3,21 @@ export interface Coordinate {
   longitude: number;
 }
 
+export type Sides = {
+  North: string;
+  South: string;
+  East: string;
+  West: string;
+};
+
+
 export interface Plan {
   planId: string;
   deedNumber: string;
   createdBy: string;
   documentURI: string;
   coordinates: Coordinate[];
+  sides: Sides;
   areaSize: number;
   areaType: "Hectare" | "Acre" | "Square Meter" | "Square Kilometer" | "Square Mile" | "Square Foot" | "Square Yard";
   status: "active" | "inactive" | "completed";
@@ -23,6 +32,12 @@ export const defaultPlan: Plan = {
   createdBy: "",
   documentURI: "",
   coordinates: [],
+    sides: {
+    North: "",
+    South: "",
+    East: "",
+    West: ""
+  },
   areaSize: 0,
   areaType: "Square Meter",
   status: "active",
