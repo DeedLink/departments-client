@@ -190,7 +190,7 @@ const SurveyPlanPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-full">
           <div className="lg:col-span-2 order-2 lg:order-1 h-full">
             {activeTab === 'map' && (
-              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700">
+              <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 h-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                   <h2 className="text-xl font-semibold text-white">Boundary Map</h2>
                   <div className="flex gap-2">
