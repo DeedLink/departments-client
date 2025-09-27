@@ -134,6 +134,7 @@ const SurveyPlanPage = () => {
         console.log("Updating plan", plan);
       }
       
+      console.log("created plan: ", plan);
       showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
       setIsNew(false);
     } catch (error) {
@@ -159,7 +160,7 @@ const SurveyPlanPage = () => {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
         <SurveyPlanPageHeader handleSave={handleSave} isSaving={isSaving} isNew={isNew} deedNumber={deedNumber} plan={plan}/>
         <SurveyPlanPageTabSelector activeTab={activeTab} setActiveTab={setActiveTab}/>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-full">
           <div className="lg:col-span-2 order-2 lg:order-1 h-full">
             {activeTab === 'map' && (
@@ -436,7 +437,7 @@ const SurveyPlanPage = () => {
                   <div className="p-4 sm:p-6 bg-green-400 rounded-xl">
                     <div className="text-sm text-black mb-1">Total Area</div>
                     <div className="text-xl sm:text-2xl font-bold text-black">
-                      {plan.areaSize.toLocaleString()} {plan.areaType}
+                      <span className="flex flex-wrap text-wrap break-all">{plan.areaSize.toLocaleString("en-US", { notation: "compact" })}</span> {plan.areaType}
                     </div>
                   </div>
                   
