@@ -177,6 +177,14 @@ export const getPlanByDeedNumber = async (deedNumber: string): Promise<any> => {
   return res.data;
 };
 
+// Get plan by plan number (protected)
+export const getPlanByPlanNumber = async (planId: string): Promise<any> => {
+  const res = await planApi.get(`/plan/${planId}`, {
+    validateStatus: () => true,
+  });
+  return res.data;
+};
+
 // Get plans by surveyor wallet address (protected)
 export const getPlanBySeurveyorWalletAddress = async (walletAddress: string): Promise<any[]> => {
   const res: AxiosResponse<any[]> = await planApi.get(`/surveyor/${walletAddress}`);

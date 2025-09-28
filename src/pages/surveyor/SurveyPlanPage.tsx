@@ -158,7 +158,7 @@ const SurveyPlanPage = () => {
         const res = await createPlan(plan);
         console.log("res: ",res);
         if(res){
-          const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber, res.planId);
+          const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber || "", res.planId);
           console.log("planIdUpdateRes: ", planIdUpdateRes);
         }
         showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");

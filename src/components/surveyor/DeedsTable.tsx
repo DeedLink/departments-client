@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, Map, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
 import SurveyPlan from "./SurveyPlan";
-import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
@@ -66,11 +66,19 @@ const DeedsTable = () => {
     console.log("Signing and passing deed:", deed.deedNumber);
   };
 
-  const handleOpenSurvey = (deed: Deed) => {
-    if (deed.location && deed.location.length > 0) {
-      setSurveyPoints(deed.location);
-      setIsSurveyOpen(true);
-      setSidesOfTheDeed(deed.sides);
+  const handleOpenSurvey = async(deed: Deed) => {
+    if (deed.surveyPlanNumber) {
+      try{
+        const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+        if(res.success){
+          setSurveyPoints(res.data.coordinates);
+          setIsSurveyOpen(true);
+          setSidesOfTheDeed(res.data.sides);
+        }
+      }
+      catch{
+        showToast("Error getting plan", "error");
+      }
     } else {
       showToast("No survey plan available for this deed.", "error");
     }
@@ -105,7 +113,7 @@ const DeedsTable = () => {
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => setSelectedDeed(deed)}
-                className="w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <Eye className="w-4 h-4" />
                 Open Details
@@ -113,14 +121,14 @@ const DeedsTable = () => {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleOpenSurvey(deed)}
-                  className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Map className="w-4 h-4" />
                   View Plan
                 </button>
                 <button
                   onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                  className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-black transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <FileText className="w-4 h-4" />
                   Survey
