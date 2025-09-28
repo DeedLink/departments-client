@@ -153,7 +153,7 @@ const DeedsTable = () => {
                   <div className="flex justify-center gap-2">
                     <button
                       onClick={() => setSelectedDeed(deed)}
-                      className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-black transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 shadow-sm"
                       title="Open Details"
                     >
                       <Eye className="w-3 h-3" />
@@ -161,7 +161,7 @@ const DeedsTable = () => {
                     </button>
                     <button
                       onClick={() => handleOpenSurvey(deed)}
-                      className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-black transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-1 shadow-sm"
                       title="View Survey Plan"
                     >
                       <Map className="w-3 h-3" />
@@ -169,7 +169,7 @@ const DeedsTable = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                      className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-black transition-colors flex items-center gap-1 shadow-sm"
+                      className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center gap-1 shadow-sm"
                       title="Create Survey"
                     >
                       <FileText className="w-3 h-3" />

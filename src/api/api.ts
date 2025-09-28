@@ -141,6 +141,15 @@ export const getDeedBySurveyorWalletAddress = async (walletAddress: string): Pro
   return res.data;
 };
 
+// Update survey plan number (surveyor only)
+export const updateSurveyPlanNumber = async (deedNumber: string, surveyPlanNumber: string): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.put(
+    `/update-survey-number/${deedNumber}`,
+    { surveyPlanNumber }
+  );
+  return res.data;
+};
+
 // Plan related api calls
 
 const SURVEY_PLAN_API_URL = import.meta.env.VITE_SURVEY_PLAN_API_URL || "http://localhost:5003/api/plans";

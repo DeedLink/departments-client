@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber } from "../../api/api";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
@@ -156,7 +156,11 @@ const SurveyPlanPage = () => {
       console.log("created plan: ", plan);
       try{
         const res = await createPlan(plan);
-        console.log(res);
+        console.log("res: ",res);
+        if(res){
+          const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber, res.planId);
+          console.log("planIdUpdateRes: ", planIdUpdateRes);
+        }
         showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
         setIsNew(false);
       }
