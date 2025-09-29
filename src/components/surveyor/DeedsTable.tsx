@@ -7,7 +7,6 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
 import DeedPopup from "./DeedPopup";
-import { signProperty } from "../../web3.0/contractService";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -52,30 +51,6 @@ const DeedsTable = () => {
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
-
-  const handleSign = async(deed: Deed) => {
-    console.log("Signing deed:", deed.tokenId);
-    try{
-      if(deed.tokenId){
-        const sign_response = await signProperty(parseInt(deed.tokenId));
-        console.log("sign_response: ",sign_response);
-      }
-      else{
-        showToast("TokenId not found", "error");
-      }
-    }
-    catch{
-      showToast("Error signing", "error");
-    }
-  };
-
-  const handleReject = (deed: Deed) => {
-    console.log("Rejecting deed:", deed.deedNumber);
-  };
-
-  const handleSignAndPass = (deed: Deed) => {
-    console.log("Signing and passing deed:", deed.deedNumber);
-  };
 
   const handleOpenSurvey = async(deed: Deed) => {
     if (deed.surveyPlanNumber) {
@@ -246,9 +221,6 @@ const DeedsTable = () => {
       <DeedPopup
         deed={selectedDeed}
         onClose={() => setSelectedDeed(null)}
-        onSign={handleSign}
-        onReject={handleReject}
-        onSignAndPass={handleSignAndPass}
       />
 
       <SurveyPlan
