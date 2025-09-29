@@ -7,7 +7,7 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
 import DeedPopup from "./DeedPopup";
-import { getMetadata } from "../../web3.0/contractService";
+import { signProperty } from "../../web3.0/contractService";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -57,8 +57,8 @@ const DeedsTable = () => {
     console.log("Signing deed:", deed.tokenId);
     try{
       if(deed.tokenId){
-        const nft_response = await getMetadata(parseInt(deed.tokenId));
-        console.log("nft_response: ",nft_response);
+        const sign_response = await signProperty(parseInt(deed.tokenId));
+        console.log("sign_response: ",sign_response);
       }
       else{
         showToast("TokenId not found", "error");
