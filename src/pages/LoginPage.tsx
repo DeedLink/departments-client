@@ -49,14 +49,23 @@ export default function LoginPage() {
       }
 
       const res = await loginUser({ email, password, walletAddress: account || "" });
-      if(res.user.role !== "surveyor") {
-        showToast("Access denied. Not a surveyor account.", "error");
+      console.log(res);
+      if(res.user.role !== "surveyor" && res.user.role !==  "IVSL" && res.user.role !==  "notary") {
+        showToast("Access denied. Not a department account.", "error");
         return;
       }
       setUser(res.user);
       setToken(res.token);
       showToast("Login successful!", "success");
-      navigate("/surveyor");
+      if(res.user.role === "surveyor"){
+        navigate("/surveyor");
+      }
+      else if(res.user.role === "IVSL"){
+        navigate("/ivsl");
+      }
+      else if(res.user.role === "notary"){
+        navigate("/notary");
+      }
     } catch (error) {
       showToast("Login failed. Please check your credentials.", "error");
     }

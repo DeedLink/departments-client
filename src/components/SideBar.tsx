@@ -21,8 +21,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const navItems = [
     { name: "Survey Home", href: "/surveyor", icon: Home, role: "surveyor" },
     { name: "Deeds", href: "/surveyor/deeds", icon: FileText, role: "surveyor" },
-    { name: "IVSL Home", href: "/ivsl", icon: Home, role: "ivsl" },
-    { name: "Deeds", href: "/ivsl/deeds", icon: FileText, role: "ivsl" },
+    { name: "IVSL Home", href: "/ivsl", icon: Home, role: "IVSL" },
+    { name: "Deeds", href: "/ivsl/deeds", icon: FileText, role: "IVSL" },
     { name: "Services", href: "#", icon: Settings, role: "all" },
     { name: "Contact", href: "#", icon: Phone, role: "all" },
   ];
