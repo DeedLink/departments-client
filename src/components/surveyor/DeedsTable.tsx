@@ -28,8 +28,7 @@ const DeedsTable = () => {
       try {
         const response = await getDeedBySurveyorWalletAddress(account || "");
         setDeeds(response);
-        const nft_response = await getMetadata(0);
-        console.log("nft_response: ",nft_response);
+        //console.log("deeds: ", response);
       } catch (error) {
         console.error("Error fetching deeds:", error);
       }
@@ -54,8 +53,20 @@ const DeedsTable = () => {
     page * rowsPerPage
   );
 
-  const handleSign = (deed: Deed) => {
-    console.log("Signing deed:", deed.deedNumber);
+  const handleSign = async(deed: Deed) => {
+    console.log("Signing deed:", deed.tokenId);
+    try{
+      if(deed.tokenId){
+        const nft_response = await getMetadata(parseInt(deed.tokenId));
+        console.log("nft_response: ",nft_response);
+      }
+      else{
+        showToast("TokenId not found", "error");
+      }
+    }
+    catch{
+      showToast("Error signing", "error");
+    }
   };
 
   const handleReject = (deed: Deed) => {

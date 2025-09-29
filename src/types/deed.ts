@@ -86,4 +86,6 @@ export type Deed = {
   surveySignedBy?: string;
   notarySignature?: string;
   notarySignedBy?: string;
+
+  tokenId?: string;
 };
