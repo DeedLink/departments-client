@@ -15,19 +15,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/')
-  }
+    navigate("/");
+  };
 
   const navItems = [
-    { name: "Survey Home", href: "/surveyor", icon: Home },
-    { name: "Deeds", href: "/surveyor/deeds", icon: FileText },
-    { name: "Services", href: "#", icon: Settings },
-    { name: "Contact", href: "#", icon: Phone },
+    { name: "Survey Home", href: "/surveyor", icon: Home, role: "surveyor" },
+    { name: "Deeds", href: "/surveyor/deeds", icon: FileText, role: "surveyor" },
+    { name: "IVSL Home", href: "/ivsl", icon: Home, role: "ivsl" },
+    { name: "Deeds", href: "/ivsl/deeds", icon: FileText, role: "ivsl" },
+    { name: "Services", href: "#", icon: Settings, role: "all" },
+    { name: "Contact", href: "#", icon: Phone, role: "all" },
   ];
 
   if (
     !user ||
-    user.role !== "surveyor" ||
     user.kycStatus !== "verified" ||
     !user.walletAddress ||
     pathname === "/" ||
@@ -35,6 +36,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   ) {
     return null;
   }
+
+  const filteredNavItems = navItems.filter(
+    (item) => item.role === "all" || item.role === user.role
+  );
 
   return (
     <div>
@@ -49,9 +54,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         className={`
           bg-gray-800 border-r border-gray-700 text-white z-40 transition-all duration-300 shadow-2xl
           lg:relative lg:block
-          ${isOpen ?
-            'fixed lg:relative top-0 left-0 h-full w-64 translate-x-0' : 
-            'fixed lg:relative top-0 left-0 h-full w-64 -translate-x-full lg:translate-x-0'
+          ${isOpen
+            ? "fixed lg:relative top-0 left-0 h-full w-64 translate-x-0"
+            : "fixed lg:relative top-0 left-0 h-full w-64 -translate-x-full lg:translate-x-0"
           }
         `}
       >
@@ -66,18 +71,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
           <div className="flex-1 flex flex-col justify-between">
             <nav className="flex flex-col p-4 space-y-2">
-              {navItems.map((item) => {
+              {filteredNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
-                
+
                 return (
                   <a
                     key={item.name}
                     href={item.href}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-green-600 text-white shadow-lg' 
-                        : 'hover:bg-gray-700 text-gray-300 hover:text-white'
+                      isActive
+                        ? "bg-green-600 text-white shadow-lg"
+                        : "hover:bg-gray-700 text-gray-300 hover:text-white"
                     }`}
                   >
                     <Icon size={18} />
@@ -95,9 +100,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   {compressAddress(user.walletAddress)}
                 </div>
               </div>
-              
-              <button 
-                onClick={handleLogout} 
+
+              <button
+                onClick={handleLogout}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg cursor-pointer"
               >
                 <LogOut size={16} />
