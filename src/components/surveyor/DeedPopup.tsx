@@ -30,9 +30,14 @@ const DeedPopup = ({ deed, onClose }: Props) => {
 
   useEffect(() => {
     callGetSignatures();
+    console.log("Survey Plan Number:", deed.surveyPlanNumber);
   }, []);
 
   const handleSign = async () => {
+    if (!deed.surveyPlanNumber) {
+      showToast("Survey plan is required to sign", "error");
+      return;
+    }
     console.log("Signing deed:", deed.tokenId);
     try {
       if (!deed.tokenId) {
@@ -61,7 +66,7 @@ const DeedPopup = ({ deed, onClose }: Props) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
       <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-sm sm:max-w-md lg:max-w-2xl relative max-h-[95vh] overflow-hidden">
-        
+
         <div className="bg-gradient-to-r from-slate-50 to-gray-50 px-6 py-4 border-b border-gray-200 relative">
           <button
             onClick={onClose}
@@ -75,13 +80,22 @@ const DeedPopup = ({ deed, onClose }: Props) => {
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
               Deed Details
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                 #{deed.deedNumber}
               </span>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                 {deed.landType}
               </span>
+              {deed.surveyPlanNumber ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                  Plan: {deed.surveyPlanNumber}
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                  No Plan
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -159,11 +173,13 @@ const DeedPopup = ({ deed, onClose }: Props) => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleSign}
-              disabled={isSurveyorSigned || loading}
+              disabled={isSurveyorSigned || loading || !deed.surveyPlanNumber}
               className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform shadow-lg text-sm sm:text-base
                 ${isSurveyorSigned
                   ? "bg-gray-400 cursor-not-allowed text-white"
-                  : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
+                  : !deed.surveyPlanNumber
+                    ? "bg-gray-300 cursor-not-allowed text-white"
+                    : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
                 }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -177,19 +193,28 @@ const DeedPopup = ({ deed, onClose }: Props) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
-                {isSurveyorSigned ? "Already Signed" : "Sign"}
+                {isSurveyorSigned
+                  ? "Already Signed"
+                  : !deed.surveyPlanNumber
+                    ? "Plan Required"
+                    : "Sign"}
               </div>
             </button>
             
             <button
               onClick={handleReject}
-              className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl text-sm sm:text-base"
+              disabled={isSurveyorSigned}
+              className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform shadow-lg text-sm sm:text-base
+                ${isSurveyorSigned
+                  ? "bg-gray-300 cursor-not-allowed text-white"
+                  : "bg-red-600 hover:bg-red-700 active:bg-red-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
+                }`}
             >
               <div className="flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Reject
+                {isSurveyorSigned ? "Cannot Reject" : "Reject"}
               </div>
             </button>
           </div>
