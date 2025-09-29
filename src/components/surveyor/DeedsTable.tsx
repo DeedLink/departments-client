@@ -7,7 +7,6 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
 import DeedPopup from "./DeedPopup";
-import { getNFTPropertyDetails } from "../../web3.0/contractService";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -28,8 +27,7 @@ const DeedsTable = () => {
       try {
         const response = await getDeedBySurveyorWalletAddress(account || "");
         setDeeds(response);
-        const nft_response = await getNFTPropertyDetails(0);
-        console.log(nft_response);
+        //console.log("deeds: ", response);
       } catch (error) {
         console.error("Error fetching deeds:", error);
       }
@@ -53,18 +51,6 @@ const DeedsTable = () => {
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
-
-  const handleSign = (deed: Deed) => {
-    console.log("Signing deed:", deed.deedNumber);
-  };
-
-  const handleReject = (deed: Deed) => {
-    console.log("Rejecting deed:", deed.deedNumber);
-  };
-
-  const handleSignAndPass = (deed: Deed) => {
-    console.log("Signing and passing deed:", deed.deedNumber);
-  };
 
   const handleOpenSurvey = async(deed: Deed) => {
     if (deed.surveyPlanNumber) {
@@ -235,9 +221,6 @@ const DeedsTable = () => {
       <DeedPopup
         deed={selectedDeed}
         onClose={() => setSelectedDeed(null)}
-        onSign={handleSign}
-        onReject={handleReject}
-        onSignAndPass={handleSignAndPass}
       />
 
       <SurveyPlan

@@ -91,3 +91,30 @@ export async function getFTBalance(tokenAddress: string, account: string) {
   const ft = await getFractionalTokenContract(tokenAddress);
   return await ft.balanceOf(account);
 }
+
+// After Multisig
+
+// Sign property (surveyor, notary, ivsl depending on role)
+export async function signProperty(tokenId: number) {
+  const nft = await getPropertyNFTContract();
+  const tx = await nft.signProperty(tokenId);
+  return await tx.wait();
+}
+
+// Get signing status
+export async function getSignatures(tokenId: number) {
+  const nft = await getPropertyNFTContract();
+  const surveyor = await nft.isSignedBySurveyor(tokenId);
+  const notary = await nft.isSignedByNotary(tokenId);
+  const ivsl = await nft.isSignedByIVSL(tokenId);
+  const fully = await nft.isFullySigned(tokenId);
+
+  return { surveyor, notary, ivsl, fully };
+}
+
+// Get Metadata
+export async function getMetadata(tokenId: number): Promise<{ ipfsHash: string; dbHash: string }> {
+  const nft = await getPropertyNFTContract();
+  const [ipfsHash, dbHash] = await nft.getMetadata(tokenId);
+  return { ipfsHash, dbHash };
+}
