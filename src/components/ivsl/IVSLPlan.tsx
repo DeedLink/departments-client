@@ -128,13 +128,13 @@ const IVSLPlan: React.FC<IVSLPlanProps> = ({ points, sides, isOpen, onClose }) =
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 lg:ml-64" onClick={onClose}>
-      <div className="bg-white rounded-lg sm:rounded-2xl overflow-hidden w-full h-full sm:h-[600px] max-w-5xl relative shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm z-10 p-3 sm:p-4 border-b flex justify-between items-center">
+      <div className="bg-white rounded-lg sm:rounded-2xl overflow-hidden w-full h-full sm:h-[600px] max-w-5xl flex flex-col shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className=" bg-white/90 backdrop-blur-sm z-10 p-3 sm:p-4 border-b flex justify-between items-center">
           <h3 className="font-semibold text-sm sm:text-base">Survey Plan & Valuation</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full">✕</button>
         </div>
 
-        <div className="w-full h-full pt-20 sm:pt-16">
+        <div className="flex-1 w-full h-full">
           <MapContainer center={center} zoom={16} scrollWheelZoom={true} className="w-full h-full" zoomControl={false}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <FitBounds coords={coords} />
@@ -163,7 +163,7 @@ const IVSLPlan: React.FC<IVSLPlanProps> = ({ points, sides, isOpen, onClose }) =
           </MapContainer>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t">
+        <div className="bg-white/95 backdrop-blur-sm p-4 border-t">
           <h4 className="font-semibold text-sm sm:text-base mb-2">Valuation Summary</h4>
           <p className="text-xs sm:text-sm text-gray-700">
             Area: {area ? `${area.toFixed(2)} m²` : "Calculating..."}<br/>
