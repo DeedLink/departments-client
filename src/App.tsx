@@ -10,6 +10,7 @@ import Sidebar from "./components/SideBar";
 import { LoaderProvider } from "./contexts/LoaderContext";
 import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
 import SurveyPlanPage from "./pages/surveyor/SurveyPlanPage";
+import IVSLDeeds from "./pages/ivsl/IVSLDeeds";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +39,7 @@ export default function App() {
                     <Route path="/surveyor" element={<SurveyorHome />} />
                     <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
                     <Route path="/surveyor/plan/:deedNumber" element={<SurveyPlanPage />} />
+                    <Route path="/ivsl/deeds" element={<IVSLDeeds />} />
                   </Routes>
                 </LoaderProvider>
               </div>
