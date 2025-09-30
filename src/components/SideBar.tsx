@@ -23,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     { name: "Deeds", href: "/surveyor/deeds", icon: FileText, role: "surveyor" },
     { name: "IVSL Home", href: "/ivsl", icon: Home, role: "IVSL" },
     { name: "Deeds", href: "/ivsl/deeds", icon: FileText, role: "IVSL" },
+    { name: "Notary Home", href: "/notary", icon: Home, role: "notary" },
     { name: "Services", href: "#", icon: Settings, role: "all" },
     { name: "Contact", href: "#", icon: Phone, role: "all" },
   ];
