@@ -1,4 +1,3 @@
-// components/ivsl/IVSLDeedsTable.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
