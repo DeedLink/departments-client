@@ -12,6 +12,7 @@ import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
 import SurveyPlanPage from "./pages/surveyor/SurveyPlanPage";
 import IVSLDeeds from "./pages/ivsl/IVSLDeeds";
 import NotaryHome from "./pages/notary/NotaryHome";
+import NotaryDeeds from "./pages/notary/NotaryDeeds";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function App() {
                     <Route path="/surveyor/plan/:deedNumber" element={<SurveyPlanPage />} />
                     <Route path="/ivsl/deeds" element={<IVSLDeeds />} />
                     <Route path="/notary" element={<NotaryHome/>}/>
+                    <Route path="/notary/deeds" element={<NotaryDeeds />} />
                   </Routes>
                 </LoaderProvider>
               </div>
