@@ -15,8 +15,8 @@ const NotaryDeedsTable = () => {
   const { account } = useWallet();
   const { showToast } = useToast();
   const [isPlanOpen, setIsPlanOpen] = useState(false);
-  const [sides, setSides] = useState();
-  const [points, setPoints] = useState([]);
+  const [sides, _setSides] = useState();
+  const [points, _setPoints] = useState([]);
 
   const rowsPerPage = 10;
 
