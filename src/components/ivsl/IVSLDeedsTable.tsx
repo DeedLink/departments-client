@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
-import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import IVSLDeedPopup from "./IVSLDeedPopup";
+import IVSLPlan from "./IVSLPlan";
 
 const IVSLDeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -13,6 +14,9 @@ const IVSLDeedsTable = () => {
   const [deeds, setDeeds] = useState<Deed[]>([]);
   const { account } = useWallet();
   const { showToast } = useToast();
+  const [ isPlanOpen, setIsPlanOpen] = useState(false);
+  const [sides, setSides] = useState();
+  const [points, setPoints] = useState([]);
 
   const rowsPerPage = 10;
 
@@ -20,31 +24,41 @@ const IVSLDeedsTable = () => {
     const fetchDeeds = async () => {
       try {
         const response = await getDeedBySurveyorWalletAddress("0x976ea74026e726554db657fa54763abd0c3a0aa9");
-        console.log(response)
         setDeeds(response);
-      } catch (error) {
-        console.error("Error fetching deeds:", error);
+      } catch {
         showToast("Failed to load deeds", "error");
       }
     };
-
     fetchDeeds();
   }, [account]);
 
   const filteredDeeds = useMemo(() => {
-    return deeds.filter((deed) => {
-      return (
-        deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
-        deed.deedNumber.toLowerCase().includes(search.toLowerCase())
-      );
-    });
+    return deeds.filter((deed) =>
+      deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
+      deed.deedNumber.toLowerCase().includes(search.toLowerCase())
+    );
   }, [search, deeds]);
 
   const totalPages = Math.ceil(filteredDeeds.length / rowsPerPage);
-  const paginatedDeeds = filteredDeeds.slice(
-    (page - 1) * rowsPerPage,
-    page * rowsPerPage
-  );
+  const paginatedDeeds = filteredDeeds.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  const handleViewPlan = async (deed: Deed) => {
+    if (!deed.surveyPlanNumber) {
+      showToast("No survey plan available for this deed.", "error");
+      return;
+    }
+    try {
+      const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+      if (res.success) {
+        showToast(`Survey plan fetched with ${res.data.coordinates.length} points`, "success");
+        setPoints(res.data.coordinates);
+        setSides(res.data.sides);
+        setIsPlanOpen(true);
+      }
+    } catch {
+      showToast("Error fetching survey plan", "error");
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
@@ -79,13 +93,18 @@ const IVSLDeedsTable = () => {
                 <td className="px-4 py-3">{deed.ownerFullName}</td>
                 <td className="px-4 py-3">{deed.landType}</td>
                 <td className="px-4 py-3 font-mono">{deed.value.toLocaleString()}</td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-4 py-3 text-center flex justify-center gap-2">
                   <button
                     onClick={() => setSelectedDeed(deed)}
-                    className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
                   >
-                    <Eye className="w-3 h-3" />
-                    Open
+                    <Eye className="w-3 h-3" /> Open
+                  </button>
+                  <button
+                    onClick={() => handleViewPlan(deed)}
+                    className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
+                  >
+                    View Plan
                   </button>
                 </td>
               </tr>
@@ -99,12 +118,20 @@ const IVSLDeedsTable = () => {
           <div key={deed.deedNumber} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <span className="font-mono font-semibold text-green-600">#{deed.deedNumber}</span>
-              <button
-                onClick={() => setSelectedDeed(deed)}
-                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 shadow-sm"
-              >
-                <Eye className="w-4 h-4" /> Open
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedDeed(deed)}
+                  className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
+                >
+                  <Eye className="w-4 h-4" /> Open
+                </button>
+                <button
+                  onClick={() => handleViewPlan(deed)}
+                  className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
+                >
+                  View Plan
+                </button>
+              </div>
             </div>
             <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
             <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
@@ -126,26 +153,23 @@ const IVSLDeedsTable = () => {
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
+            <ChevronLeft className="w-4 h-4" /> Previous
           </button>
-          <span className="text-black text-sm font-medium">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-black text-sm font-medium">Page {page} of {totalPages}</span>
           <button
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
           >
-            Next
-            <ChevronRight className="w-4 h-4" />
+            Next <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
 
       <IVSLDeedPopup deed={selectedDeed} onClose={() => setSelectedDeed(null)} />
+      <IVSLPlan isOpen={isPlanOpen} onClose={()=>setIsPlanOpen(false)} points={points} sides={sides}/>
     </div>
   );
 };

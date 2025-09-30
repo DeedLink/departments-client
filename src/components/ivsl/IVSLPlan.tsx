@@ -6,8 +6,7 @@ import type { Sides } from "../../types/deed";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
@@ -87,41 +86,27 @@ const IVSLPlan: React.FC<IVSLPlanProps> = ({ points, sides, isOpen, onClose }) =
   const [value, setValue] = useState<number | null>(null);
   const [nearestRoad, setNearestRoad] = useState<string | null>(null);
 
-  if (!isOpen) return null;
-  if (!points || points.length === 0) {
-    return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={onClose}>
-        <div className="bg-white rounded-2xl p-6 shadow-lg w-full max-w-sm sm:max-w-md text-center" onClick={(e) => e.stopPropagation()}>
-          <h2 className="text-lg sm:text-xl font-bold mb-2">Survey Plan</h2>
-          <p className="text-gray-600 text-sm">No survey data available.</p>
-          <button onClick={onClose} className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">Close</button>
-        </div>
-      </div>
-    );
-  }
-
-  const coords = points.map((p) => [p.latitude, p.longitude] as [number, number]);
-  const center = coords[0];
-
   useEffect(() => {
+    if (!isOpen || !points || points.length === 0) return;
+
+    const coords = points.map((p) => [p.latitude, p.longitude] as [number, number]);
     if (coords.length > 2) {
       const a = polygonArea(coords);
       setArea(a);
-
-      const perches = a / 25.2929;
-      setPerches(perches);
-
-      const price = perches * 500000;
-      setValue(price);
+      setPerches(a / 25.2929);
+      setValue((a / 25.2929) * 500000);
     }
 
-    const [lat, lng] = center;
+    const [lat, lng] = coords[0];
     fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
       .then((res) => res.json())
-      .then((data) => {
-        setNearestRoad(data?.address?.road || "Unknown road");
-      });
-  }, []);
+      .then((data) => setNearestRoad(data?.address?.road || "Unknown road"));
+  }, [isOpen, points]);
+
+  if (!isOpen) return null;
+
+  const coords = points.map((p) => [p.latitude, p.longitude] as [number, number]);
+  const center = coords[0];
 
   const renderSide = (label: string, start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W", color: string) => {
     const poly = createAngledPolygon(start, end, direction);
@@ -181,12 +166,9 @@ const IVSLPlan: React.FC<IVSLPlanProps> = ({ points, sides, isOpen, onClose }) =
         <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t">
           <h4 className="font-semibold text-sm sm:text-base mb-2">Valuation Summary</h4>
           <p className="text-xs sm:text-sm text-gray-700">
-            Area: {area ? `${area.toFixed(2)} m²` : "Calculating..."}  
-            <br/>
-            Area in perches: {perches ? perches.toFixed(2) : "..."}  
-            <br/>
-            Estimated Value: {value ? `Rs. ${value.toLocaleString()}` : "..."}  
-            <br/>
+            Area: {area ? `${area.toFixed(2)} m²` : "Calculating..."}<br/>
+            Area in perches: {perches ? perches.toFixed(2) : "..."}<br/>
+            Estimated Value: {value ? `Rs. ${value.toLocaleString()}` : "..."}<br/>
             Nearest Road: {nearestRoad || "Fetching..."}
           </p>
         </div>
