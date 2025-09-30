@@ -3,6 +3,7 @@ import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
 import IVSLPlan from "./IVSLPlan";
+import { getPlanByPlanNumber } from "../../api/api";
 
 type Props = {
   deed: Deed | null;
@@ -16,6 +17,26 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
   const [isIVSLSigned, setIsIVSLSigned] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPlan, setShowPlan] = useState(false);
+  const [surveyPoints, setSurveyPoints] = useState([]);
+  const [sidesOfTheDeed, setSidesOfTheDeed] = useState();
+
+  const handleOpenSurvey = async() => {
+    if (deed.surveyPlanNumber) {
+      try{
+        const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+        if(res.success){
+          setSurveyPoints(res.data.coordinates);
+          setShowPlan(true);
+          setSidesOfTheDeed(res.data.sides);
+        }
+      }
+      catch{
+        showToast("Error getting plan", "error");
+      }
+    } else {
+      showToast("No survey plan available for this deed.", "error");
+    }
+  };
 
   const callGetSignatures = async () => {
     try {
@@ -169,7 +190,7 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
             </button>
 
             <button
-              onClick={() => setShowPlan(true)}
+              onClick={handleOpenSurvey}
               className="flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform shadow-lg text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
             >
               View Survey Plan
@@ -179,8 +200,8 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
       </div>
 
       <IVSLPlan
-        points={deed.location || []}
-        sides={deed.sides}
+        points={surveyPoints || []}
+        sides={sidesOfTheDeed}
         isOpen={showPlan}
         onClose={() => setShowPlan(false)}
       />

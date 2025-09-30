@@ -94,6 +94,25 @@ const IVSLDeedsTable = () => {
         </table>
       </div>
 
+      <div className="md:hidden p-4 flex flex-col gap-4">
+        {paginatedDeeds.map((deed) => (
+          <div key={deed.deedNumber} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="font-mono font-semibold text-green-600">#{deed.deedNumber}</span>
+              <button
+                onClick={() => setSelectedDeed(deed)}
+                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-1 shadow-sm"
+              >
+                <Eye className="w-4 h-4" /> Open
+              </button>
+            </div>
+            <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
+            <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
+            <p><span className="font-semibold">Value:</span> LKR {deed.value.toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
+
       {filteredDeeds.length === 0 && (
         <div className="p-8 text-center">
           <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
