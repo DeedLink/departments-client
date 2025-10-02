@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
-import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
+import { getDeedByIVSLWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import IVSLDeedPopup from "./IVSLDeedPopup";
@@ -23,7 +23,7 @@ const IVSLDeedsTable = () => {
   useEffect(() => {
     const fetchDeeds = async () => {
       try {
-        const response = await getDeedBySurveyorWalletAddress("0x976ea74026e726554db657fa54763abd0c3a0aa9");
+        const response = await getDeedByIVSLWalletAddress(account || "");
         setDeeds(response);
       } catch {
         showToast("Failed to load deeds", "error");

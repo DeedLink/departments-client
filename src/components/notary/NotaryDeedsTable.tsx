@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
-import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { getDeedByNotaryorWalletAddress, getDeedBySurveyorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import NotaryDeedPopup from "./NotaryDeedPopup";
@@ -24,7 +24,7 @@ const NotaryDeedsTable = () => {
     const fetchDeeds = async () => {
       try {
         if (!account) return;
-        const response = await getDeedBySurveyorWalletAddress("0x976ea74026e726554db657fa54763abd0c3a0aa9");
+        const response = await getDeedByNotaryorWalletAddress( account || "" );
         setDeeds(response);
       } catch {
         showToast("Failed to load deeds for notary", "error");
