@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
-import { getDeedByNotaryorWalletAddress, getDeedBySurveyorWalletAddress } from "../../api/api";
+import { getDeedByNotaryorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import NotaryDeedPopup from "./NotaryDeedPopup";
