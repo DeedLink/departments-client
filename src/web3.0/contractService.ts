@@ -104,10 +104,11 @@ export async function signProperty(tokenId: number) {
 // Get signing status
 export async function getSignatures(tokenId: number) {
   const nft = await getPropertyNFTContract();
-  const surveyor = await nft.isSignedBySurveyor(tokenId);
-  const notary = await nft.isSignedByNotary(tokenId);
-  const ivsl = await nft.isSignedByIVSL(tokenId);
-  const fully = await nft.isFullySigned(tokenId);
+  
+  const surveyor: boolean = await nft.isSignedBySurveyor(tokenId);
+  const notary: boolean = await nft.isSignedByNotary(tokenId);
+  const ivsl: boolean = await nft.isSignedByIVSL(tokenId);
+  const fully: boolean = await nft.isFullySigned(tokenId);
 
   return { surveyor, notary, ivsl, fully };
 }

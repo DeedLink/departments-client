@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
-import { signProperty, getSignatures } from "../../web3.0/contractService";
+import { signProperty, getSignatures, getRolesOf } from "../../web3.0/contractService";
+import { useWallet } from "../../contexts/WalletContext";
 
 type Props = {
   deed: Deed | null;
@@ -14,10 +15,13 @@ const DeedPopup = ({ deed, onClose }: Props) => {
   const { showToast } = useToast();
   const [isSurveyorSigned, setIsSurveyorSigned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { account } = useWallet();
 
   const callGetSignatures = async () => {
     try {
       if (deed.tokenId) {
+        const sigs = await getRolesOf(account || "");
+        console.log(sigs);
         const res = await getSignatures(parseInt(deed.tokenId));
         console.log("signatures: ", res);
         setIsSurveyorSigned(res.surveyor);
