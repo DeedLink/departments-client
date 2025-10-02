@@ -141,6 +141,18 @@ export const getDeedBySurveyorWalletAddress = async (walletAddress: string): Pro
   return res.data;
 };
 
+// Get deeds by surveyor wallet address (protected)
+export const getDeedByNotaryorWalletAddress = async (walletAddress: string): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await deedApi.get(`/notary/${walletAddress}`);
+  return res.data;
+};
+
+// Get deeds by surveyor wallet address (protected)
+export const getDeedByIVSLWalletAddress = async (walletAddress: string): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await deedApi.get(`/ivsl/${walletAddress}`);
+  return res.data;
+};
+
 // Update survey plan number (surveyor only)
 export const updateSurveyPlanNumber = async (deedNumber: string, surveyPlanNumber: string): Promise<any> => {
   const res: AxiosResponse<any> = await deedApi.put(
