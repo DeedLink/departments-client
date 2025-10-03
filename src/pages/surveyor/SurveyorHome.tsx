@@ -39,8 +39,7 @@ const SurveyorHome = () => {
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Welcome Header */}
+
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
@@ -59,8 +58,7 @@ const SurveyorHome = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* User Profile Section */}
+
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
@@ -130,10 +128,8 @@ const SurveyorHome = () => {
             </div>
           </div>
 
-          {/* Analytics Dashboard */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
                 <div className="flex items-center gap-3">
@@ -184,7 +180,6 @@ const SurveyorHome = () => {
               </div>
             </div>
 
-            {/* Performance Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
