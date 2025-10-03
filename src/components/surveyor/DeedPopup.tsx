@@ -3,6 +3,8 @@ import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures, getRolesOf } from "../../web3.0/contractService";
 import { useWallet } from "../../contexts/WalletContext";
+import { signDeed } from "../../api/api";
+import { BrowserProvider } from "ethers";
 
 type Props = {
   deed: Deed | null;
@@ -42,15 +44,41 @@ const DeedPopup = ({ deed, onClose }: Props) => {
       showToast("Survey plan is required to sign", "error");
       return;
     }
+
     console.log("Signing deed:", deed.tokenId);
+
     try {
       if (!deed.tokenId) {
         showToast("TokenId not found", "error");
         return;
       }
+
       setLoading(true);
+
+      // 1. On-chain signing
       const sign_response = await signProperty(parseInt(deed.tokenId));
-      console.log("sign_response: ", sign_response);
+      console.log("sign_response (on-chain): ", sign_response);
+
+      // 2. Off-chain signing (DB)
+      const provider = new BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+
+      const message = JSON.stringify(deed.tokenId); 
+      const signature = await signer.signMessage(message);
+
+      if (!deed._id) {
+        showToast("Deed ID not found", "error");
+        return;
+      }
+
+      const db_response = await signDeed(
+        deed._id,
+        "survey",
+        signature
+      );
+
+      console.log("db_response (off-chain): ", db_response);
+
       showToast("Deed signed successfully", "success");
       setIsSurveyorSigned(true);
     } catch (err) {

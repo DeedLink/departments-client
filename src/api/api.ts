@@ -227,8 +227,15 @@ export const deletePlan = async (planId: string): Promise<{ message: string }> =
   return res.data;
 };
 
-// Sign Deed as Surveyor
-export const signPropertyonDB = async (role: string, tokenId: number ,walletAddress: string): Promise<any> => {
-  const res: AxiosResponse<any> = await planApi.put(`/sign`, {role, tokenId, walletAddress});
+// Sign deed (protected)
+export const signDeed = async (
+  deedId: string,
+  type: "survey" | "notary" | "ivsl",
+  signature: string
+): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.post(
+    `/${deedId}/sign/${type}`,
+    { signature }
+  );
   return res.data;
 };
