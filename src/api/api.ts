@@ -226,3 +226,9 @@ export const deletePlan = async (planId: string): Promise<{ message: string }> =
   const res: AxiosResponse<{ message: string }> = await planApi.delete(`/${planId}`);
   return res.data;
 };
+
+// Sign Deed as Surveyor
+export const signPropertyonDB = async (role: string, tokenId: number ,walletAddress: string): Promise<any> => {
+  const res: AxiosResponse<any> = await planApi.put(`/sign`, {role, tokenId, walletAddress});
+  return res.data;
+};
