@@ -14,7 +14,7 @@ const IVSLDeedsTable = () => {
   const [deeds, setDeeds] = useState<Deed[]>([]);
   const { account } = useWallet();
   const { showToast } = useToast();
-  const [ isPlanOpen, setIsPlanOpen] = useState(false);
+  const [isPlanOpen, setIsPlanOpen] = useState(false);
   const [sides, setSides] = useState();
   const [points, setPoints] = useState([]);
 
@@ -60,6 +60,13 @@ const IVSLDeedsTable = () => {
     }
   };
 
+  const getLatestValuation = (deed: Deed) => {
+    if (deed.valuation && deed.valuation.length > 0) {
+      return deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0];
+    }
+    return null;
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
       <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -82,23 +89,55 @@ const IVSLDeedsTable = () => {
               <th className="px-4 py-3 text-left font-medium text-black">Deed Number</th>
               <th className="px-4 py-3 text-left font-medium text-black">Owner</th>
               <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Value (LKR)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Requested (LKR)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Estimated (LKR)</th>
               <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {paginatedDeeds.map((deed) => (
-              <tr key={deed.deedNumber} className="hover:bg-gray-50 text-black transition-colors">
-                <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
-                <td className="px-4 py-3">{deed.ownerFullName}</td>
-                <td className="px-4 py-3">{deed.landType}</td>
-                <td className="px-4 py-3 font-mono">{deed.value.toLocaleString()}</td>
-                <td className="px-4 py-3 text-center flex justify-center gap-2">
+            {paginatedDeeds.map((deed) => {
+              const latestValuation = getLatestValuation(deed);
+              return (
+                <tr key={deed.deedNumber} className="hover:bg-gray-50 text-black transition-colors">
+                  <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
+                  <td className="px-4 py-3">{deed.ownerFullName}</td>
+                  <td className="px-4 py-3">{deed.landType}</td>
+                  <td className="px-4 py-3 font-mono">{latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}</td>
+                  <td className="px-4 py-3 font-mono">{latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}</td>
+                  <td className="px-4 py-3 text-center flex justify-center gap-2">
+                    <button
+                      onClick={() => setSelectedDeed(deed)}
+                      className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
+                    >
+                      <Eye className="w-3 h-3" /> Open
+                    </button>
+                    <button
+                      onClick={() => handleViewPlan(deed)}
+                      className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
+                    >
+                      View Plan
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="md:hidden p-4 flex flex-col gap-4">
+        {paginatedDeeds.map((deed) => {
+          const latestValuation = getLatestValuation(deed);
+          return (
+            <div key={deed.deedNumber} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <span className="font-mono font-semibold text-green-600">#{deed.deedNumber}</span>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedDeed(deed)}
                     className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
                   >
-                    <Eye className="w-3 h-3" /> Open
+                    <Eye className="w-4 h-4" /> Open
                   </button>
                   <button
                     onClick={() => handleViewPlan(deed)}
@@ -106,38 +145,15 @@ const IVSLDeedsTable = () => {
                   >
                     View Plan
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="md:hidden p-4 flex flex-col gap-4">
-        {paginatedDeeds.map((deed) => (
-          <div key={deed.deedNumber} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="font-mono font-semibold text-green-600">#{deed.deedNumber}</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedDeed(deed)}
-                  className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
-                >
-                  <Eye className="w-4 h-4" /> Open
-                </button>
-                <button
-                  onClick={() => handleViewPlan(deed)}
-                  className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
-                >
-                  View Plan
-                </button>
+                </div>
               </div>
+              <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
+              <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
+              <p><span className="font-semibold">Requested:</span> LKR {latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}</p>
+              <p><span className="font-semibold">Estimated:</span> LKR {latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}</p>
             </div>
-            <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
-            <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
-            <p><span className="font-semibold">Value:</span> LKR {deed.value.toLocaleString()}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredDeeds.length === 0 && (
@@ -169,7 +185,7 @@ const IVSLDeedsTable = () => {
       )}
 
       <IVSLDeedPopup deed={selectedDeed} onClose={() => setSelectedDeed(null)} />
-      <IVSLPlan isOpen={isPlanOpen} onClose={()=>setIsPlanOpen(false)} points={points} sides={sides}/>
+      <IVSLPlan isOpen={isPlanOpen} onClose={() => setIsPlanOpen(false)} points={points} sides={sides} />
     </div>
   );
 };

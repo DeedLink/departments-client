@@ -52,6 +52,10 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
     onClose();
   };
 
+  const latestValuation = deed.valuation && deed.valuation.length > 0
+    ? deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0]
+    : null;
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
       <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-sm sm:max-w-md lg:max-w-2xl relative max-h-[95vh] overflow-hidden">
@@ -101,8 +105,16 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
               <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">Property Information</h3>
               <div className="space-y-3">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Property Value (LKR)</p>
-                  <p className="text-2xl font-bold text-green-700">{deed.value.toLocaleString("en-LK")}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Requested Value (LKR)</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estimated Value (LKR)</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 rounded-lg p-4">

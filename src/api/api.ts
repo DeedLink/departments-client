@@ -239,3 +239,17 @@ export const signDeed = async (
   );
   return res.data;
 };
+
+// Estimate Valuation (IVSL)
+export const estimateValuation = async (
+  id: string,
+  estimatedValue: number,
+  isAccepted: boolean
+): Promise<any> => {
+  const res = await deedApi.post(`/ivsl/${id}`, {
+    estimatedValue,
+    isAccepted,
+    mode: "estimate",
+  });
+  return res.data;
+};

@@ -52,13 +52,21 @@ export type DeedType = {
   deedNumber: string;
 };
 
+export interface Valuation {
+  _id?: string;
+  requestedValue?: number;
+  estimatedValue?: number;
+  isAccepted?: boolean;
+  timestamp: number;
+}
+
 export type Deed = {
   _id?: string;
 
   title: Transaction[];
   owners: Owner[];
   deedType: DeedType;
-  value: number;
+  valuation: [Valuation];
   location: LocationPoint[];
   sides?: Sides;
   deedNumber: string;
