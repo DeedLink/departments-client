@@ -66,7 +66,7 @@ export type Deed = {
   title: Transaction[];
   owners: Owner[];
   deedType: DeedType;
-  valuation: [Valuation];
+  valuation: Valuation[];
   location: LocationPoint[];
   sides?: Sides;
   deedNumber: string;

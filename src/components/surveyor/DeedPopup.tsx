@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures, getRolesOf } from "../../web3.0/contractService";
@@ -55,15 +55,12 @@ const DeedPopup = ({ deed, onClose }: Props) => {
 
       setLoading(true);
 
-      // 1. On-chain signing
       const sign_response = await signProperty(parseInt(deed.tokenId));
       console.log("sign_response (on-chain): ", sign_response);
 
-      // 2. Off-chain signing (DB)
       const provider = new BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
-
-      const message = JSON.stringify(deed.tokenId); 
+      const message = JSON.stringify(deed.tokenId);
       const signature = await signer.signMessage(message);
 
       if (!deed._id) {
@@ -71,12 +68,7 @@ const DeedPopup = ({ deed, onClose }: Props) => {
         return;
       }
 
-      const db_response = await signDeed(
-        deed._id,
-        "survey",
-        signature
-      );
-
+      const db_response = await signDeed(deed._id, "survey", signature);
       console.log("db_response (off-chain): ", db_response);
 
       showToast("Deed signed successfully", "success");
@@ -94,6 +86,14 @@ const DeedPopup = ({ deed, onClose }: Props) => {
     showToast(`Deed #${deed.deedNumber} rejected`, "info");
     onClose();
   };
+
+  const getLatestValuation = (deed: Deed) => {
+    if (!deed.valuation || deed.valuation.length === 0) return { requested: 0, estimated: 0 };
+    const latest = [...deed.valuation].sort((a, b) => b.timestamp - a.timestamp)[0];
+    return { requested: latest.requestedValue || 0, estimated: latest.estimatedValue || 0 };
+  };
+
+  const latestValuation = useMemo(() => getLatestValuation(deed), [deed]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
@@ -165,13 +165,23 @@ const DeedPopup = ({ deed, onClose }: Props) => {
                 Property Information
               </h3>
               <div className="space-y-3">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    Property Value (LKR)
-                  </p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {deed.value.toLocaleString("en-LK")}
-                  </p>
+                <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Requested Value (LKR)
+                    </p>
+                    <p className="text-lg font-medium text-blue-700">
+                      {latestValuation.requested.toLocaleString("en-LK")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Estimated Value (LKR)
+                    </p>
+                    <p className="text-lg font-medium text-purple-700">
+                      {latestValuation.estimated.toLocaleString("en-LK")}
+                    </p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 rounded-lg p-4">
