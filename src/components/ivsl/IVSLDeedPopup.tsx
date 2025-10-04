@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
+import { estimateValuation } from "../../api/api";
 
 type Props = {
   deed: Deed | null;
@@ -47,6 +48,17 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
     }
   };
 
+  const updateEstimation = async () => {
+    if (deed._id) {
+      const res = await estimateValuation(deed._id, parseFloat(ivslEstimatedValue.replace(/,/g, "")), true);
+      console.log(res);
+      showToast("Estimation updated", "success");
+    } else {
+      showToast("Deed not found", "error");
+    }
+  };
+
+
   const handleReject = () => {
     showToast(`Deed #${deed.deedNumber} rejected by IVSL`, "info");
     onClose();
@@ -55,6 +67,8 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
   const latestValuation = deed.valuation && deed.valuation.length > 0
     ? deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0]
     : null;
+
+    const [ ivslEstimatedValue, setIVSLEstimatedValue] = useState(latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
@@ -112,9 +126,15 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estimated Value (LKR)</p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}
-                  </p>
+                  <input
+                    type="number"
+                    onChange={(e) => setIVSLEstimatedValue(e.target.value)}
+                    value={ivslEstimatedValue.replace(/,/g, "")}
+                    className="text-2xl font-bold text-green-700 w-full border-b border-gray-300 focus:outline-none"
+                  />
+                  <div className="flex items-center w-full justify-end mt-2">
+                    <button className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl p-1 rounded-xl" onClick={updateEstimation}>Update</button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 rounded-lg p-4">
