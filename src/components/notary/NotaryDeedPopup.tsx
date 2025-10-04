@@ -15,6 +15,10 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   const [isSigned, setIsSigned] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const latestValuation = deed.valuation && deed.valuation.length > 0
+    ? deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0]
+    : null;
+
   const checkSignatures = async () => {
     try {
       if (deed.tokenId) {
@@ -65,10 +69,17 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)] space-y-2">
           <p className="text-gray-700"><strong>Owner:</strong> {deed.ownerFullName}</p>
           <p className="text-gray-700"><strong>NIC:</strong> {deed.ownerNIC}</p>
-          <p className="text-gray-700"><strong>Value:</strong> Rs. {deed.value.toLocaleString()}</p>
+          <p className="text-gray-700">
+            <strong>Requested Value:</strong> Rs. {latestValuation?.requestedValue?.toLocaleString() || "0"}
+          </p>
+          <p className="text-gray-700">
+            <strong>Estimated Value:</strong> Rs. {latestValuation?.estimatedValue?.toLocaleString() || "0"}
+          </p>
+          <p className="text-gray-700"><strong>Land Type:</strong> {deed.landType}</p>
+          <p className="text-gray-700"><strong>Deed Number:</strong> {deed.deedNumber}</p>
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
