@@ -249,7 +249,7 @@ export const estimateValuation = async (
   const res = await deedApi.post(`/ivsl/${id}`, {
     estimatedValue,
     isAccepted,
-    mode: "estimate",
+    mode: "estimate-requested",
   });
   return res.data;
 };
