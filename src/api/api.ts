@@ -253,3 +253,26 @@ export const estimateValuation = async (
   });
   return res.data;
 };
+
+// Set Password for Unset Department User
+export const setPasswordForUnsetDepartmentUser = async (
+  email?: string,
+  walletAddress?: string,
+  signature?: string,
+  newPassword?: string,
+  confirmPassword?: string,
+  otp?: string
+): Promise<AuthResponse> => {
+  const res: AxiosResponse<AuthResponse> = await api.post(
+    "/set-password-for-unset-department-user",
+    {
+      email,
+      walletAddress,
+      signature,
+      newPassword,
+      confirmPassword,
+      otp,
+    }
+  );
+  return res.data;
+};

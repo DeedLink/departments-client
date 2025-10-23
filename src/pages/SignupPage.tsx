@@ -1,13 +1,22 @@
 import { Link } from "react-router-dom";
-import { User, Mail, Shield, Lock, Wallet } from "lucide-react";
+import { User, Mail, Lock, Wallet, KeyIcon } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress } from "../utils/functions";
 import { useLoader } from "../contexts/LoaderContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { setPasswordForUnsetDepartmentUser } from "../api/api";
+import { getSignature } from "../web3.0/wallet";
+import { useToast } from "../contexts/ToastContext";
 
 export default function SignupPage() {
   const { account, connect, disconnect } = useWallet();
   const { showLoader, hideLoader } = useLoader();
+  const [ email, setEmail ] = useState("");
+  const [ password, setPassword ] = useState("");
+  const [ confirmPassword, setConfirmPassword ] = useState("");
+  const [ otp, setOtp ] = useState("");
+  const { showToast } = useToast();
+
 
   useEffect(() => {
     showLoader();
@@ -17,6 +26,29 @@ export default function SignupPage() {
 
     return () => clearTimeout(timer);
   },[]);
+
+  const handleSetPassword = async () => {
+    try {
+      showLoader();
+      const signature = account ? await getSignature(`Setting password for wallet: ${account}`) : undefined;
+      const response = await setPasswordForUnsetDepartmentUser(
+        email,
+        account?.toLocaleLowerCase() || undefined,
+        signature,
+        password,
+        confirmPassword,
+        otp
+      );
+
+      console.log("Account created:", response);
+      showToast("Account created successfully! Please sign in.", "success");
+    } catch (error) {
+      console.error("Error setting password:", error);
+      showToast("Failed to create account. Please try again.", "error");
+    } finally {
+      hideLoader();
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
@@ -57,15 +89,8 @@ export default function SignupPage() {
             <input
               type="email"
               placeholder="Email Address"
-              className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-            />
-          </div>
-
-          <div className="relative">
-            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="National ID Number"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
             />
           </div>
@@ -75,30 +100,38 @@ export default function SignupPage() {
             <input
               type="password"
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
             />
           </div>
 
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none appearance-none bg-white">
-              <option value="">Select Your Role</option>
-              <option value="notary">Notary Public</option>
-              <option value="surveyor">Land Surveyor</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+            />
           </div>
 
-          <button className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-4 rounded-xl font-medium transition-all transform hover:scale-[1.02]">
+          <div className="relative">
+            <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <button
+            onClick={handleSetPassword}
+            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-4 rounded-xl font-medium transition-all transform hover:scale-[1.02]"
+          >
             Create Account
           </button>
 
@@ -113,3 +146,4 @@ export default function SignupPage() {
     </div>
   );
 }
+
