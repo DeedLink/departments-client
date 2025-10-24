@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { User, Mail, Lock, Wallet, KeyIcon } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
-import { compressAddress } from "../utils/functions";
+import { compressAddress, isValidPassword } from "../utils/functions";
 import { useLoader } from "../contexts/LoaderContext";
 import { useEffect, useState } from "react";
 import { setPasswordForUnsetDepartmentUser } from "../api/api";
@@ -30,6 +30,10 @@ export default function SignupPage() {
   const handleSetPassword = async () => {
     try {
       showLoader();
+      if (isValidPassword(password) === false) {
+        showToast("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.", "error");
+        return;
+      }
       const signature = account ? await getSignature(`Setting password for wallet: ${account}`) : undefined;
       const response = await setPasswordForUnsetDepartmentUser(
         email,
