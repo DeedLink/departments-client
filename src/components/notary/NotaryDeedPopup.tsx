@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
+import { signDeed } from "../../api/api";
+import { BrowserProvider } from "ethers";
 
 type Props = {
   deed: Deed | null;
@@ -35,21 +37,42 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   }, []);
 
   const handleSign = async () => {
-    if (!deed.tokenId) {
-      showToast("TokenId not found", "error");
-      return;
-    }
-    setLoading(true);
+    console.log("Signing deed (Notary):", deed.tokenId);
+
     try {
-      await signProperty(parseInt(deed.tokenId));
+      if (!deed.tokenId) {
+        showToast("TokenId not found", "error");
+        return;
+      }
+
+      setLoading(true);
+
+      const sign_response = await signProperty(parseInt(deed.tokenId));
+      console.log("sign_response (on-chain): ", sign_response);
+
+      const provider = new BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const message = JSON.stringify(deed.tokenId);
+      const signature = await signer.signMessage(message);
+
+      if (!deed._id) {
+        showToast("Deed ID not found", "error");
+        return;
+      }
+
+      const db_response = await signDeed(deed._id, "notary", signature);
+      console.log("db_response (off-chain): ", db_response);
+
       showToast("Deed signed by Notary successfully", "success");
       setIsSigned(true);
-    } catch {
+    } catch (err) {
+      console.error("Error signing deed (Notary):", err);
       showToast("Error signing", "error");
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleReject = () => {
     showToast(`Deed #${deed.deedNumber} rejected by Notary`, "info");
