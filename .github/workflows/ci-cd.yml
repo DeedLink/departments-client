@@ -52,7 +52,7 @@ jobs:
             cd $DEPLOY_DIR
 
             if [ ! -d ".git" ]; then
-              git clone https://github.com/DeedLink/department-client-web.git .
+              git clone https://github.com/DeedLink/departments-client.git .
             else
               git fetch origin
               git reset --hard origin/main
