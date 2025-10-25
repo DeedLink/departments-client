@@ -1,7 +1,8 @@
 import type { Deed } from "../types/deed";
 
 export const mockDeeds: Deed[] = [
-  {
+   {
+    valuation:[],
     deedNumber: "D001",
     sides: { North: "D002", South: "River", East: "D004", West: "Road" },
     deedType: { deedType: "Sale", deedNumber: "D001" },
@@ -29,7 +30,8 @@ export const mockDeeds: Deed[] = [
     division: "Colombo 01",
     registrationDate: new Date("2025-09-01"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D002",
     sides: { North: "D003", South: "D001", East: "D005", West: "Forest" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D002" },
@@ -57,7 +59,8 @@ export const mockDeeds: Deed[] = [
     division: "Kandy Central",
     registrationDate: new Date("2025-08-15"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D003",
     sides: { North: "D006", South: "D002", East: "D007", West: "Hill" },
     deedType: { deedType: "Mortgage", deedNumber: "D003" },
@@ -85,7 +88,8 @@ export const mockDeeds: Deed[] = [
     division: "Galle Fort",
     registrationDate: new Date("2025-07-20"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D004",
     sides: { North: "D005", South: "Sea", East: "D008", West: "D001" },
     deedType: { deedType: "Sale", deedNumber: "D004" },
@@ -113,7 +117,8 @@ export const mockDeeds: Deed[] = [
     division: "Negombo",
     registrationDate: new Date("2025-06-10"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D005",
     sides: { North: "D006", South: "D004", East: "D009", West: "D002" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D005" },
@@ -141,7 +146,8 @@ export const mockDeeds: Deed[] = [
     division: "Matara South",
     registrationDate: new Date("2025-05-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D006",
     sides: { North: "D010", South: "D003", East: "D007", West: "Mountain" },
     deedType: { deedType: "Sale", deedNumber: "D006" },
@@ -169,7 +175,8 @@ export const mockDeeds: Deed[] = [
     division: "Badulla Central",
     registrationDate: new Date("2025-04-12"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D007",
     sides: { North: "D011", South: "D003", East: "D012", West: "D006" },
     deedType: { deedType: "Mortgage", deedNumber: "D007" },
@@ -197,7 +204,8 @@ export const mockDeeds: Deed[] = [
     division: "Ratnapura Town",
     registrationDate: new Date("2025-03-28"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D008",
     sides: { North: "D009", South: "Ocean", East: "D013", West: "D004" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D008" },
@@ -225,7 +233,8 @@ export const mockDeeds: Deed[] = [
     division: "Hambantota Port",
     registrationDate: new Date("2025-02-14"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D009",
     sides: { North: "D012", South: "D008", East: "D014", West: "D005" },
     deedType: { deedType: "Sale", deedNumber: "D009" },
@@ -253,7 +262,8 @@ export const mockDeeds: Deed[] = [
     division: "Polonnaruwa Ancient City",
     registrationDate: new Date("2025-01-30"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D010",
     sides: { North: "D015", South: "D006", East: "D011", West: "Valley" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D010" },
@@ -281,7 +291,8 @@ export const mockDeeds: Deed[] = [
     division: "Nuwara Eliya Central",
     registrationDate: new Date("2024-12-18"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D011",
     sides: { North: "D016", South: "D007", East: "D017", West: "D010" },
     deedType: { deedType: "Mortgage", deedNumber: "D011" },
@@ -309,7 +320,8 @@ export const mockDeeds: Deed[] = [
     division: "Anuradhapura Sacred City",
     registrationDate: new Date("2024-11-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D012",
     sides: { North: "D017", South: "D007", East: "D018", West: "D011" },
     deedType: { deedType: "Sale", deedNumber: "D012" },
@@ -337,7 +349,8 @@ export const mockDeeds: Deed[] = [
     division: "Kurunegala Central",
     registrationDate: new Date("2024-10-08"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D013",
     sides: { North: "D014", South: "Lagoon", East: "D019", West: "D008" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D013" },
@@ -365,7 +378,8 @@ export const mockDeeds: Deed[] = [
     division: "Puttalam Lagoon",
     registrationDate: new Date("2024-09-12"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D014",
     sides: { North: "D018", South: "D013", East: "D020", West: "D009" },
     deedType: { deedType: "Mortgage", deedNumber: "D014" },
@@ -393,7 +407,8 @@ export const mockDeeds: Deed[] = [
     division: "Monaragala East",
     registrationDate: new Date("2024-08-29"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D015",
     sides: { North: "D021", South: "D010", East: "D016", West: "Plateau" },
     deedType: { deedType: "Sale", deedNumber: "D015" },
@@ -421,7 +436,8 @@ export const mockDeeds: Deed[] = [
     division: "Bandarawela",
     registrationDate: new Date("2024-07-15"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D016",
     sides: { North: "D022", South: "D011", East: "D017", West: "D015" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D016" },
@@ -449,7 +465,8 @@ export const mockDeeds: Deed[] = [
     division: "Kalutara South",
     registrationDate: new Date("2024-06-02"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D017",
     sides: { North: "D023", South: "D012", East: "D018", West: "D016" },
     deedType: { deedType: "Mortgage", deedNumber: "D017" },
@@ -477,7 +494,8 @@ export const mockDeeds: Deed[] = [
     division: "Jaffna Central",
     registrationDate: new Date("2024-05-18"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D018",
     sides: { North: "D024", South: "D014", East: "D020", West: "D017" },
     deedType: { deedType: "Sale", deedNumber: "D018" },
@@ -505,7 +523,8 @@ export const mockDeeds: Deed[] = [
     division: "Trincomalee Port",
     registrationDate: new Date("2024-04-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D019",
     sides: { North: "D020", South: "Bay", East: "D025", West: "D013" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D019" },
@@ -533,7 +552,8 @@ export const mockDeeds: Deed[] = [
     division: "Batticaloa Central",
     registrationDate: new Date("2024-03-10"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D020",
     sides: { North: "D024", South: "D019", East: "D026", West: "D014" },
     deedType: { deedType: "Mortgage", deedNumber: "D020" },
@@ -561,7 +581,8 @@ export const mockDeeds: Deed[] = [
     division: "Ampara East",
     registrationDate: new Date("2024-02-28"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D021",
     sides: { North: "D027", South: "D015", East: "D022", West: "Cliff" },
     deedType: { deedType: "Sale", deedNumber: "D021" },
@@ -589,7 +610,8 @@ export const mockDeeds: Deed[] = [
     division: "Ella",
     registrationDate: new Date("2024-01-15"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D022",
     sides: { North: "D028", South: "D016", East: "D023", West: "D021" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D022" },
@@ -617,7 +639,8 @@ export const mockDeeds: Deed[] = [
     division: "Vavuniya South",
     registrationDate: new Date("2023-12-22"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D023",
     sides: { North: "D029", South: "D017", East: "D024", West: "D022" },
     deedType: { deedType: "Mortgage", deedNumber: "D023" },
@@ -645,7 +668,8 @@ export const mockDeeds: Deed[] = [
     division: "Mannar Island",
     registrationDate: new Date("2023-11-08"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D024",
     sides: { North: "D030", South: "D018", East: "D026", West: "D023" },
     deedType: { deedType: "Sale", deedNumber: "D024" },
@@ -673,7 +697,8 @@ export const mockDeeds: Deed[] = [
     division: "Mullaitivu Central",
     registrationDate: new Date("2023-10-14"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D025",
     sides: { North: "D026", South: "Strait", East: "D031", West: "D019" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D025" },
@@ -701,7 +726,8 @@ export const mockDeeds: Deed[] = [
     division: "Kilinochchi Central",
     registrationDate: new Date("2023-09-30"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D026",
     sides: { North: "D030", South: "D025", East: "D032", West: "D020" },
     deedType: { deedType: "Mortgage", deedNumber: "D026" },
@@ -729,7 +755,8 @@ export const mockDeeds: Deed[] = [
     division: "Kegalle East",
     registrationDate: new Date("2023-08-16"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D027",
     sides: { North: "D033", South: "D021", East: "D028", West: "Gorge" },
     deedType: { deedType: "Sale", deedNumber: "D027" },
@@ -757,7 +784,8 @@ export const mockDeeds: Deed[] = [
     division: "Hatton",
     registrationDate: new Date("2023-07-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D028",
     sides: { North: "D034", South: "D022", East: "D029", West: "D027" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D028" },
@@ -785,7 +813,8 @@ export const mockDeeds: Deed[] = [
     division: "Dambulla",
     registrationDate: new Date("2023-06-12"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D029",
     sides: { North: "D035", South: "D023", East: "D030", West: "D028" },
     deedType: { deedType: "Mortgage", deedNumber: "D029" },
@@ -813,7 +842,8 @@ export const mockDeeds: Deed[] = [
     division: "Sigiriya",
     registrationDate: new Date("2023-05-28"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D030",
     sides: { North: "D036", South: "D024", East: "D032", West: "D029" },
     deedType: { deedType: "Sale", deedNumber: "D030" },
@@ -841,7 +871,8 @@ export const mockDeeds: Deed[] = [
     division: "Nawalapitiya",
     registrationDate: new Date("2023-04-15"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D031",
     sides: { North: "D032", South: "Peninsula", East: "D037", West: "D025" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D031" },
@@ -869,7 +900,8 @@ export const mockDeeds: Deed[] = [
     division: "Point Pedro",
     registrationDate: new Date("2023-03-22"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D032",
     sides: { North: "D036", South: "D031", East: "D038", West: "D026" },
     deedType: { deedType: "Mortgage", deedNumber: "D032" },
@@ -897,7 +929,8 @@ export const mockDeeds: Deed[] = [
     division: "Akkaraipattu",
     registrationDate: new Date("2023-02-08"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D033",
     sides: { North: "D039", South: "D027", East: "D034", West: "Ridge" },
     deedType: { deedType: "Sale", deedNumber: "D033" },
@@ -925,7 +958,8 @@ export const mockDeeds: Deed[] = [
     division: "Haputale",
     registrationDate: new Date("2023-01-18"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D034",
     sides: { North: "D040", South: "D028", East: "D035", West: "D033" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D034" },
@@ -953,7 +987,8 @@ export const mockDeeds: Deed[] = [
     division: "Welimada",
     registrationDate: new Date("2022-12-28"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D035",
     sides: { North: "D041", South: "D029", East: "D036", West: "D034" },
     deedType: { deedType: "Mortgage", deedNumber: "D035" },
@@ -981,7 +1016,8 @@ export const mockDeeds: Deed[] = [
     division: "Mahiyanganaya",
     registrationDate: new Date("2022-11-14"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D036",
     sides: { North: "D042", South: "D030", East: "D038", West: "D035" },
     deedType: { deedType: "Sale", deedNumber: "D036" },
@@ -1009,7 +1045,8 @@ export const mockDeeds: Deed[] = [
     division: "Passara",
     registrationDate: new Date("2022-10-30"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D037",
     sides: { North: "D038", South: "Channel", East: "D043", West: "D031" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D037" },
@@ -1037,7 +1074,8 @@ export const mockDeeds: Deed[] = [
     division: "Kalmunai",
     registrationDate: new Date("2022-09-16"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D038",
     sides: { North: "D042", South: "D037", East: "D044", West: "D032" },
     deedType: { deedType: "Mortgage", deedNumber: "D038" },
@@ -1065,7 +1103,8 @@ export const mockDeeds: Deed[] = [
     division: "Dehiattakandiya",
     registrationDate: new Date("2022-08-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D039",
     sides: { North: "D045", South: "D033", East: "D040", West: "Peak" },
     deedType: { deedType: "Sale", deedNumber: "D039" },
@@ -1093,7 +1132,8 @@ export const mockDeeds: Deed[] = [
     division: "Ohiya",
     registrationDate: new Date("2022-07-12"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D040",
     sides: { North: "D046", South: "D034", East: "D041", West: "D039" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D040" },
@@ -1121,7 +1161,8 @@ export const mockDeeds: Deed[] = [
     division: "Koslanda",
     registrationDate: new Date("2022-06-28"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D041",
     sides: { North: "D047", South: "D035", East: "D042", West: "D040" },
     deedType: { deedType: "Mortgage", deedNumber: "D041" },
@@ -1149,7 +1190,8 @@ export const mockDeeds: Deed[] = [
     division: "Beragala",
     registrationDate: new Date("2022-05-15"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D042",
     sides: { North: "D048", South: "D036", East: "D044", West: "D041" },
     deedType: { deedType: "Sale", deedNumber: "D042" },
@@ -1177,7 +1219,8 @@ export const mockDeeds: Deed[] = [
     division: "Moneragala Central",
     registrationDate: new Date("2022-04-22"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D043",
     sides: { North: "D044", South: "Inlet", East: "D049", West: "D037" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D043" },
@@ -1205,7 +1248,8 @@ export const mockDeeds: Deed[] = [
     division: "Sammanthurai",
     registrationDate: new Date("2022-03-08"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D044",
     sides: { North: "D048", South: "D043", East: "D050", West: "D038" },
     deedType: { deedType: "Mortgage", deedNumber: "D044" },
@@ -1233,7 +1277,8 @@ export const mockDeeds: Deed[] = [
     division: "Damana",
     registrationDate: new Date("2022-02-14"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D045",
     sides: { North: "Summit", South: "D039", East: "D046", West: "Escarpment" },
     deedType: { deedType: "Sale", deedNumber: "D045" },
@@ -1261,7 +1306,8 @@ export const mockDeeds: Deed[] = [
     division: "Horton Plains",
     registrationDate: new Date("2022-01-25"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D046",
     sides: { North: "Plateau", South: "D040", East: "D047", West: "D045" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D046" },
@@ -1289,7 +1335,8 @@ export const mockDeeds: Deed[] = [
     division: "Poonagala",
     registrationDate: new Date("2021-12-10"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D047",
     sides: { North: "Highland", South: "D041", East: "D048", West: "D046" },
     deedType: { deedType: "Mortgage", deedNumber: "D047" },
@@ -1317,7 +1364,8 @@ export const mockDeeds: Deed[] = [
     division: "Lunugala",
     registrationDate: new Date("2021-11-18"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D048",
     sides: { North: "Forest", South: "D042", East: "D050", West: "D047" },
     deedType: { deedType: "Sale", deedNumber: "D048" },
@@ -1345,7 +1393,8 @@ export const mockDeeds: Deed[] = [
     division: "Bibila",
     registrationDate: new Date("2021-10-26"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D049",
     sides: { North: "D050", South: "Coast", East: "Border", West: "D043" },
     deedType: { deedType: "Transfer Deed", deedNumber: "D049" },
@@ -1373,7 +1422,8 @@ export const mockDeeds: Deed[] = [
     division: "Pottuvil",
     registrationDate: new Date("2021-09-14"),
   },
-  {
+   {
+    valuation:[],
     deedNumber: "D050",
     sides: { North: "D048", South: "D049", East: "National Park", West: "D044" },
     deedType: { deedType: "Mortgage", deedNumber: "D050" },

@@ -96,4 +96,6 @@ export type Deed = {
   notarySignedBy?: string;
 
   tokenId?: string;
+
+  value?: number | string;
 };
