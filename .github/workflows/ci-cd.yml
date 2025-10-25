@@ -47,10 +47,17 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/department-client-web || mkdir -p /home/ubuntu/department-client-web
-            cd /home/ubuntu/department-client-web
+            DEPLOY_DIR="/home/ubuntu/deedlink-deployments/department-client-web"
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
 
-            # Pull latest Docker image
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/DeedLink/department-client-web.git .
+            else
+              git fetch origin
+              git reset --hard origin/main
+            fi
+
             docker compose pull
             docker compose down
             docker compose up -d --remove-orphans
