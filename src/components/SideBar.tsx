@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     { name: "Notary Home", href: "/notary", icon: Home, role: "notary" },
     { name: "Deeds", href: "/notary/deeds", icon: FileText, role: "notary" },
     { name: "Services", href: "#", icon: Settings, role: "all" },
-    { name: "Contact", href: "#", icon: Phone, role: "all" },
+    { name: "Contact", href: "/contact", icon: Phone, role: "all" },
   ];
 
   if (
