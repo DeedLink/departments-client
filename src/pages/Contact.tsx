@@ -12,8 +12,10 @@ function contact() {
     const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
 
 
-    const handleSubmit = () => {
+    const handleSubmit = (e:React.FormEvent) => {
+        e.preventDefault();
 
+        
     }
 
 
