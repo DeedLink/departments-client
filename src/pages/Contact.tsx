@@ -3,6 +3,7 @@ import { useState } from "react";
 
 function contact() {
 
+    const [sendRole, setSendRole] = useState("");
     const [recipient, setRecipient] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -15,6 +16,14 @@ function contact() {
     const handleSubmit = (e:React.FormEvent) => {
         e.preventDefault();
 
+        if(!recipient || !subject || !message){
+            alert("Please fill in all fields before submitting the form.");
+            return;
+        }
+
+        const payload = {
+            
+        }
         
     }
 
