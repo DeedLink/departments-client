@@ -11,7 +11,7 @@ function contact() {
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
 
-    const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
+    const [roles, _setRoles] = useState<string[]>(["Admin", "Notary","Surveyor", "IVSL Officer"]);
 
     const { user } = useLogin();
 
@@ -46,6 +46,7 @@ function contact() {
         if (selectedRole === "IVSL Officer") backendRole = "IVSL";
         else if (selectedRole === "Admin") backendRole = "admin";
         else if (selectedRole === "Notary") backendRole = "notary";
+        else if (selectedRole === "Surveyor") backendRole = "surveyor";
 
 
         try {
