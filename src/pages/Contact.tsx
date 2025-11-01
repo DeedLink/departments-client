@@ -19,9 +19,9 @@ function contact() {
     }
 
     
-    const fetchUsersByRole = async(selectedRole) => {
+    const fetchUsersByRole = async(selectedRole:string) => {
         try{
-            const response = await axios.get(`http://userSevice IP/api/users/role/${selectedRole}`);
+            const response = await axios.get(`http://userSeviceIP/api/users/role/${selectedRole}`);
             console.log("Users with role", selectedRole, ":", response.data);
         }catch(error){
             console.error("Error fetching users by role:", error);
@@ -60,6 +60,12 @@ function contact() {
 
                             </div>
                         </div>
+
+                        {recipient &&(
+                            <div>
+                                
+                            </div>
+                        )}
 
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Subject</label>
