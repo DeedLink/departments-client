@@ -29,7 +29,7 @@ function contact() {
 
         let backendRole = selectedRole.toLowerCase();
 
-        if (selectedRole === "IVSL Officer") backendRole = "ivsl";
+        if (selectedRole === "IVSL Officer") backendRole = "IVSL";
         else if (selectedRole === "Admin") backendRole = "admin";
         else if (selectedRole === "Notary") backendRole = "notary";;
 
