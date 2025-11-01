@@ -48,13 +48,20 @@ function contact() {
 
             console.log("✅ Message sent:", response.data);
             alert("✅ Message sent successfully!");
+
+            setSubject("");
+            setMessage("");
+            setRecipient("");
+            setUsers([]);
+
         } catch (error) {
             console.error("Error submitting contact form:", error);
+             alert("❌ Failed to send message. Please try again.");
+        }finally {
+            setLoading(false);
         }
 
-
-
-    }
+    };
 
 
     const fetchUsersByRole = async (selectedRole: string) => {
