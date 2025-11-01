@@ -54,10 +54,18 @@ function contact() {
                             />
                         </div>
 
+                        <div>
+                            <label className="text-gray-800 font-medium mb-1 block">Message</label>
+                            <textarea name="subject" placeholder="Write your message here..." value={message} onChange={(e) => setMessage(e.target.value)} type="text" 
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            ></textarea>
+                        </div>
+                        
+
                     </form>
                 </div>
 
-                <p className="text-gray-600 text-justify">
+                <p className="text-gray-600 text-justify pt-2">
                     For technical issues, account assistance, or process clarifications, please reach out to our support team at
                     <span className="font-semibold text-emerald-700"> support@realestatechain.lk </span>
                     or call us at <span className="font-semibold text-emerald-700"> +94 71 234 5678</span>.
