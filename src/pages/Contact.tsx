@@ -11,12 +11,12 @@ function contact() {
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
 
-    const [roles, _setRoles] = useState<string[]>(["Admin", "Notary","Surveyor", "IVSL Officer"]);
+    const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "Surveyor", "IVSL Officer"]);
 
     const { user } = useLogin();
 
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!recipient || !subject || !message) {
@@ -24,13 +24,35 @@ function contact() {
             return;
         }
 
-        const payload = {
-
-            sendRole,
-            recipientRole: recipient,
-            subject,
-            message,
+        if (!user) {
+            alert("⚠️ You must be logged in to send a message.");
+            return;
         }
+
+        try {
+
+            setLoading(true);
+
+            const payload = {
+
+                senderName: user.name,
+                senderEmail: user.email,
+                senderRole: user.role,
+                recipientRole: recipient,
+                subject,
+                message,
+
+            }
+
+            const response = await axios.post("https://api-deedlink-contact-service.vercel.app/api/contact/message", payload);
+
+            console.log("✅ Message sent:", response.data);
+            alert("✅ Message sent successfully!");
+        } catch (error) {
+            console.error("Error submitting contact form:", error);
+        }
+
+
 
     }
 
@@ -106,10 +128,10 @@ function contact() {
                                     <p className="text-gray-500 italic">Loading users...</p>
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
-                                        {users.map((user, index) => (
+                                        {users.map((sendUser, index) => (
                                             <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
-                                                <span className="font-medium">{user.name || "Unnamed User"}</span> {" "}
-                                                <span className="text-gray-500 text-sm">({user.email})</span>
+                                                <span className="font-medium">{sendUser.name || "Unnamed User"}</span> {" "}
+                                                <span className="text-gray-500 text-sm">({sendUser.email})</span>
                                             </li>
                                         ))}
                                     </ul>
