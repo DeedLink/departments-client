@@ -4,16 +4,12 @@ import { useState } from "react";
 function contact() {
 
     const [recipient, setRecipient] = useState("");
-    const [sendRole, setSendRole] = useState("");
-    const [notary, setNotary] = useState("");
-    const [ivslOfficer, setIvslOfficer] = useState("");
-    const [admin, setAdmin] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
 
-    const [roles, setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
+    const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
 
 
     const handleSubmit = () => {
