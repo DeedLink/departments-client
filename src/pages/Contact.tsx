@@ -72,11 +72,12 @@ function contact() {
                 <div>
                     <form className="space-y-6 bg-white border border-gray-200 rounded w-2xl
                     shadow-sm p-6" onSubmit={handleSubmit}>
-                        {user && ()}
-                        <div>
-                            <p className="text-xs text-gray-500 font-medium">Sender Name</p>
-                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                        </div>
+                        {user && (
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium">Sender's Name</p>
+                                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                            </div>)}
+
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Recipient Role</label>
                             <div className="flex flex-wrap gap-4">
