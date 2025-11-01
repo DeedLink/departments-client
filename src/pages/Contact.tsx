@@ -4,7 +4,6 @@ import { useLogin } from "../contexts/LoginContext";
 
 function contact() {
 
-    const [sendRole, _setSendRole] = useState("");
     const [recipient, setRecipient] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -56,7 +55,7 @@ function contact() {
 
         } catch (error) {
             console.error("Error submitting contact form:", error);
-             alert("❌ Failed to send message. Please try again.");
+             alert("Failed to send message. Please try again.");
         }finally {
             setLoading(false);
         }
