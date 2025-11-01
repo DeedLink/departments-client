@@ -22,11 +22,26 @@ function contact() {
 
 
     const fetchUsersByRole = async (selectedRole: string) => {
+
+        setRecipient(selectedRole);
+        setUsers([]);
+        setLoading(true);
+
+        let backendRole = selectedRole.toLowerCase();
+
+        if (selectedRole === "IVSL Officer") backendRole = "ivsl";
+        else if (selectedRole === "Admin") backendRole = "admin";
+        else if (selectedRole === "Notary") backendRole = "notary";;
+
+
         try {
-            const response = await axios.get(`https://api-deedlink-user-service.vercel.app/api/users/role/${selectedRole}`);
+            const response = await axios.get(`https://api-deedlink-user-service.vercel.app/api/users/role/${backendRole}`);
+            setUsers(response.data);
             console.log("Users with role", selectedRole, ":", response.data);
         } catch (error) {
             console.error("Error fetching users by role:", error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -66,18 +81,21 @@ function contact() {
                             <div className="mt-4">
                                 <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
 
+                                {loading ? (
+                                    <p className="text-gray-500 italic">Loading users...</p>
+                                ) : users.length > 0 ? (
+                                    <ul className="space-y-2">
+                                        {users.map((user, index) => (
+                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
+                                                <span className="font-medium">{user.name || "Unnamed User"}</span> {" "}
+                                                <span className="text-gray-500 text-sm">({user.email})</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-500 italic">No users found for this role.</p>
+                                )}
                             </div>
-                            {loading ? (
-                            <p className="text-gray-500 italic">Loading users...</p>
-                        ) : users.length > 0 ? (
-                            <ul className="space-y-2">
-                                {users.map((user, index) => (
-                                    <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
-                                        <span className="font-medium"></span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
                         )}
 
                         <div>
