@@ -2,16 +2,15 @@ import { useState } from "react";
 
 function contact() {
 
-    const [formData, setFormData] = useState({
-        sendRole: "Surveyor",
-        receiverRole: "",
-        subject:"",
-        message:""
-    });
+    const [recipient, setRecipient] = useState("");
+    const [sendRole,setSendRole] = useState("");
+    const [subject,setSubject] = useState("");
+    const [message,setMessage] = useState("");
+    const [roles, setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
 
 
     const handleSubmit = () => {
-        
+
     }
 
     const handleChange = () => {
@@ -30,27 +29,33 @@ function contact() {
                     shadow-sm p-6" onSubmit={handleSubmit}>
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Recipient Role</label>
-                            <select name="receiverRole" value={formData.receiverRole} onChange={handleChange} required
-                            className="w-full  border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500
-                            focus:outline-none">
+                            <div className="flex flex-wrap gap-4">
+                                {roles.map((role: string) => (
+                                    <div key={role} onClick={() => setRecipient(role)} className={`cursor-pointer text-lg font-semibold px-4 py-2 rounded-xl border 
+                                    transition-all duration-300 ease-in-out
+                                    ${
+                                    recipient === role
+                                        ? "bg-emerald-600 text-white border-emerald-600 text-2xl"
+                                        : "bg-white text-gray-800 border-gray-300 hover:bg-emerald-50 hover:border-emerald-200 text-xl"
+                                    }
+                                    `}>
+                                        {role}
+                                    </div>
+                                ))}
 
-                                <option value="">Select Recipient</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Notary">Notary</option>
-                                <option value="IVSL Officer">IVSL Officer</option>
 
-                            </select>
+                            </div>
                         </div>
 
-                    </form> 
+                    </form>
                 </div>
 
-                 <p className="text-gray-600 text-justify">
-                    For technical issues, account assistance, or process clarifications, please reach out to our support team at  
+                <p className="text-gray-600 text-justify">
+                    For technical issues, account assistance, or process clarifications, please reach out to our support team at
                     <span className="font-semibold text-emerald-700"> support@realestatechain.lk </span>
-                     or call us at <span className="font-semibold text-emerald-700"> +94 71 234 5678</span>.  
+                    or call us at <span className="font-semibold text-emerald-700"> +94 71 234 5678</span>.
                     We’ll ensure your concerns are handled promptly and securely.
-                 </p>
+                </p>
             </div>
 
         </div>
