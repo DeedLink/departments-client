@@ -47,6 +47,13 @@ function contact() {
                             </div>
                         </div>
 
+                        <div>
+                            <label className="text-gray-800 font-medium mb-1 block">Subject</label>
+                            <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} type="text" 
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                        </div>
+
                     </form>
                 </div>
 
