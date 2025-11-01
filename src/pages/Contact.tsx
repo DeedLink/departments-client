@@ -1,9 +1,10 @@
 import axios from "axios";
 import { useState } from "react";
+import { useLogin } from "../contexts/LoginContext";
 
 function contact() {
 
-    const [sendRole, setSendRole] = useState("");
+    const [sendRole, _setSendRole] = useState("");
     const [recipient, setRecipient] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -12,19 +13,25 @@ function contact() {
 
     const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
 
+    const { user } = useLogin();
 
-    const handleSubmit = (e:React.FormEvent) => {
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if(!recipient || !subject || !message){
+        if (!recipient || !subject || !message) {
             alert("Please fill in all fields before submitting the form.");
             return;
         }
 
         const payload = {
-            
+
+            sendRole,
+            recipientRole: recipient,
+            subject,
+            message,
         }
-        
+
     }
 
 
@@ -65,6 +72,11 @@ function contact() {
                 <div>
                     <form className="space-y-6 bg-white border border-gray-200 rounded w-2xl
                     shadow-sm p-6" onSubmit={handleSubmit}>
+
+                        <div>
+                            <p className="text-xs text-gray-500 font-medium">Sender Name</p>
+                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                        </div>
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Recipient Role</label>
                             <div className="flex flex-wrap gap-4">
