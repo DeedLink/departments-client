@@ -1,11 +1,16 @@
+import axios from "axios";
 import { useState } from "react";
 
 function contact() {
 
     const [recipient, setRecipient] = useState("");
     const [sendRole,setSendRole] = useState("");
+    const [notary, setNotary] = useState("");
+    const [ivslOfficer, setIvslOfficer] = useState(""); 
+    const [admin, setAdmin] = useState("");
     const [subject,setSubject] = useState("");
     const [message,setMessage] = useState("");
+
     const [roles, setRoles] = useState<string[]>(["Admin", "Notary", "IVSL Officer"]);
 
 
@@ -13,9 +18,18 @@ function contact() {
 
     }
 
-    const handleChange = () => {
-
+    
+    const fetchUsersByRole = async(selectedRole) => {
+        try{
+            const response = await axios.get(`http://userSevice IP/api/users/role/${selectedRole}`);
+            console.log("Users with role", selectedRole, ":", response.data);
+        }catch(error){
+            console.error("Error fetching users by role:", error);
+        }
     }
+    
+
+
     return (
         <div className="min-h-screen p-4 sm:p-6">
             <div className="max-w-7xl mx-auto">
@@ -31,8 +45,8 @@ function contact() {
                             <label className="text-gray-800 font-medium mb-1 block">Recipient Role</label>
                             <div className="flex flex-wrap gap-4">
                                 {roles.map((role: string) => (
-                                    <div key={role} onClick={() => setRecipient(role)} className={`cursor-pointer text-lg font-semibold px-4 py-2 rounded-xl border 
-                                    transition-all duration-300 ease-in-out
+                                    <div key={role} onClick={() => {setRecipient(role); fetchUsersByRole(role);}} className={`cursor-pointer text-lg font-semibold px-4 py-2 rounded-xl border 
+                                    transition-all duration-150 ease-in-out hover:scale-105
                                     ${
                                     recipient === role
                                         ? "bg-emerald-600 text-white border-emerald-600 text-2xl"
@@ -56,12 +70,16 @@ function contact() {
 
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Message</label>
-                            <textarea name="subject" placeholder="Write your message here..." value={message} onChange={(e) => setMessage(e.target.value)} type="text" 
+                            <textarea name="subject" placeholder="Write your message here..." value={message} onChange={(e) => setMessage(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             ></textarea>
                         </div>
                         
-
+                    <button className="border border-gray-500 p-2 w-full rounded-lg hover:bg-emerald-700 hover:shadow-lg hover:text-white
+                    transition-all duration-200 ease-in-out font-semibold text-lg bg-emerald-600 px-6 py-2 hover:scale-105
+               focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                        Send
+                    </button>
                     </form>
                 </div>
 
