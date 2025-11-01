@@ -27,7 +27,7 @@ function contact() {
 
         if (selectedRole === "IVSL Officer") backendRole = "IVSL";
         else if (selectedRole === "Admin") backendRole = "admin";
-        else if (selectedRole === "Notary") backendRole = "notary";;
+        else if (selectedRole === "Notary") backendRole = "notary";
 
 
         try {
