@@ -9,6 +9,7 @@ function contact() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "Surveyor", "IVSL Officer"]);
 
@@ -88,6 +89,10 @@ function contact() {
         }
     }
 
+    const filterUsers = ()=>{
+
+    }
+
 
 
     return (
@@ -137,7 +142,10 @@ function contact() {
                                     <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
 
                                     <div>
-                                        <p>Search Bar</p>
+                                        <input name="receiverName" value={searchTerm} type="text"
+                                        placeholder="Search by name or email..."
+                                        className="border border-gray-300 rounded-lg px-3 py-2 w-64 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"
+                                        onChange={(e) => setSearchTerm(e.target.value)}/>
                                     </div>
                                     
                                 </div>
