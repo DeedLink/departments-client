@@ -1,39 +1,42 @@
 
 import { CheckCircle, Clock, MessageSquare, Upload } from "lucide-react";
+import { useState } from "react";
 
 
 const activitiesData = [
-  {
-    id: 1,
-    type: "Verification",
-    title: "Verified Deed #D-001",
-    time: "3 hours ago",
-    icon: <CheckCircle className="text-green-500" size={20} />,
-  },
-  {
-    id: 2,
-    type: "Report",
-    title: "Uploaded Report #R-011",
-    time: "1 day ago",
-    icon: <Upload className="text-blue-500" size={20} />,
-  },
-  {
-    id: 3,
-    type: "Communication",
-    title: "Replied to Notary Silva",
-    time: "1 day ago",
-    icon: <MessageSquare className="text-purple-500" size={20} />,
-  },
-  {
-    id: 4,
-    type: "Verification",
-    title: "Reviewed Request #REQ-12",
-    time: "2 days ago",
-    icon: <Clock className="text-orange-400" size={20} />,
-  },
+    {
+        id: 1,
+        type: "Verification",
+        title: "Verified Deed #D-001",
+        time: "3 hours ago",
+        icon: <CheckCircle className="text-green-500" size={20} />,
+    },
+    {
+        id: 2,
+        type: "Report",
+        title: "Uploaded Report #R-011",
+        time: "1 day ago",
+        icon: <Upload className="text-blue-500" size={20} />,
+    },
+    {
+        id: 3,
+        type: "Communication",
+        title: "Replied to Notary Silva",
+        time: "1 day ago",
+        icon: <MessageSquare className="text-purple-500" size={20} />,
+    },
+    {
+        id: 4,
+        type: "Verification",
+        title: "Reviewed Request #REQ-12",
+        time: "2 days ago",
+        icon: <Clock className="text-orange-400" size={20} />,
+    },
 ];
 
 function SurveyorServices() {
+
+    const [filter, setFilter] = useState("All");
 
     return (
         <div className="min-h-screen p-4 sm:p-6">
@@ -45,6 +48,14 @@ function SurveyorServices() {
 
                 <div>
                     <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0">Activity & History</h2>
+                    <select className="">
+                        <option>All</option>
+                        <option>Verification</option>
+                        <option>Report</option>
+                        <option>Communication</option>
+
+                    </select>
+
                 </div>
             </div>
 
