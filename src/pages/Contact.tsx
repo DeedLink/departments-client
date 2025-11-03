@@ -9,6 +9,7 @@ function contact() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const [roles, _setRoles] = useState<string[]>(["Admin", "Notary", "Surveyor", "IVSL Officer"]);
 
@@ -88,6 +89,13 @@ function contact() {
         }
     }
 
+    const filterUsers = users.filter((user) =>{
+
+        const lower = searchTerm.toLowerCase();
+        return (user.name.toLowerCase().includes(lower) 
+        || user.email.toLowerCase().includes(lower)
+    );
+    });
 
 
     return (
@@ -126,15 +134,31 @@ function contact() {
                             </div>
                         </div>
 
+                        <div>
+                            
+                        </div>
+
                         {recipient && (
                             <div className="mt-4">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
+
+                                <div className="flex flex-row justify-between items-center m-3">
+                                    <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
+
+                                    <div>
+                                        <input name="receiverName" value={searchTerm} type="text"
+                                        placeholder="Search by name or email..."
+                                        className="border border-gray-300 rounded-lg px-3 py-2 w-64 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"
+                                        onChange={(e) => setSearchTerm(e.target.value)}/>
+                                    </div>
+                                    
+                                </div>
+                                
 
                                 {loading ? (
                                     <p className="text-gray-500 italic">Loading users...</p>
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
-                                        {users.map((sendUser, index) => (
+                                        {filterUsers.map((sendUser, index) => (
                                             <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
                                                 <span className="font-medium">{sendUser.name || "Unnamed User"}</span> {" "}
                                                 <span className="text-gray-500 text-sm">({sendUser.email})</span>
