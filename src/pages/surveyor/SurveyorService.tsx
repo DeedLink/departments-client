@@ -47,12 +47,12 @@ function SurveyorServices() {
                 </div>
 
                 <div>
-                    <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0">Activity & History</h2>
-                    <select className=" border border-emerald-300 rounded-xl px-4 py-2 text-gray-800 font-medium
-                        bg-gradient-to-r from-emerald-50 to-green-50
-                        transition-all duration-300 ease-in-out
-                        hover:shadow-md hover:scale-[1.02]
-                        focus:outline-none focus:ring-4 focus:ring-emerald-300 focus:ring-opacity-40">
+                    <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0 py-2">Activity & History</h2>
+                    <select className=" border border-emerald-300 rounded-xl px-3 py-2 text-gray-800 font-medium
+                        bg-gradient-to-r from-emerald-50 to-green-50 transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02]
+                        focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-opacity-40" value={filter}
+                        onChange={(e)=> setFilter(e.target.value)}>
+                            
                         <option>All</option>
                         <option>Verification</option>
                         <option>Report</option>
