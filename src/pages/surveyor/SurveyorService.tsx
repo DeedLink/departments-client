@@ -84,8 +84,12 @@ function SurveyorServices() {
 
                             </motion.div>
                         ))
-                    };
 
+
+                    };
+                <div className="flex justify-center mt-6">
+                    <button className="text-emerald-600 font-semibold hover:underline">Load more</button>
+                </div>
 
                 </div>
             </div>
