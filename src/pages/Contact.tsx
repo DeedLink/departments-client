@@ -89,10 +89,13 @@ function contact() {
         }
     }
 
-    const filterUsers = ()=>{
+    const filterUsers = users.filter((user) =>{
 
-    }
-
+        const lower = searchTerm.toLowerCase();
+        return (user.name.toLowerCase().includes(lower) 
+        || user.email.toLowerCase().includes(lower)
+    );
+    });
 
 
     return (
@@ -155,7 +158,7 @@ function contact() {
                                     <p className="text-gray-500 italic">Loading users...</p>
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
-                                        {users.map((sendUser, index) => (
+                                        {filterUsers.map((sendUser, index) => (
                                             <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
                                                 <span className="font-medium">{sendUser.name || "Unnamed User"}</span> {" "}
                                                 <span className="text-gray-500 text-sm">({sendUser.email})</span>
