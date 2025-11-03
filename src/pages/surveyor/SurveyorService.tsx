@@ -1,6 +1,7 @@
 
 import { CheckCircle, Clock, MessageSquare, Upload } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 
 const activitiesData = [
@@ -38,6 +39,9 @@ function SurveyorServices() {
 
     const [filter, setFilter] = useState("All");
 
+    const filteredActivities = filter === "All" ? activitiesData :
+        activitiesData.filter((activity) => activity.type === filter);
+
     return (
         <div className="min-h-screen p-4 sm:p-6">
             <div className="max-w-7xl mx-auto">
@@ -51,14 +55,34 @@ function SurveyorServices() {
                     <select className=" border border-emerald-300 rounded-xl px-3 py-2 text-gray-800 font-medium
                         bg-gradient-to-r from-emerald-50 to-green-50 transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02]
                         focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-opacity-40" value={filter}
-                        onChange={(e)=> setFilter(e.target.value)}>
-                            
+                        onChange={(e) => setFilter(e.target.value)}>
+
                         <option>All</option>
                         <option>Verification</option>
                         <option>Report</option>
                         <option>Communication</option>
 
                     </select>
+
+                </div>
+
+                <div className="space-y-4">
+                    {
+                        filteredActivities.map((activity) => (
+                            <motion.div
+                                key={activity.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                            className="flex items-center">
+
+                                <div></div>
+                                <p className="text-gray-800 font-medium">{activity.title}</p>
+                                <p className="text-sm text-gray-500">{activity.time}</p>
+                            </motion.div>
+                        ))
+                    };
+
 
                 </div>
             </div>
