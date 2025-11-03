@@ -14,6 +14,7 @@ import IVSLDeeds from "./pages/ivsl/IVSLDeeds";
 import NotaryHome from "./pages/notary/NotaryHome";
 import NotaryDeeds from "./pages/notary/NotaryDeeds";
 import Contact from "./pages/Contact";
+import Services from "./pages/Services";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +47,7 @@ export default function App() {
                     <Route path="/notary" element={<NotaryHome />} />
                     <Route path="/notary/deeds" element={<NotaryDeeds />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/services" element = {<Services/>}/>
                   </Routes>
                 </LoaderProvider>
               </div>
