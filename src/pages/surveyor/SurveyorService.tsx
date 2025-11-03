@@ -74,11 +74,13 @@ function SurveyorServices() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3 }}
-                            className="flex items-center">
+                                className="flex items-center gap-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100 hover:bg-emerald-100">
 
-                                <div></div>
-                                <p className="text-gray-800 font-medium">{activity.title}</p>
-                                <p className="text-sm text-gray-500">{activity.time}</p>
+                                <div>
+                                    <p className="text-gray-800 font-medium">{activity.title}</p>
+                                    <p className="text-sm text-gray-500">{activity.time}</p>
+                                </div>
+
                             </motion.div>
                         ))
                     };
