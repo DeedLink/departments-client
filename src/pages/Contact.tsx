@@ -126,9 +126,22 @@ function contact() {
                             </div>
                         </div>
 
+                        <div>
+                            
+                        </div>
+
                         {recipient && (
                             <div className="mt-4">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
+
+                                <div className="flex flex-row justify-between items-center m-3">
+                                    <h2 className="text-lg font-semibold text-gray-800 mb-2">{recipient} List</h2>
+
+                                    <div>
+                                        <p>Search Bar</p>
+                                    </div>
+                                    
+                                </div>
+                                
 
                                 {loading ? (
                                     <p className="text-gray-500 italic">Loading users...</p>
