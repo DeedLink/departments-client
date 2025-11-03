@@ -42,6 +42,10 @@ function SurveyorServices() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Surveyor Services</h1>
                     <p className="text-black">Access and manage your blockchain-integrated field services</p>
                 </div>
+
+                <div>
+                    <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0">Activity & History</h2>
+                </div>
             </div>
 
         </div>
