@@ -66,7 +66,7 @@ function SurveyorServices() {
 
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 pt-4">
                     {
                         filteredActivities.map((activity) => (
                             <motion.div
