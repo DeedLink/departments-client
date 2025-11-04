@@ -27,8 +27,14 @@ const Services: React.FC = () => {
 
                         return(
                             <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
-                           className="flex items-center" >
-                                {tab.label}
+                           className={`flex items-center rounded-lg px-2 transition-all duration-200 ${
+                            isActive ? "bg-emerald-500 text-white shadow-lg scale-105":
+                            "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
+                           } `}>
+                            
+                                <tab.icon size={18}/>
+                                {tab.label};
+
                             
                             </button>
                         )

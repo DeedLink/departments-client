@@ -54,7 +54,7 @@ function SurveyorServices() {
                 </div>
 
                 <div>
-                    <Topbar/>
+                    
                     <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0 py-2">Activity & History</h2>
                     <select className=" border border-emerald-300 rounded-xl px-3 py-2 text-gray-800 font-medium
                         bg-gradient-to-r from-emerald-50 to-green-50 transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02]
