@@ -1,9 +1,11 @@
 import { ClipboardList, Clock, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
+import { useLogin } from "../contexts/LoginContext";
 
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
+    const {user} = useLogin();
 
     return (
         <div className="min-h-screen p-4 sm:p-6">
@@ -19,7 +21,15 @@ const Services: React.FC = () => {
                         {id: "history" , label: "History", icon: Clock},
                         {id: "messages" , label: "Messages", icon: MessageSquare},
 
-                    ]}
+                    ].map((tab)=>{
+                        const icon = tab.icon;
+                        const isActive = activeTab ===tab.id;
+
+                        return(
+                            
+                        )
+                    })
+                    }
                 </div>
             </div>
 
