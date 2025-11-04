@@ -2,6 +2,7 @@
 import { CheckCircle, Clock, MessageSquare, Upload } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Topbar from "../../components/TopBar";
 
 
 const activitiesData = [
@@ -45,12 +46,15 @@ function SurveyorServices() {
     return (
         <div className="min-h-screen p-4 sm:p-6">
             <div className="max-w-7xl mx-auto">
+
+                
                 <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
                     <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Surveyor Services</h1>
                     <p className="text-black">Access and manage your blockchain-integrated field services</p>
                 </div>
 
                 <div>
+                    <Topbar/>
                     <h2 className="text-xl font-semibold mb-2 text-gray-800 sm:mb-0 py-2">Activity & History</h2>
                     <select className=" border border-emerald-300 rounded-xl px-3 py-2 text-gray-800 font-medium
                         bg-gradient-to-r from-emerald-50 to-green-50 transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02]

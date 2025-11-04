@@ -7,8 +7,17 @@ interface Topbarprops {
 
 const Topbar: React.FC<Topbarprops> = ({isOpen, setIsOpen}) => {
     return(
-        <div>
-            
+        <div className="flex flex-row justify-between">
+            <div>
+                <p>khdkasd</p>
+            </div>
+
+            <div>
+                <p>hgdajda</p>
+            </div>
+
         </div>
     )
 }
+
+export default Topbar;
