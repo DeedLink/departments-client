@@ -1,11 +1,11 @@
 import { ClipboardList, Clock, Icon, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
-import { useLogin } from "../contexts/LoginContext";
+
 
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    const {user} = useLogin();
+    
 
     return (
         <div className="min-h-screen p-4 sm:p-6">
