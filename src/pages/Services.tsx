@@ -15,7 +15,7 @@ const Services: React.FC = () => {
                     <p className="text-black">Access and manage your blockchain-integrated field services</p>
                 </div>
 
-                <div className="flex justify-center gap-18 bg-white shadow-md rounded-b-2xl sticky top-0 z-40 w-full py-1">
+                <div className="flex justify-start gap-3 bg-white shadow-md rounded-2xl sticky top-0 z-40 w-full p-3">
                     {[
                         {id: "activities" , label: "Activities", icon: ClipboardList},
                         {id: "history" , label: "History", icon: Clock},
@@ -27,7 +27,7 @@ const Services: React.FC = () => {
 
                         return(
                             <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
-                           className={`flex items-center rounded-lg px-2 py-1 transition-all duration-200 ${
+                           className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-200 ${
                             isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105":
                             "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
                            } `}>
