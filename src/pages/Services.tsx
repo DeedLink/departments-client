@@ -1,4 +1,4 @@
-import { ClipboardList, Clock, MessageSquare } from "lucide-react";
+import { ClipboardList, Clock, Icon, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
 import { useLogin } from "../contexts/LoginContext";
 
@@ -15,7 +15,7 @@ const Services: React.FC = () => {
                     <p className="text-black">Access and manage your blockchain-integrated field services</p>
                 </div>
 
-                <div className="">
+                <div className="flex justify-center gap-12 bg-white shadow-md rounded-b-2xl sticky top-0 z-40 w-full py-1">
                     {[
                         {id: "activities" , label: "Activities", icon: ClipboardList},
                         {id: "history" , label: "History", icon: Clock},
@@ -26,7 +26,11 @@ const Services: React.FC = () => {
                         const isActive = activeTab ===tab.id;
 
                         return(
+                            <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
+                           className="flex items-center" >
+                                {tab.label}
                             
+                            </button>
                         )
                     })
                     }
