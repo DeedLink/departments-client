@@ -12,7 +12,7 @@ const Services: React.FC = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
                     <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Surveyor Services</h1>
-                    <p className="text-black">Access and manage your blockchain-integrated field services</p>
+                    <p className="text-gray-800">Access and manage your blockchain-integrated field services</p>
                 </div>
 
                 <div className="flex justify-start gap-3 bg-white shadow-md rounded-2xl sticky top-0 z-40 w-full p-3">
