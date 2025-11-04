@@ -15,32 +15,35 @@ const Services: React.FC = () => {
                     <p className="text-black">Access and manage your blockchain-integrated field services</p>
                 </div>
 
-                <div className="flex justify-center gap-12 bg-white shadow-md rounded-b-2xl sticky top-0 z-40 w-full py-1">
+                <div className="flex justify-center gap-18 bg-white shadow-md rounded-b-2xl sticky top-0 z-40 w-full py-1">
                     {[
                         {id: "activities" , label: "Activities", icon: ClipboardList},
                         {id: "history" , label: "History", icon: Clock},
                         {id: "messages" , label: "Messages", icon: MessageSquare},
 
                     ].map((tab)=>{
-                        const icon = tab.icon;
+                        const Icon = tab.icon;
                         const isActive = activeTab ===tab.id;
 
                         return(
                             <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
-                           className={`flex items-center rounded-lg px-2 transition-all duration-200 ${
-                            isActive ? "bg-emerald-500 text-white shadow-lg scale-105":
+                           className={`flex items-center rounded-lg px-2 py-1 transition-all duration-200 ${
+                            isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105":
                             "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
                            } `}>
                             
-                                <tab.icon size={18}/>
-                                {tab.label};
-
-                            
+                                <Icon size={18}/>
+                                {tab.label}
                             </button>
+
+
                         )
                     })
                     }
+
                 </div>
+
+            
             </div>
 
         </div>
