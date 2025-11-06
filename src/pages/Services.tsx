@@ -1,3 +1,4 @@
+import { label } from "framer-motion/client";
 import { ClipboardList, Clock, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
 
@@ -6,6 +7,13 @@ const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
     const [messageFilterMode, setMessageFilterMode] = useState <"all" | "read" | "unread">("all");
+
+    const messageModes = [
+        
+        {id: "all" , label: "All"},
+        {id: "read" , label: "Read"},
+        {id: "unread" , label: "Unread"},
+    ];
 
 
     return (
