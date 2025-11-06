@@ -46,7 +46,9 @@ const Services: React.FC = () => {
                     <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg">
                         <div className="flex flex-row justify-end">
                             <div>
-                                <button className="border rounded-lg">All</button>
+                                <button className="border rounded-lg bg-emerald-500 text-gray-50 shadow-lg">
+                                    <a href="">All</a>
+                                </button>
                             </div>
                         </div>
 
