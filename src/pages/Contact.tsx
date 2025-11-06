@@ -5,7 +5,7 @@ import { useLogin } from "../contexts/LoginContext";
 function contact() {
 
     const [recipient, setRecipient] = useState("");
-    const [recipientName,setRecipientName] = useState("");
+    const [recipientName, setRecipientName] = useState("");
     const [recipientEmail, setRecipientEmail] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -60,8 +60,8 @@ function contact() {
 
         } catch (error) {
             console.error("Error submitting contact form:", error);
-             alert("Failed to send message. Please try again.");
-        }finally {
+            alert("Failed to send message. Please try again.");
+        } finally {
             setLoading(false);
         }
 
@@ -93,12 +93,12 @@ function contact() {
         }
     }
 
-    const filterUsers = users.filter((user) =>{
+    const filterUsers = users.filter((user) => {
 
         const lower = searchTerm.toLowerCase();
-        return (user.name.toLowerCase().includes(lower) 
-        || user.email.toLowerCase().includes(lower)
-    );
+        return (user.name.toLowerCase().includes(lower)
+            || user.email.toLowerCase().includes(lower)
+        );
     });
 
 
@@ -139,7 +139,7 @@ function contact() {
                         </div>
 
                         <div>
-                            
+
                         </div>
 
                         {recipient && (
@@ -150,20 +150,20 @@ function contact() {
 
                                     <div>
                                         <input name="receiverName" value={searchTerm} type="text"
-                                        placeholder="Search by name or email..."
-                                        className="border border-gray-300 rounded-lg px-3 py-2 w-64 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"
-                                        onChange={(e) => setSearchTerm(e.target.value)}/>
+                                            placeholder="Search by name or email..."
+                                            className="border border-gray-300 rounded-lg px-3 py-2 w-64 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"
+                                            onChange={(e) => setSearchTerm(e.target.value)} />
                                     </div>
-                                    
+
                                 </div>
-                                
+
 
                                 {loading ? (
                                     <p className="text-gray-500 italic">Loading users...</p>
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
                                         {filterUsers.map((sendUser, index) => (
-                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index} onClick={()=>{
+                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index} onClick={() => {
                                                 setRecipientName(sendUser.name);
                                                 setRecipientEmail(sendUser.email);
                                             }}>
@@ -187,15 +187,16 @@ function contact() {
 
                         <div>
                             <label className="text-gray-800 font-medium mb-1 block">Message</label>
-                            <textarea name="subject" placeholder="Write your message here..." value={message} onChange={(e) => setMessage(e.target.value)}
+                            <textarea name="message" placeholder="Write your message here..." value={message} onChange={(e) => setMessage(e.target.value)}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             ></textarea>
                         </div>
 
-                        <button className="border border-gray-500 p-2 w-full rounded-lg hover:bg-emerald-700 hover:shadow-lg hover:text-white
-                    transition-all duration-200 ease-in-out font-semibold text-lg bg-emerald-600 px-6 py-2 hover:scale-105
-               focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-                            Send
+                        <button disabled={loading} className={`border border-gray-500 p-2 w-full rounded-lg hover:bg-emerald-700 hover:shadow-lg hover:text-white
+                        transition-all duration-200 ease-in-out font-semibold text-lg bg-emerald-600 px-6 py-2 hover:scale-105
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
+                        ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+                            {loading ? "Sending..." : "Send"}
                         </button>
                     </form>
                 </div>
