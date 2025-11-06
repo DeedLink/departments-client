@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber } from "../../api/api";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
@@ -148,26 +148,50 @@ const SurveyPlanPage = () => {
     setIsSaving(true);
     try {
       if (isNew) {
+        // Creating a new plan
         console.log("Creating new plan", plan);
-      } else {
-        console.log("Updating plan", plan);
-      }
-      
-      console.log("created plan: ", plan);
-      try{
-        const res = await createPlan(plan);
-        console.log("res: ",res);
-        if(res){
-          const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber || "", res.planId);
-          console.log("planIdUpdateRes: ", planIdUpdateRes);
+        try {
+          const res = await createPlan(plan);
+          console.log("res: ", res);
+          if (res && res.planId) {
+            // Update the deed with the plan ID
+            const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber || "", res.planId);
+            console.log("planIdUpdateRes: ", planIdUpdateRes);
+            
+            // Update local state with the created plan data
+            setPlan({ ...plan, planId: res.planId });
+            setIsNew(false);
+            showToast("Plan created successfully!", "success");
+          } else {
+            showToast("Error: Plan ID not returned from server", "error");
+          }
+        } catch (error) {
+          console.error("Error creating plan:", error);
+          showToast("Error creating plan", "error");
         }
-        showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
-        setIsNew(false);
-      }
-      catch{
-        showToast("Error creating plan", "error");
+      } else {
+        // Updating an existing plan
+        console.log("Updating plan", plan);
+        if (!plan._id) {
+          showToast("Error: Plan ID (_id) is missing. Cannot update plan.", "error");
+          return;
+        }
+        
+        try {
+          // Use MongoDB _id for updating, not planId
+          const res = await updatePlan(plan._id, plan);
+          console.log("Update res: ", res);
+          showToast("Plan updated successfully!", "success");
+          
+          // Refresh the plan data to ensure we have the latest version
+          await fetchPlan();
+        } catch (error) {
+          console.error("Error updating plan:", error);
+          showToast("Error updating plan", "error");
+        }
       }
     } catch (error) {
+      console.error("Error saving plan:", error);
       showToast("Error saving plan", "error");
     } finally {
       setIsSaving(false);
