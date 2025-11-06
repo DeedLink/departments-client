@@ -5,7 +5,15 @@ import React, { useState } from "react";
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    
+    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread">("all");
+
+    const messageModes = [
+
+        { id: "all", label: "All" },
+        { id: "read", label: "Read" },
+        { id: "unread", label: "Unread" },
+    ];
+
 
     return (
         <div className="min-h-screen p-4 sm:p-6">
@@ -17,22 +25,21 @@ const Services: React.FC = () => {
 
                 <div className="flex justify-start gap-3 bg-white shadow-md rounded-2xl sticky top-0 z-40 w-full p-3">
                     {[
-                        {id: "activities" , label: "Activities", icon: ClipboardList},
-                        {id: "history" , label: "History", icon: Clock},
-                        {id: "messages" , label: "Messages", icon: MessageSquare},
+                        { id: "activities", label: "Activities", icon: ClipboardList },
+                        { id: "history", label: "History", icon: Clock },
+                        { id: "messages", label: "Messages", icon: MessageSquare },
 
-                    ].map((tab)=>{
+                    ].map((tab) => {
                         const Icon = tab.icon;
-                        const isActive = activeTab ===tab.id;
+                        const isActive = activeTab === tab.id;
 
-                        return(
-                            <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
-                           className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-200 ${
-                            isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105":
-                            "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
-                           } `}>
-                            
-                                <Icon size={18}/>
+                        return (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-200 ${isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105" :
+                                    "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
+                                    } `}>
+
+                                <Icon size={18} />
                                 {tab.label}
                             </button>
 
@@ -43,7 +50,62 @@ const Services: React.FC = () => {
 
                 </div>
 
-            
+                {
+                    activeTab === "messages" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="flex justify-end gap-2 rounded-2xl sticky top-0 z-40 w-full p-3">
+
+                                    {
+                                        messageModes.map((mode) => {
+
+                                            const isActiveMessageMode = messageFilterMode === mode.id;
+                                            return (
+                                                <button key={mode.id} onClick={() => setMessageFilterMode(mode.id as any)}
+                                                    className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" :
+                                                        "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
+                                                    {mode.label}
+                                                </button>
+                                            )
+
+
+                                        })
+                                    }
+
+                               </div>
+                            </div>
+                        ) : null
+
+                }
+
+                {
+                    activeTab === "history" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+                                    
+                                </div>
+                            </div>
+                        ) : null
+
+                }
+
+                {
+                    activeTab === "activities" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+                                    
+
+                                </div>
+                            </div>
+                        ) : null
+
+                }
+
+
             </div>
 
         </div>
