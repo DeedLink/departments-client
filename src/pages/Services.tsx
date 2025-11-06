@@ -6,13 +6,13 @@ import React, { useState } from "react";
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    const [messageFilterMode, setMessageFilterMode] = useState <"all" | "read" | "unread">("all");
+    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread">("all");
 
     const messageModes = [
-        
-        {id: "all" , label: "All"},
-        {id: "read" , label: "Read"},
-        {id: "unread" , label: "Unread"},
+
+        { id: "all", label: "All" },
+        { id: "read", label: "Read" },
+        { id: "unread", label: "Unread" },
     ];
 
 
@@ -50,15 +50,27 @@ const Services: React.FC = () => {
                     }
 
                 </div>
-                <div className="w-full border rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg">
-                        <div className="flex flex-row justify-end">
-                            <div>
-                                <button className="border rounded-lg bg-emerald-500 text-gray-50 shadow-lg">
-                                    <a href="">All</a>
-                                </button>
-                            </div>
-                        </div>
+                <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+                        {
+                            messageModes.map((mode) => {
+
+                                const isActiveMessageMode = messageFilterMode === mode.id;
+                                return (
+                                    <button key={mode.id} onClick={()=> setMessageFilterMode(mode.id as any)} 
+                                    className={`flex items-center gap-1 rounded-md px-2 mx-2 py-1 transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" : 
+                                    "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
+                                        {mode.label}
+                                    </button>
+                                )
+
+                                
+                            })
+                        }
+
+        
+
 
 
 
