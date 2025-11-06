@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan } from "../../api/api";
+import { MapContainer, TileLayer, Marker, Polyline, Polygon, Popup, useMapEvents, useMap } from "react-leaflet";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getPlanBySeurveyorWalletAddress } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
-import { Trash2 } from "lucide-react";
-import { calculatePolygonArea } from "../../utils/functions";
+import { Trash2, AlertTriangle } from "lucide-react";
+import { calculatePolygonArea, doPolygonsOverlap, doBoundariesOverlap, type LocationPoint, calculateOverlapPercentage } from "../../utils/functions";
 import { useLoader } from "../../contexts/LoaderContext";
+import { useWallet } from "../../contexts/WalletContext";
 import SurveyPlanPageHeader from "../../components/surveyPlanPage/surveyplanpageheader";
 import SurveyPlanPageTabSelector from "../../components/surveyPlanPage/surveyplanpagetabselector";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 const defaultPlan: Plan = {
   planId: "",
@@ -40,6 +50,18 @@ const MapClickHandler = ({ onAddPoint }: { onAddPoint: (latlng: [number, number]
   return null;
 };
 
+// FitBounds component for map
+const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [coords, map]);
+  return null;
+};
+
 const SurveyPlanPage = () => {
   const { deedNumber } = useParams<{ deedNumber: string }>();
   const [plan, setPlan] = useState<Plan>(defaultPlan);
@@ -48,8 +70,12 @@ const SurveyPlanPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'map' | 'details' | 'summary'>('map');
+  const [overlappingPlans, setOverlappingPlans] = useState<Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }>>([]);
+  const [allPlans, setAllPlans] = useState<Plan[]>([]);
+  const [loadingOverlaps, setLoadingOverlaps] = useState(false);
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
+  const { account } = useWallet();
 
   const fetchPlan = async () => {
     setIsLoading(true);
@@ -58,7 +84,19 @@ const SurveyPlanPage = () => {
       if (deedNumber) {
         const res = await getPlanByDeedNumber(deedNumber);
         if (res.success) {
-          setPlan(res.data);
+          // Convert coordinates from {longitude, latitude} to {latitude, longitude} if needed
+          const planData = res.data;
+          if (planData.coordinates && Array.isArray(planData.coordinates)) {
+            planData.coordinates = planData.coordinates.map((coord: any) => {
+              // Handle both formats
+              if (coord.latitude !== undefined && coord.longitude !== undefined) {
+                return { latitude: coord.latitude, longitude: coord.longitude };
+              }
+              // If stored as {longitude, latitude}, swap them
+              return { latitude: coord.longitude || coord.latitude, longitude: coord.latitude || coord.longitude };
+            });
+          }
+          setPlan(planData);
           setIsNew(false);
         }
         else if(!res.success) {
@@ -85,6 +123,114 @@ const SurveyPlanPage = () => {
   useEffect(() => {
     fetchPlan();
   }, [deedNumber]);
+
+  // Fetch all plans to check for overlaps
+  useEffect(() => {
+    const fetchAllPlans = async () => {
+      try {
+        // Try to get plans by surveyor first, fallback to all plans
+        let plans: any[] = [];
+        if (account) {
+          try {
+            plans = await getPlanBySeurveyorWalletAddress(account);
+          } catch {
+            // Fallback to all plans if surveyor-specific fails
+            plans = await getAllPlans();
+          }
+        } else {
+          plans = await getAllPlans();
+        }
+        
+        // Convert coordinates format if needed
+        const normalizedPlans: Plan[] = plans.map((p: any) => {
+          if (p.coordinates && Array.isArray(p.coordinates)) {
+            p.coordinates = p.coordinates.map((coord: any) => {
+              // Ensure coordinates are in {latitude, longitude} format
+              if (coord.latitude !== undefined && coord.longitude !== undefined) {
+                return { latitude: coord.latitude, longitude: coord.longitude };
+              }
+              // Handle if stored differently
+              return { latitude: coord.latitude || coord.lat || 0, longitude: coord.longitude || coord.lng || 0 };
+            });
+          }
+          return p as Plan;
+        });
+        
+        setAllPlans(normalizedPlans);
+      } catch (error) {
+        console.error("Error fetching plans for overlap detection:", error);
+      }
+    };
+    fetchAllPlans();
+  }, [account]);
+
+  // Check for overlaps when plan coordinates or boundaries change
+  useEffect(() => {
+    const checkOverlaps = () => {
+      if (!plan.coordinates || plan.coordinates.length < 3) {
+        setOverlappingPlans([]);
+        return;
+      }
+
+      setLoadingOverlaps(true);
+      const overlaps: Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }> = [];
+
+      // Convert current plan coordinates to LocationPoint format
+      // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+      const currentPlanCoords: LocationPoint[] = plan.coordinates.map(coord => ({
+        longitude: coord.longitude,
+        latitude: coord.latitude
+      }));
+
+      // Check against all other plans
+      for (const otherPlan of allPlans) {
+        // Skip the current plan itself
+        if (otherPlan._id === plan._id || otherPlan.planId === plan.planId) {
+          continue;
+        }
+
+        if (!otherPlan.coordinates || otherPlan.coordinates.length < 3) {
+          continue;
+        }
+
+        // Convert other plan coordinates to LocationPoint format
+        // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+        const otherPlanCoords: LocationPoint[] = otherPlan.coordinates.map(coord => ({
+          longitude: coord.longitude,
+          latitude: coord.latitude
+        }));
+
+        // Check polygon overlap
+        const polygonOverlap = doPolygonsOverlap(currentPlanCoords, otherPlanCoords);
+
+        // Check boundary overlap
+        const boundaryOverlap = doBoundariesOverlap(plan.sides, otherPlan.sides);
+
+        if (polygonOverlap || boundaryOverlap) {
+          const overlapType: 'polygon' | 'boundary' | 'both' = 
+            polygonOverlap && boundaryOverlap ? 'both' :
+            polygonOverlap ? 'polygon' : 'boundary';
+
+          const overlapPercentage = polygonOverlap 
+            ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
+            : undefined;
+
+          overlaps.push({
+            plan: otherPlan,
+            overlapType,
+            overlapPercentage,
+          });
+        }
+      }
+
+      setOverlappingPlans(overlaps);
+      setLoadingOverlaps(false);
+    };
+
+    // Debounce overlap checking
+    const timeoutId = setTimeout(checkOverlaps, 500);
+    return () => clearTimeout(timeoutId);
+  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId]);
 
   const coordinateToLatLng = (coord: Coordinate): [number, number] => {
     return [coord.latitude, coord.longitude];
@@ -233,10 +379,52 @@ const SurveyPlanPage = () => {
                   </div>
                 </div>
                 
+                {/* Overlap Warning Banner */}
+                {overlappingPlans.length > 0 && (
+                  <div className="mb-4 bg-red-50 border-2 border-red-300 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-red-900 mb-2">
+                          ⚠️ {overlappingPlans.length} Overlap{overlappingPlans.length !== 1 ? 's' : ''} Detected
+                        </h3>
+                        <div className="space-y-2">
+                          {overlappingPlans.map((overlap, idx) => (
+                            <div key={idx} className="bg-white rounded-lg p-2 border border-red-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                  overlap.overlapType === 'polygon' 
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : overlap.overlapType === 'boundary'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
+                                   overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
+                                   '⚠️ Both'}
+                                </span>
+                                {overlap.overlapPercentage !== undefined && (
+                                  <span className="text-xs font-semibold text-red-600">
+                                    {overlap.overlapPercentage.toFixed(1)}% overlap
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-700">
+                                <span className="font-semibold">Plan:</span> {overlap.plan.planId} 
+                                {overlap.plan.deedNumber && <span className="text-gray-500"> (Deed: {overlap.plan.deedNumber})</span>}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="h-64 sm:h-96 w-full border border-gray-600 rounded-xl overflow-hidden">
                   <MapContainer
-                    center={[7.8731, 80.7718]}
-                    zoom={8}
+                    center={plan.coordinates.length > 0 ? coordinateToLatLng(plan.coordinates[0]) : [7.8731, 80.7718]}
+                    zoom={plan.coordinates.length > 0 ? 15 : 8}
                     className="h-full w-full"
                   >
                     <TileLayer
@@ -244,8 +432,59 @@ const SurveyPlanPage = () => {
                       attribution="&copy; OpenStreetMap contributors"
                     />
 
+                    {/* Fit bounds to show all polygons */}
+                    {plan.coordinates.length > 0 && (
+                      <FitBounds coords={[
+                        ...plan.coordinates.map(coordinateToLatLng),
+                        ...overlappingPlans.flatMap(op => 
+                          op.plan.coordinates?.map(coord => [coord.latitude, coord.longitude] as [number, number]) || []
+                        )
+                      ]} />
+                    )}
+
                     <MapClickHandler onAddPoint={addPoint} />
 
+                    {/* Render overlapping plans first (in background) */}
+                    {overlappingPlans.map((overlap, idx) => {
+                      const coords = overlap.plan.coordinates?.map(coord => [coord.latitude, coord.longitude] as [number, number]) || [];
+                      if (coords.length < 3) return null;
+                      
+                      const color = overlap.overlapType === 'polygon' ? '#3b82f6' : 
+                                   overlap.overlapType === 'boundary' ? '#f59e0b' : '#ef4444';
+                      
+                      return (
+                        <Polygon
+                          key={`overlap-${idx}`}
+                          positions={coords}
+                          pathOptions={{
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.2,
+                            weight: 2,
+                            dashArray: '5, 5'
+                          }}
+                        >
+                          <Popup>
+                            <div className="text-sm">
+                              <strong className="font-semibold">Overlapping Plan: {overlap.plan.planId}</strong>
+                              {overlap.plan.deedNumber && (
+                                <>
+                                  <br />
+                                  <span className="text-gray-600">Deed: {overlap.plan.deedNumber}</span>
+                                </>
+                              )}
+                              <br />
+                              <span className="text-xs text-gray-500">
+                                Type: {overlap.overlapType}
+                                {overlap.overlapPercentage !== undefined && ` (${overlap.overlapPercentage.toFixed(1)}%)`}
+                              </span>
+                            </div>
+                          </Popup>
+                        </Polygon>
+                      );
+                    })}
+
+                    {/* Current plan markers */}
                     {plan.coordinates.map((coord, idx) => (
                       <Marker
                         key={idx}
@@ -261,10 +500,44 @@ const SurveyPlanPage = () => {
                       />
                     ))}
 
+                    {/* Current plan polygon */}
                     {plan.coordinates.length > 1 && (
+                      <Polygon
+                        positions={[...plan.coordinates.map(coordinateToLatLng), coordinateToLatLng(plan.coordinates[0])]}
+                        pathOptions={{
+                          color: overlappingPlans.length > 0 ? "#ef4444" : "#10B981",
+                          fillColor: overlappingPlans.length > 0 ? "#ef4444" : "#10B981",
+                          fillOpacity: 0.3,
+                          weight: 3
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <strong className="font-semibold">Current Plan: {plan.planId || 'New Plan'}</strong>
+                            {plan.deedNumber && (
+                              <>
+                                <br />
+                                <span className="text-gray-600">Deed: {plan.deedNumber}</span>
+                              </>
+                            )}
+                            {overlappingPlans.length > 0 && (
+                              <>
+                                <br />
+                                <span className="text-red-600 font-semibold">
+                                  ⚠️ {overlappingPlans.length} overlap{overlappingPlans.length !== 1 ? 's' : ''} detected
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </Popup>
+                      </Polygon>
+                    )}
+
+                    {/* Fallback to polyline if no polygon yet */}
+                    {plan.coordinates.length > 1 && plan.coordinates.length < 3 && (
                       <Polyline 
                         positions={[...plan.coordinates.map(coordinateToLatLng), coordinateToLatLng(plan.coordinates[0])]} 
-                        color="#10B981" 
+                        color={overlappingPlans.length > 0 ? "#ef4444" : "#10B981"} 
                         weight={3}
                       />
                     )}
@@ -275,6 +548,16 @@ const SurveyPlanPage = () => {
                   <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
                     <span className="w-4 h-4 text-red-500">⚠</span>
                     {errors.coordinates}
+                  </p>
+                )}
+
+                {loadingOverlaps && (
+                  <p className="text-blue-400 text-sm mt-2 flex items-center gap-1">
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" strokeWidth={4} className="opacity-25" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M4 12a8 8 0 018-8" />
+                    </svg>
+                    Checking for overlaps...
                   </p>
                 )}
                 
@@ -553,6 +836,23 @@ const SurveyPlanPage = () => {
                         <span className="text-black">Area Calculation</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.areaSize > 0 ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-yellow-600/20 text-yellow-400 border border-yellow-600/30'}`}>
                           {plan.areaSize > 0 ? 'Calculated' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-black">Overlap Status</span>
+                        <span className={`text-sm px-2 py-1 rounded flex items-center gap-1 ${
+                          overlappingPlans.length > 0 
+                            ? 'bg-red-600/20 text-red-400 border border-red-600/30' 
+                            : 'bg-green-600/20 text-green-400 border border-green-600/30'
+                        }`}>
+                          {overlappingPlans.length > 0 ? (
+                            <>
+                              <AlertTriangle className="w-3 h-3" />
+                              {overlappingPlans.length} overlap{overlappingPlans.length !== 1 ? 's' : ''}
+                            </>
+                          ) : (
+                            'No overlaps'
+                          )}
                         </span>
                       </div>
                     </div>
