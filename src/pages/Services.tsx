@@ -72,10 +72,32 @@ const Services: React.FC = () => {
                                         })
                                     }
 
+                               </div>
+                            </div>
+                        ) : null
 
+                }
 
+                {
+                    activeTab === "history" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
 
+                                    
+                                </div>
+                            </div>
+                        ) : null
 
+                }
+
+                {
+                    activeTab === "activities" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+                                    
 
                                 </div>
                             </div>
