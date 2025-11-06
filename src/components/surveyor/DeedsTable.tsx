@@ -8,6 +8,9 @@ import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
 import DeedPopup from "./DeedPopup";
 import { detectOverlappingDeeds, type OverlapResult } from "../../utils/functions";
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -20,6 +23,7 @@ const DeedsTable = () => {
   const [overlaps, setOverlaps] = useState<OverlapResult[]>([]);
   const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
   const [loadingOverlaps, setLoadingOverlaps] = useState(false);
+  const [plansMap, setPlansMap] = useState<Record<string, { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string } }>>({});
   const { account } = useWallet();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -66,9 +70,13 @@ const DeedsTable = () => {
           });
 
         await Promise.all(planPromises);
+        setPlansMap(plans);
 
         // Detect overlaps
         const detectedOverlaps = detectOverlappingDeeds(deeds, plans);
+        console.log('Detected overlaps:', detectedOverlaps);
+        console.log('Total deeds:', deeds.length);
+        console.log('Plans fetched:', Object.keys(plans).length);
         setOverlaps(detectedOverlaps);
       } catch (error) {
         console.error("Error detecting overlaps:", error);
@@ -91,6 +99,11 @@ const DeedsTable = () => {
   // Check if a deed has overlaps
   const hasOverlaps = (deedNumber: string): boolean => {
     return getOverlappingDeeds(deedNumber).length > 0;
+  };
+
+  // Get deed info helper (used in error display)
+  const getDeedInfo = (deedNumber: string) => {
+    return deeds.find(d => d.deedNumber === deedNumber);
   };
 
   const filteredDeeds = useMemo(() => {
@@ -152,25 +165,107 @@ const getLatestValuation = (deed: Deed) => {
 
       {/* Overlap Alert Banner */}
       {!loadingOverlaps && overlaps.length > 0 && (
-        <div className="bg-red-50 border-b border-red-200 p-4">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b-2 border-red-300 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="p-2 bg-red-100 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-red-800">
-                  {overlaps.length} Overlap{overlaps.length !== 1 ? 's' : ''} Detected
+                <p className="text-base font-bold text-red-900">
+                  ⚠️ {overlaps.length} Overlap Error{overlaps.length !== 1 ? 's' : ''} Detected
                 </p>
-                <p className="text-xs text-red-600">
-                  Some deeds have overlapping coordinates or boundaries
+                <p className="text-sm text-red-700 mt-1">
+                  Critical: Some deeds have overlapping coordinates or boundaries that need immediate attention
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOverlapModalOpen(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-            >
-              View Details
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsOverlapModalOpen(true)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-md flex items-center gap-2"
+              >
+                <Map className="w-4 h-4" />
+                View on Map
+              </button>
+              <button
+                onClick={() => setIsOverlapModalOpen(true)}
+                className="px-4 py-2 bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Errors Summary Panel */}
+      {!loadingOverlaps && overlaps.length > 0 && (
+        <div className="bg-red-50 border-b border-red-200 p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-red-900 mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Overlap Errors Summary
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {overlaps.slice(0, 6).map((overlap, index) => {
+                  const deed1Info = getDeedInfo(overlap.deed1);
+                  const deed2Info = getDeedInfo(overlap.deed2);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white border-2 border-red-300 rounded-lg p-3 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          overlap.overlapType === 'polygon' 
+                            ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                            : overlap.overlapType === 'boundary'
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}>
+                          {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
+                           overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
+                           '⚠️ Both'}
+                        </span>
+                        {overlap.overlapPercentage !== undefined && (
+                          <span className="text-xs font-semibold text-red-600">
+                            {overlap.overlapPercentage.toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-semibold text-gray-600">Deed 1:</span>
+                          <span className="text-xs font-mono text-red-700 font-bold">{overlap.deed1}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-semibold text-gray-600">Deed 2:</span>
+                          <span className="text-xs font-mono text-red-700 font-bold">{overlap.deed2}</span>
+                        </div>
+                        {deed1Info && deed2Info && (
+                          <div className="text-xs text-gray-500 mt-1 pt-1 border-t border-gray-200">
+                            {deed1Info.ownerFullName} ↔ {deed2Info.ownerFullName}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {overlaps.length > 6 && (
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => setIsOverlapModalOpen(true)}
+                    className="text-sm text-red-600 hover:text-red-800 font-semibold underline"
+                  >
+                    View all {overlaps.length} overlap errors →
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -350,6 +445,7 @@ const getLatestValuation = (deed: Deed) => {
         <OverlapDetailsModal
           overlaps={overlaps}
           deeds={deeds}
+          plansMap={plansMap}
           onClose={() => setIsOverlapModalOpen(false)}
         />
       )}
@@ -361,10 +457,32 @@ const getLatestValuation = (deed: Deed) => {
 interface OverlapDetailsModalProps {
   overlaps: OverlapResult[];
   deeds: Deed[];
+  plansMap: Record<string, { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string } }>;
   onClose: () => void;
 }
 
-const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, deeds, onClose }) => {
+// Fix Leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// FitBounds component for map
+const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [coords, map]);
+  return null;
+};
+
+const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, deeds, plansMap, onClose }) => {
+  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const getDeedInfo = (deedNumber: string) => {
     return deeds.find(d => d.deedNumber === deedNumber);
   };
@@ -395,6 +513,79 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
     }
   };
 
+  // Get all unique deed numbers from overlaps
+  const getUniqueOverlappingDeeds = () => {
+    const deedNumbers = new Set<string>();
+    overlaps.forEach(overlap => {
+      deedNumbers.add(overlap.deed1);
+      deedNumbers.add(overlap.deed2);
+    });
+    return Array.from(deedNumbers);
+  };
+
+  // Get coordinates for a deed
+  const getDeedCoordinates = (deedNumber: string): [number, number][] => {
+    const deed = deeds.find(d => d.deedNumber === deedNumber);
+    if (!deed) return [];
+
+    // Try to get plan coordinates first
+    if (deed.surveyPlanNumber && plansMap[deed.surveyPlanNumber]) {
+      const planCoords = plansMap[deed.surveyPlanNumber].coordinates;
+      // Plan coordinates are stored as {longitude, latitude} but we need [latitude, longitude] for map
+      return planCoords.map(coord => {
+        // Handle both formats: {latitude, longitude} or {longitude, latitude}
+        if ('latitude' in coord && 'longitude' in coord) {
+          return [coord.latitude, coord.longitude] as [number, number];
+        }
+        return [0, 0] as [number, number];
+      }).filter(([lat, lng]) => lat !== 0 || lng !== 0);
+    }
+
+    // Fall back to deed location
+    if (deed.location && deed.location.length > 0) {
+      return deed.location.map(coord => {
+        // Deed location is {latitude, longitude}
+        return [coord.latitude, coord.longitude] as [number, number];
+      });
+    }
+
+    return [];
+  };
+
+  // Get all coordinates for map bounds
+  const getAllCoordinates = (): [number, number][] => {
+    const allCoords: [number, number][] = [];
+    getUniqueOverlappingDeeds().forEach(deedNumber => {
+      const coords = getDeedCoordinates(deedNumber);
+      allCoords.push(...coords);
+    });
+    return allCoords;
+  };
+
+  // Color palette for different deeds
+  const colors = [
+    '#ef4444', // red
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#f97316', // orange
+  ];
+
+  const getDeedColor = (deedNumber: string): string => {
+    const uniqueDeeds = getUniqueOverlappingDeeds();
+    const index = uniqueDeeds.indexOf(deedNumber);
+    return colors[index % colors.length];
+  };
+
+  const allCoords = getAllCoordinates();
+  const center: [number, number] = allCoords.length > 0 
+    ? [allCoords.reduce((sum, [lat]) => sum + lat, 0) / allCoords.length, 
+       allCoords.reduce((sum, [, lng]) => sum + lng, 0) / allCoords.length]
+    : [7.8731, 80.7718]; // Default center (Sri Lanka)
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 lg:ml-64" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -418,60 +609,156 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
               </svg>
             </button>
           </div>
+          
+          {/* Tab Selector */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'list'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              List View
+            </button>
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'map'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Map className="w-4 h-4 inline mr-1" />
+              Map View
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <div className="space-y-4">
-            {overlaps.map((overlap, index) => {
-              const deed1Info = getDeedInfo(overlap.deed1);
-              const deed2Info = getDeedInfo(overlap.deed2);
-              
-              return (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getOverlapTypeColor(overlap.overlapType)}`}>
-                          {getOverlapTypeLabel(overlap.overlapType)}
-                        </span>
-                        {overlap.overlapPercentage !== undefined && (
-                          <span className="text-xs text-gray-600">
-                            {overlap.overlapPercentage.toFixed(1)}% overlap
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-lg p-3 border border-gray-200">
-                          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Deed 1</p>
-                          <p className="font-mono font-semibold text-green-600">{overlap.deed1}</p>
-                          {deed1Info && (
-                            <p className="text-sm text-gray-600 mt-1">{deed1Info.ownerFullName}</p>
-                          )}
-                        </div>
-                        <div className="bg-white rounded-lg p-3 border border-gray-200">
-                          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Deed 2</p>
-                          <p className="font-mono font-semibold text-green-600">{overlap.deed2}</p>
-                          {deed2Info && (
-                            <p className="text-sm text-gray-600 mt-1">{deed2Info.ownerFullName}</p>
-                          )}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+          {activeTab === 'map' ? (
+            <div className="h-[600px] w-full border border-gray-300 rounded-xl overflow-hidden">
+              <MapContainer
+                center={center}
+                zoom={10}
+                scrollWheelZoom={true}
+                className="h-full w-full"
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap contributors"
+                />
+                {allCoords.length > 0 && <FitBounds coords={allCoords} />}
+                
+                {/* Render polygons for each overlapping deed */}
+                {getUniqueOverlappingDeeds().map((deedNumber) => {
+                  const coords = getDeedCoordinates(deedNumber);
+                  const deed = deeds.find(d => d.deedNumber === deedNumber);
+                  const color = getDeedColor(deedNumber);
+                  
+                  if (coords.length < 3) return null;
+                  
+                  return (
+                    <React.Fragment key={deedNumber}>
+                      <Polygon
+                        positions={coords}
+                        pathOptions={{
+                          color: color,
+                          fillColor: color,
+                          fillOpacity: 0.3,
+                          weight: 3,
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <strong className="font-semibold">Deed: {deedNumber}</strong>
+                            {deed && (
+                              <>
+                                <br />
+                                <span className="text-gray-600">Owner: {deed.ownerFullName}</span>
+                                <br />
+                                <span className="text-gray-600">Type: {deed.landType}</span>
+                              </>
+                            )}
+                          </div>
+                        </Popup>
+                      </Polygon>
+                      {/* Add marker at centroid */}
+                      {coords.length > 0 && (
+                        <Marker
+                          position={[
+                            coords.reduce((sum, [lat]) => sum + lat, 0) / coords.length,
+                            coords.reduce((sum, [, lng]) => sum + lng, 0) / coords.length
+                          ]}
+                          icon={L.divIcon({
+                            className: 'custom-marker',
+                            html: `<div style="background-color: ${color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${deedNumber}</div>`,
+                            iconSize: [60, 30],
+                            iconAnchor: [30, 15],
+                          })}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </MapContainer>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {overlaps.map((overlap, index) => {
+                  const deed1Info = getDeedInfo(overlap.deed1);
+                  const deed2Info = getDeedInfo(overlap.deed2);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getOverlapTypeColor(overlap.overlapType)}`}>
+                              {getOverlapTypeLabel(overlap.overlapType)}
+                            </span>
+                            {overlap.overlapPercentage !== undefined && (
+                              <span className="text-xs text-gray-600">
+                                {overlap.overlapPercentage.toFixed(1)}% overlap
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white rounded-lg p-3 border border-gray-200">
+                              <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Deed 1</p>
+                              <p className="font-mono font-semibold text-green-600">{overlap.deed1}</p>
+                              {deed1Info && (
+                                <p className="text-sm text-gray-600 mt-1">{deed1Info.ownerFullName}</p>
+                              )}
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-gray-200">
+                              <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Deed 2</p>
+                              <p className="font-mono font-semibold text-green-600">{overlap.deed2}</p>
+                              {deed2Info && (
+                                <p className="text-sm text-gray-600 mt-1">{deed2Info.ownerFullName}</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
 
-          {overlaps.length === 0 && (
-            <div className="text-center py-12">
-              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg font-medium">No overlaps detected</p>
-              <p className="text-gray-500 text-sm mt-1">All deeds have unique coordinates and boundaries</p>
-            </div>
+              {overlaps.length === 0 && (
+                <div className="text-center py-12">
+                  <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg font-medium">No overlaps detected</p>
+                  <p className="text-gray-500 text-sm mt-1">All deeds have unique coordinates and boundaries</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 

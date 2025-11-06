@@ -111,6 +111,20 @@ const doLineSegmentsIntersect = (
 };
 
 /**
+ * Validate coordinates are within valid ranges
+ */
+const isValidCoordinate = (coord: LocationPoint): boolean => {
+  // Sri Lanka approximate bounds: lat 5.9-9.8, lng 79.7-81.9
+  // But we'll use more generous bounds to allow for other regions
+  return (
+    coord.latitude >= -90 && coord.latitude <= 90 &&
+    coord.longitude >= -180 && coord.longitude <= 180 &&
+    !isNaN(coord.latitude) && !isNaN(coord.longitude) &&
+    isFinite(coord.latitude) && isFinite(coord.longitude)
+  );
+};
+
+/**
  * Check if two polygons overlap by checking:
  * 1. If any vertex of polygon1 is inside polygon2
  * 2. If any vertex of polygon2 is inside polygon1
@@ -122,28 +136,56 @@ export const doPolygonsOverlap = (
 ): boolean => {
   if (polygon1.length < 3 || polygon2.length < 3) return false;
 
+  // Validate all coordinates
+  const validPoly1 = polygon1.filter(isValidCoordinate);
+  const validPoly2 = polygon2.filter(isValidCoordinate);
+  
+  if (validPoly1.length < 3 || validPoly2.length < 3) return false;
+
+  // Check if polygons are too far apart (quick rejection)
+  const getBounds = (poly: LocationPoint[]) => {
+    let minLat = Infinity, maxLat = -Infinity;
+    let minLng = Infinity, maxLng = -Infinity;
+    for (const p of poly) {
+      minLat = Math.min(minLat, p.latitude);
+      maxLat = Math.max(maxLat, p.latitude);
+      minLng = Math.min(minLng, p.longitude);
+      maxLng = Math.max(maxLng, p.longitude);
+    }
+    return { minLat, maxLat, minLng, maxLng };
+  };
+
+  const bounds1 = getBounds(validPoly1);
+  const bounds2 = getBounds(validPoly2);
+
+  // If bounding boxes don't overlap, polygons can't overlap
+  if (bounds1.maxLat < bounds2.minLat || bounds2.maxLat < bounds1.minLat ||
+      bounds1.maxLng < bounds2.minLng || bounds2.maxLng < bounds1.minLng) {
+    return false;
+  }
+
   // Check if any vertex of polygon1 is inside polygon2
-  for (const point of polygon1) {
-    if (isPointInPolygon(point, polygon2)) {
+  for (const point of validPoly1) {
+    if (isPointInPolygon(point, validPoly2)) {
       return true;
     }
   }
 
   // Check if any vertex of polygon2 is inside polygon1
-  for (const point of polygon2) {
-    if (isPointInPolygon(point, polygon1)) {
+  for (const point of validPoly2) {
+    if (isPointInPolygon(point, validPoly1)) {
       return true;
     }
   }
 
   // Check if any edges intersect
-  for (let i = 0; i < polygon1.length; i++) {
-    const p1 = polygon1[i];
-    const p2 = polygon1[(i + 1) % polygon1.length];
+  for (let i = 0; i < validPoly1.length; i++) {
+    const p1 = validPoly1[i];
+    const p2 = validPoly1[(i + 1) % validPoly1.length];
 
-    for (let j = 0; j < polygon2.length; j++) {
-      const p3 = polygon2[j];
-      const p4 = polygon2[(j + 1) % polygon2.length];
+    for (let j = 0; j < validPoly2.length; j++) {
+      const p3 = validPoly2[j];
+      const p4 = validPoly2[(j + 1) % validPoly2.length];
 
       if (doLineSegmentsIntersect(p1, p2, p3, p4)) {
         return true;
@@ -187,7 +229,18 @@ export const calculateOverlapPercentage = (
 };
 
 /**
+ * Check if a string is a deed number reference (e.g., "D001", "78216")
+ */
+const isDeedNumberReference = (value: string): boolean => {
+  if (!value) return false;
+  // Check if it starts with 'D' followed by numbers, or is just numbers (deed numbers)
+  return /^D\d+$/.test(value.trim()) || /^\d+$/.test(value.trim());
+};
+
+/**
  * Check if boundaries (sides) overlap by comparing side references
+ * Only considers it an overlap if both deeds reference the same deed number
+ * Generic landmarks like "Road", "River" are ignored to avoid false positives
  */
 export const doBoundariesOverlap = (
   sides1?: { North?: string; South?: string; East?: string; West?: string },
@@ -195,10 +248,15 @@ export const doBoundariesOverlap = (
 ): boolean => {
   if (!sides1 || !sides2) return false;
 
-  const sides1Values = [sides1.North, sides1.South, sides1.East, sides1.West].filter(Boolean);
-  const sides2Values = [sides2.North, sides2.South, sides2.East, sides2.West].filter(Boolean);
+  const sides1Values = [sides1.North, sides1.South, sides1.East, sides1.West]
+    .filter(Boolean)
+    .filter(val => isDeedNumberReference(val!)); // Only check deed number references
+  
+  const sides2Values = [sides2.North, sides2.South, sides2.East, sides2.West]
+    .filter(Boolean)
+    .filter(val => isDeedNumberReference(val!)); // Only check deed number references
 
-  // Check if any boundary references match
+  // Check if any deed number boundary references match
   for (const side1 of sides1Values) {
     for (const side2 of sides2Values) {
       if (side1 === side2 && side1) {
@@ -234,8 +292,26 @@ export const detectOverlappingDeeds = (
       const plan2 = deed2.surveyPlanNumber ? (plansMap instanceof Map ? plansMap.get(deed2.surveyPlanNumber) : plansMap[deed2.surveyPlanNumber]) : null;
 
       // Use plan coordinates if available, otherwise use deed location
-      const coords1 = plan1?.coordinates || deed1.location;
-      const coords2 = plan2?.coordinates || deed2.location;
+      // Both are stored as {longitude, latitude} format (LocationPoint)
+      let coords1: LocationPoint[] = [];
+      let coords2: LocationPoint[] = [];
+
+      if (plan1?.coordinates && plan1.coordinates.length >= 3) {
+        coords1 = plan1.coordinates;
+      } else if (deed1.location && deed1.location.length >= 3) {
+        coords1 = deed1.location;
+      }
+
+      if (plan2?.coordinates && plan2.coordinates.length >= 3) {
+        coords2 = plan2.coordinates;
+      } else if (deed2.location && deed2.location.length >= 3) {
+        coords2 = deed2.location;
+      }
+
+      // Skip if either deed has no valid coordinates
+      if (coords1.length < 3 || coords2.length < 3) {
+        continue;
+      }
 
       // Check polygon overlap
       const polygonOverlap = doPolygonsOverlap(coords1, coords2);
