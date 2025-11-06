@@ -50,32 +50,40 @@ const Services: React.FC = () => {
                     }
 
                 </div>
-                <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
 
-                        {
-                            messageModes.map((mode) => {
+                {
+                    activeTab === "messages" ?
+                        (
+                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
 
-                                const isActiveMessageMode = messageFilterMode === mode.id;
-                                return (
-                                    <button key={mode.id} onClick={()=> setMessageFilterMode(mode.id as any)} 
-                                    className={`flex items-center gap-1 rounded-md px-2 mx-2 py-1 transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" : 
-                                    "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
-                                        {mode.label}
-                                    </button>
-                                )
+                                    {
+                                        messageModes.map((mode) => {
 
-                                
-                            })
-                        }
-
-        
+                                            const isActiveMessageMode = messageFilterMode === mode.id;
+                                            return (
+                                                <button key={mode.id} onClick={() => setMessageFilterMode(mode.id as any)}
+                                                    className={`flex items-center gap-1 rounded-md px-2 mx-2 py-1 transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" :
+                                                        "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
+                                                    {mode.label}
+                                                </button>
+                                            )
 
 
+                                        })
+                                    }
 
 
-                    </div>
-                </div>
+
+
+
+
+                                </div>
+                            </div>
+                        ) : null
+
+                }
+
 
             </div>
 
