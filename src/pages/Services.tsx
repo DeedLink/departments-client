@@ -5,7 +5,8 @@ import React, { useState } from "react";
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    
+    const [messageFilterMode, setMessageFilterMode] = useState <"all" | "read" | "unread">("all");
+
 
     return (
         <div className="min-h-screen p-4 sm:p-6">
@@ -17,22 +18,21 @@ const Services: React.FC = () => {
 
                 <div className="flex justify-start gap-3 bg-white shadow-md rounded-2xl sticky top-0 z-40 w-full p-3">
                     {[
-                        {id: "activities" , label: "Activities", icon: ClipboardList},
-                        {id: "history" , label: "History", icon: Clock},
-                        {id: "messages" , label: "Messages", icon: MessageSquare},
+                        { id: "activities", label: "Activities", icon: ClipboardList },
+                        { id: "history", label: "History", icon: Clock },
+                        { id: "messages", label: "Messages", icon: MessageSquare },
 
-                    ].map((tab)=>{
+                    ].map((tab) => {
                         const Icon = tab.icon;
-                        const isActive = activeTab ===tab.id;
+                        const isActive = activeTab === tab.id;
 
-                        return(
-                            <button key={tab.id} onClick={()=> setActiveTab(tab.id as any)}
-                           className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-200 ${
-                            isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105":
-                            "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
-                           } `}>
-                            
-                                <Icon size={18}/>
+                        return (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-200 ${isActive ? "bg-emerald-500 text-gray-50 shadow-lg scale-105" :
+                                    "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
+                                    } `}>
+
+                                <Icon size={18} />
                                 {tab.label}
                             </button>
 
@@ -42,8 +42,19 @@ const Services: React.FC = () => {
                     }
 
                 </div>
+                <div className="w-full border rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg">
+                        <div className="flex flex-row justify-end">
+                            <div>
+                                <button className="border rounded-lg">All</button>
+                            </div>
+                        </div>
 
-            
+
+
+                    </div>
+                </div>
+
             </div>
 
         </div>
