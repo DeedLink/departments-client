@@ -5,6 +5,8 @@ import { useLogin } from "../contexts/LoginContext";
 function contact() {
 
     const [recipient, setRecipient] = useState("");
+    const [recipientName,setRecipientName] = useState("");
+    const [recipientEmail, setRecipientEmail] = useState("");
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
@@ -39,12 +41,14 @@ function contact() {
                 senderEmail: user.email,
                 senderRole: user.role,
                 recipientRole: recipient,
-                subject,
-                message,
+                recipientName: recipientName,
+                recipientEmail: recipientEmail,
+                subject: subject,
+                message: message,
 
             }
 
-            const response = await axios.post("https://api-deedlink-contact-service.vercel.app/api/contact/message", payload);
+            const response = await axios.post("https://api-deedlink-notification-service.vercel.app/api/notifications/message", payload);
 
             console.log("✅ Message sent:", response.data);
             alert("✅ Message sent successfully!");
@@ -159,7 +163,10 @@ function contact() {
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
                                         {filterUsers.map((sendUser, index) => (
-                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index}>
+                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index} onClick={()=>{
+                                                setRecipientName(sendUser.name);
+                                                setRecipientEmail(sendUser.email);
+                                            }}>
                                                 <span className="font-medium">{sendUser.name || "Unnamed User"}</span> {" "}
                                                 <span className="text-gray-500 text-sm">({sendUser.email})</span>
                                             </li>
