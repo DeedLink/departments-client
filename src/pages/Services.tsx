@@ -6,9 +6,16 @@ import axios from "axios";
 
 const Services: React.FC = () => {
 
+    interface Message {
+        recipientEmail: string;
+        message: string;
+        senderEmail?: string;
+        createdAt?: string;
+    }
+
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
     const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
-    const [_messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState<Message[]>([]);
 
 
     const messageModes = [
@@ -118,11 +125,24 @@ const Services: React.FC = () => {
 
                                         <div>
 
-                                            <h2 className="text-xl text-gray-700 font-semibold pl-2 pt-1 mb-3">Your Sent Messages</h2>
+                                            <h2 className="text-xl text-gray-700 font-semibold pl-2 pt-1 mb-3">Sent Messages</h2>
 
                                             <div className="m-3 pt-5">
                                                 <div>
-
+                                                    {
+                                                        messages.length == 0 ? (
+                                                            <p className="text-2xl text-center pt-10 text-gray-500">You have no mesages yet</p>
+                                                        ) : (
+                                                            <ul className="space-y-2">
+                                                                {messages.map((msg, index) => (
+                                                                    <li key={index} className="border p-3 rounded-lg shadow">
+                                                                        <p><strong>To:</strong> {msg.recipientEmail}</p>
+                                                                        <p><strong>Message:</strong> {msg.message}</p>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )
+                                                    }
                                                 </div>
                                             </div>
 
