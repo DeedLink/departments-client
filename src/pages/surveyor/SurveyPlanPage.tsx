@@ -5,7 +5,7 @@ import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, ge
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, Plus, Edit2, Check, X } from "lucide-react";
 import { calculatePolygonArea, doPolygonsOverlap, doBoundariesOverlap, type LocationPoint, calculateOverlapPercentage } from "../../utils/functions";
 import { useLoader } from "../../contexts/LoaderContext";
 import { useWallet } from "../../contexts/WalletContext";
@@ -73,6 +73,9 @@ const SurveyPlanPage = () => {
   const [overlappingPlans, setOverlappingPlans] = useState<Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }>>([]);
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [loadingOverlaps, setLoadingOverlaps] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingCoords, setEditingCoords] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
+  const [manualInput, setManualInput] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
   const { account } = useWallet();
@@ -271,6 +274,95 @@ const SurveyPlanPage = () => {
 
   const clearAllPoints = () => {
     setPlan(prev => ({ ...prev, coordinates: [], areaSize: 0 }));
+    setEditingIndex(null);
+    setManualInput({ latitude: '', longitude: '' });
+  };
+
+  const addManualPoint = () => {
+    const lat = parseFloat(manualInput.latitude);
+    const lng = parseFloat(manualInput.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      showToast("Please enter valid latitude and longitude values", "error");
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      showToast("Latitude must be between -90 and 90", "error");
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      showToast("Longitude must be between -180 and 180", "error");
+      return;
+    }
+
+    const newCoordinate: Coordinate = { latitude: lat, longitude: lng };
+    setPlan((prev) => {
+      const newCoordinates = [...prev.coordinates, newCoordinate];
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
+      return {
+        ...prev,
+        coordinates: newCoordinates,
+        areaSize: calculatedArea
+      };
+    });
+
+    setManualInput({ latitude: '', longitude: '' });
+    showToast("Point added successfully", "success");
+  };
+
+  const startEditing = (index: number) => {
+    const coord = plan.coordinates[index];
+    setEditingIndex(index);
+    setEditingCoords({
+      latitude: coord.latitude.toString(),
+      longitude: coord.longitude.toString()
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditingCoords({ latitude: '', longitude: '' });
+  };
+
+  const saveEdit = (index: number) => {
+    const lat = parseFloat(editingCoords.latitude);
+    const lng = parseFloat(editingCoords.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      showToast("Please enter valid latitude and longitude values", "error");
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      showToast("Latitude must be between -90 and 90", "error");
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      showToast("Longitude must be between -180 and 180", "error");
+      return;
+    }
+
+    setPlan((prev) => {
+      const newCoordinates = [...prev.coordinates];
+      newCoordinates[index] = { latitude: lat, longitude: lng };
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
+      return {
+        ...prev,
+        coordinates: newCoordinates,
+        areaSize: calculatedArea
+      };
+    });
+
+    setEditingIndex(null);
+    setEditingCoords({ latitude: '', longitude: '' });
+    showToast("Point updated successfully", "success");
   };
 
   const validateForm = () => {
@@ -563,27 +655,141 @@ const SurveyPlanPage = () => {
                 
                 <div className="mt-4 text-sm text-gray-400 space-y-1">
                   <p>• Click on the map to add boundary points</p>
+                  <p>• Or manually enter coordinates below</p>
                   <p>• Points will automatically connect to form the boundary</p>
                   <p>• Minimum 3 points required for a valid survey plan</p>
                   <p>• Area will be calculated automatically</p>
                 </div>
 
+                {/* Manual Coordinate Input */}
+                <div className="mt-6 bg-gray-800 rounded-xl p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Add Coordinate Manually
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Latitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualInput.latitude}
+                        onChange={(e) => setManualInput({ ...manualInput, latitude: e.target.value })}
+                        placeholder="e.g., 7.1546"
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Longitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualInput.longitude}
+                        onChange={(e) => setManualInput({ ...manualInput, longitude: e.target.value })}
+                        placeholder="e.g., 81.1360"
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={addManualPoint}
+                    disabled={!manualInput.latitude || !manualInput.longitude}
+                    className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Point
+                  </button>
+                </div>
+
+                {/* Coordinate List */}
                 {plan.coordinates.length > 0 && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {plan.coordinates.map((coord, index) => (
-                      <div key={index} className="bg-gray-700 p-3 rounded-lg border border-gray-600">
-                        <div className="text-xs text-gray-400">Point {index + 1}</div>
-                        <div className="text-sm font-mono text-gray-200">
-                          {coord.latitude.toFixed(4)}, {coord.longitude.toFixed(4)}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                      Boundary Points ({plan.coordinates.length})
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {plan.coordinates.map((coord, index) => (
+                        <div key={index} className="bg-gray-700 p-4 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-semibold text-gray-400">Point {index + 1}</div>
+                            <div className="flex items-center gap-2">
+                              {editingIndex === index ? (
+                                <>
+                                  <button
+                                    onClick={() => saveEdit(index)}
+                                    className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                                    title="Save"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                                    title="Cancel"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(index)}
+                                    className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => removePoint(index)}
+                                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                                    title="Remove"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {editingIndex === index ? (
+                            <div className="space-y-2">
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Latitude</label>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={editingCoords.latitude}
+                                  onChange={(e) => setEditingCoords({ ...editingCoords, latitude: e.target.value })}
+                                  className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Longitude</label>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={editingCoords.longitude}
+                                  onChange={(e) => setEditingCoords({ ...editingCoords, longitude: e.target.value })}
+                                  className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm font-mono text-gray-200">
+                              <div className="mb-1">
+                                <span className="text-gray-400 text-xs">Lat:</span> {coord.latitude.toFixed(6)}
+                              </div>
+                              <div>
+                                <span className="text-gray-400 text-xs">Lng:</span> {coord.longitude.toFixed(6)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => removePoint(index)}
-                          className="text-red-400 hover:text-red-300 text-xs mt-1"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
