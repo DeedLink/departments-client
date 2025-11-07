@@ -8,7 +8,7 @@ const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
     const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
-    const [messages, setMessages] = useState([]);
+    const [_messages, setMessages] = useState([]);
 
 
     const messageModes = [
@@ -87,7 +87,7 @@ const Services: React.FC = () => {
 
 
                                                 <button key={mode.id} onClick={() => setMessageFilterMode(mode.id as any)}
-                                                    className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" :
+                                                    className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg scale-105" :
                                                         "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
                                                     {mode.label}
                                                 </button>
@@ -118,7 +118,13 @@ const Services: React.FC = () => {
 
                                         <div>
 
-                                            <h2 className="text-xl font-semibold mb-3">Your Sent Messages</h2>
+                                            <h2 className="text-xl text-gray-700 font-semibold pl-2 pt-1 mb-3">Your Sent Messages</h2>
+
+                                            <div className="m-3 pt-5">
+                                                <div>
+
+                                                </div>
+                                            </div>
 
 
                                         </div>
