@@ -407,8 +407,14 @@ export const detectOverlappingDeeds = (
   } else {
     console.log('❌ NO OVERLAP FOUND between 002 and 005');
     // Check if both deeds exist (check both string and number formats)
-    const deed002 = deeds.find(d => String(d.deedNumber).trim() === '002' || d.deedNumber === '002' || d.deedNumber === 2);
-    const deed005 = deeds.find(d => String(d.deedNumber).trim() === '005' || d.deedNumber === '005' || d.deedNumber === 5);
+    const deed002 = deeds.find(d => {
+      const deedNum = String(d.deedNumber).trim();
+      return deedNum === '002' || deedNum === '2';
+    });
+    const deed005 = deeds.find(d => {
+      const deedNum = String(d.deedNumber).trim();
+      return deedNum === '005' || deedNum === '5';
+    });
     console.log('Deed 002 exists:', !!deed002, deed002 ? {
       hasPlan: !!deed002.surveyPlanNumber,
       planNumber: deed002.surveyPlanNumber,

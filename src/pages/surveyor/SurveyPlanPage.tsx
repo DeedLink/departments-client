@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, Polygon, Popup, useMapEvents, useMap } from "react-leaflet";
 import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getPlanBySeurveyorWalletAddress } from "../../api/api";
