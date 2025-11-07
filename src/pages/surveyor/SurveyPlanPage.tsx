@@ -473,37 +473,41 @@ const SurveyPlanPage = () => {
                 
                 {/* Overlap Warning Banner */}
                 {overlappingPlans.length > 0 && (
-                  <div className="mb-4 bg-red-50 border-2 border-red-300 rounded-xl p-4">
+                  <div className="mb-4 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-4 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h3 className="text-sm font-bold text-red-900 mb-2">
+                      <div className="p-2 bg-red-100 rounded-full flex-shrink-0">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-red-900 mb-3">
                           ⚠️ {overlappingPlans.length} Overlap{overlappingPlans.length !== 1 ? 's' : ''} Detected
                         </h3>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
                           {overlappingPlans.map((overlap, idx) => (
-                            <div key={idx} className="bg-white rounded-lg p-2 border border-red-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            <div key={idx} className="bg-white rounded-lg p-3 border-2 border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <span className={`px-2.5 py-1 rounded text-xs font-semibold border ${
                                   overlap.overlapType === 'polygon' 
-                                    ? 'bg-blue-100 text-blue-800'
+                                    ? 'bg-blue-100 text-blue-800 border-blue-300'
                                     : overlap.overlapType === 'boundary'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
+                                    ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                    : 'bg-red-100 text-red-800 border-red-300'
                                 }`}>
                                   {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
                                    overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
                                    '⚠️ Both'}
                                 </span>
                                 {overlap.overlapPercentage !== undefined && (
-                                  <span className="text-xs font-semibold text-red-600">
+                                  <span className="text-xs font-bold text-red-700 bg-red-50 px-2 py-1 rounded border border-red-300">
                                     {overlap.overlapPercentage.toFixed(1)}% overlap
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-700">
-                                <span className="font-semibold">Plan:</span> {overlap.plan.planId} 
-                                {overlap.plan.deedNumber && <span className="text-gray-500"> (Deed: {overlap.plan.deedNumber})</span>}
+                              <p className="text-xs text-gray-700 break-words">
+                                <span className="font-semibold">Plan:</span> <span className="font-mono">{overlap.plan.planId}</span>
+                                {overlap.plan.deedNumber && (
+                                  <span className="text-gray-600"> • <span className="font-semibold">Deed:</span> <span className="font-mono">{overlap.plan.deedNumber}</span></span>
+                                )}
                               </p>
                             </div>
                           ))}

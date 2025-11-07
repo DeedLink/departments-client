@@ -282,14 +282,37 @@ export const detectOverlappingDeeds = (
 ): OverlapResult[] => {
   const overlaps: OverlapResult[] = [];
 
+  console.log('=== detectOverlappingDeeds Debug ===');
+  console.log('Total deeds to check:', deeds.length);
+  console.log('Plans map keys:', plansMap instanceof Map ? Array.from(plansMap.keys()) : Object.keys(plansMap));
+
   for (let i = 0; i < deeds.length; i++) {
     for (let j = i + 1; j < deeds.length; j++) {
       const deed1 = deeds[i];
       const deed2 = deeds[j];
 
-      // Get plan data for both deeds
-      const plan1 = deed1.surveyPlanNumber ? (plansMap instanceof Map ? plansMap.get(deed1.surveyPlanNumber) : plansMap[deed1.surveyPlanNumber]) : null;
-      const plan2 = deed2.surveyPlanNumber ? (plansMap instanceof Map ? plansMap.get(deed2.surveyPlanNumber) : plansMap[deed2.surveyPlanNumber]) : null;
+      // Skip if checking same deed
+      if (deed1.deedNumber === deed2.deedNumber) continue;
+
+      // Get plan data for both deeds - try multiple lookup methods
+      let plan1 = null;
+      let plan2 = null;
+      
+      if (deed1.surveyPlanNumber) {
+        plan1 = plansMap instanceof Map ? plansMap.get(deed1.surveyPlanNumber) : plansMap[deed1.surveyPlanNumber];
+      }
+      // Also try looking up by deed number if plan not found by surveyPlanNumber
+      if (!plan1) {
+        plan1 = plansMap instanceof Map ? plansMap.get(deed1.deedNumber) : plansMap[deed1.deedNumber];
+      }
+      
+      if (deed2.surveyPlanNumber) {
+        plan2 = plansMap instanceof Map ? plansMap.get(deed2.surveyPlanNumber) : plansMap[deed2.surveyPlanNumber];
+      }
+      // Also try looking up by deed number if plan not found by surveyPlanNumber
+      if (!plan2) {
+        plan2 = plansMap instanceof Map ? plansMap.get(deed2.deedNumber) : plansMap[deed2.deedNumber];
+      }
 
       // Use plan coordinates if available, otherwise use deed location
       // Both are stored as {longitude, latitude} format (LocationPoint)
@@ -298,28 +321,39 @@ export const detectOverlappingDeeds = (
 
       if (plan1?.coordinates && plan1.coordinates.length >= 3) {
         coords1 = plan1.coordinates;
+        console.log(`Deed ${deed1.deedNumber}: Using plan coordinates (${coords1.length} points)`);
       } else if (deed1.location && deed1.location.length >= 3) {
         coords1 = deed1.location;
+        console.log(`Deed ${deed1.deedNumber}: Using deed location (${coords1.length} points)`);
+      } else {
+        console.log(`Deed ${deed1.deedNumber}: No valid coordinates (plan: ${plan1 ? 'exists but no coords' : 'not found'}, location: ${deed1.location?.length || 0} points)`);
       }
 
       if (plan2?.coordinates && plan2.coordinates.length >= 3) {
         coords2 = plan2.coordinates;
+        console.log(`Deed ${deed2.deedNumber}: Using plan coordinates (${coords2.length} points)`);
       } else if (deed2.location && deed2.location.length >= 3) {
         coords2 = deed2.location;
+        console.log(`Deed ${deed2.deedNumber}: Using deed location (${coords2.length} points)`);
+      } else {
+        console.log(`Deed ${deed2.deedNumber}: No valid coordinates (plan: ${plan2 ? 'exists but no coords' : 'not found'}, location: ${deed2.location?.length || 0} points)`);
       }
 
       // Skip if either deed has no valid coordinates
       if (coords1.length < 3 || coords2.length < 3) {
+        console.log(`Skipping overlap check: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} - insufficient coordinates`);
         continue;
       }
 
       // Check polygon overlap
       const polygonOverlap = doPolygonsOverlap(coords1, coords2);
+      console.log(`Polygon overlap check: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} = ${polygonOverlap}`);
 
       // Check boundary overlap
       const sides1 = plan1?.sides || deed1.sides;
       const sides2 = plan2?.sides || deed2.sides;
       const boundaryOverlap = doBoundariesOverlap(sides1, sides2);
+      console.log(`Boundary overlap check: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} = ${boundaryOverlap}`, { sides1, sides2 });
 
       if (polygonOverlap || boundaryOverlap) {
         const overlapType: 'polygon' | 'boundary' | 'both' = 
@@ -330,6 +364,8 @@ export const detectOverlappingDeeds = (
           ? calculateOverlapPercentage(coords1, coords2)
           : undefined;
 
+        console.log(`✅ OVERLAP DETECTED: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
+
         overlaps.push({
           deed1: deed1.deedNumber,
           deed2: deed2.deedNumber,
@@ -339,6 +375,9 @@ export const detectOverlappingDeeds = (
       }
     }
   }
+
+  console.log(`Total overlaps found: ${overlaps.length}`);
+  console.log('=== End detectOverlappingDeeds Debug ===');
 
   return overlaps;
 };

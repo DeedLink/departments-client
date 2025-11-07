@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Search, Eye, Map, FileText, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import type { Deed } from "../../types/deed";
 import SurveyPlan from "./SurveyPlan";
-import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
+import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber, getPlanByDeedNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
@@ -52,31 +52,68 @@ const DeedsTable = () => {
       const plans: Record<string, PlanData> = {};
 
       try {
-        // Fetch all plan data
-        const planPromises = deeds
-          .filter(deed => deed.surveyPlanNumber)
-          .map(async (deed) => {
+        // Fetch all plan data - try both by plan number and by deed number
+        const planPromises = deeds.map(async (deed) => {
+          // Try to fetch by surveyPlanNumber first
+          if (deed.surveyPlanNumber) {
             try {
-              const res = await getPlanByPlanNumber(deed.surveyPlanNumber!);
+              const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
               if (res.success && res.data) {
-                plans[deed.surveyPlanNumber!] = {
+                plans[deed.surveyPlanNumber] = {
                   coordinates: res.data.coordinates || [],
                   sides: res.data.sides,
                 };
+                console.log(`✅ Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`);
+                return;
               }
             } catch (error) {
-              console.error(`Failed to fetch plan for ${deed.surveyPlanNumber}:`, error);
+              console.error(`❌ Failed to fetch plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}:`, error);
             }
-          });
+          }
+          
+          // Also try to fetch plan by deed number (in case plan number is same as deed number)
+          // Store it both by planId and by deed number for lookup
+          try {
+            const res = await getPlanByDeedNumber(deed.deedNumber);
+            if (res.success && res.data) {
+              const planId = res.data.planId || res.data._id || deed.deedNumber;
+              const planData = {
+                coordinates: res.data.coordinates || [],
+                sides: res.data.sides,
+              };
+              // Store by both planId and deed number for flexible lookup
+              plans[planId] = planData;
+              plans[deed.deedNumber] = planData; // Also store by deed number
+              console.log(`✅ Fetched plan by deed number ${deed.deedNumber} (planId: ${planId})`);
+            }
+          } catch (error) {
+            // Silently fail - deed might not have a plan yet
+            console.log(`ℹ️ No plan found for deed ${deed.deedNumber} (this is OK if deed has location data)`);
+          }
+        });
 
         await Promise.all(planPromises);
         setPlansMap(plans);
 
+        // Debug: Log deed and plan information
+        console.log('=== Overlap Detection Debug ===');
+        console.log('Total deeds:', deeds.length);
+        console.log('Plans fetched:', Object.keys(plans).length);
+        deeds.forEach(deed => {
+          console.log(`Deed ${deed.deedNumber}:`, {
+            hasPlanNumber: !!deed.surveyPlanNumber,
+            planNumber: deed.surveyPlanNumber,
+            hasLocation: !!deed.location && deed.location.length > 0,
+            locationCount: deed.location?.length || 0,
+            hasSides: !!deed.sides,
+            planData: deed.surveyPlanNumber ? plans[deed.surveyPlanNumber] : null
+          });
+        });
+
         // Detect overlaps
         const detectedOverlaps = detectOverlappingDeeds(deeds, plans);
         console.log('Detected overlaps:', detectedOverlaps);
-        console.log('Total deeds:', deeds.length);
-        console.log('Plans fetched:', Object.keys(plans).length);
+        console.log('=== End Debug ===');
         setOverlaps(detectedOverlaps);
       } catch (error) {
         console.error("Error detecting overlaps:", error);
@@ -305,6 +342,27 @@ const getLatestValuation = (deed: Deed) => {
                 <p className="text-black"><strong>Owner:</strong> {deed.ownerFullName}</p>
                 <p className="text-black"><strong>Requested Value:</strong> LKR {requested.toLocaleString()}</p>
                 <p className="text-black"><strong>Estimated Value:</strong> LKR {estimated.toLocaleString()}</p>
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-black font-semibold mb-1">Status:</p>
+                  {deedHasOverlaps ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-1 rounded-full">
+                      <AlertTriangle className="w-3 h-3" />
+                      {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2 py-1 rounded-full">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      No issues
+                    </span>
+                  )}
+                  {deed.surveyPlanNumber && (
+                    <p className="text-xs text-blue-600 font-medium mt-1">
+                      Plan: {deed.surveyPlanNumber}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <button
@@ -345,7 +403,7 @@ const getLatestValuation = (deed: Deed) => {
               <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
               <th className="px-4 py-3 text-left font-medium text-black">Requested Value (LKR)</th>
               <th className="px-4 py-3 text-left font-medium text-black">Estimated Value (LKR)</th>
-              <th className="px-4 py-3 text-center font-medium text-black">Status</th>
+              <th className="px-4 py-3 text-center font-medium text-black min-w-[140px]">Status</th>
               <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
           </thead>
@@ -370,15 +428,27 @@ const getLatestValuation = (deed: Deed) => {
                   <td className="px-4 py-3">{deed.landType}</td>
                   <td className="px-4 py-3 font-mono">{requested.toLocaleString()}</td>
                   <td className="px-4 py-3 font-mono">{estimated.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center">
-                    {deedHasOverlaps ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                        <AlertTriangle className="w-3 h-3" />
-                        {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-500">No issues</span>
-                    )}
+                  <td className="px-4 py-3 text-center min-w-[140px]">
+                    <div className="flex flex-col items-center gap-1.5">
+                      {deedHasOverlaps ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                          {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          No issues
+                        </span>
+                      )}
+                      {deed.surveyPlanNumber && (
+                        <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
+                          Plan: {deed.surveyPlanNumber}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-center gap-2">
