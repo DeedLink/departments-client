@@ -12,6 +12,7 @@ export type Sides = {
 
 
 export interface Plan {
+  _id?: string; // MongoDB ObjectId
   planId: string;
   deedNumber: string;
   createdBy: string;

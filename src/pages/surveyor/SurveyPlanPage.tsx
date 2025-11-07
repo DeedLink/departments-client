@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber } from "../../api/api";
+import { MapContainer, TileLayer, Marker, Polyline, Polygon, Popup, useMapEvents, useMap } from "react-leaflet";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getPlanBySeurveyorWalletAddress } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
-import { Trash2 } from "lucide-react";
-import { calculatePolygonArea } from "../../utils/functions";
+import { Trash2, AlertTriangle, Plus, Edit2, Check, X } from "lucide-react";
+import { calculatePolygonArea, doPolygonsOverlap, doBoundariesOverlap, type LocationPoint, calculateOverlapPercentage } from "../../utils/functions";
 import { useLoader } from "../../contexts/LoaderContext";
+import { useWallet } from "../../contexts/WalletContext";
 import SurveyPlanPageHeader from "../../components/surveyPlanPage/surveyplanpageheader";
 import SurveyPlanPageTabSelector from "../../components/surveyPlanPage/surveyplanpagetabselector";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 const defaultPlan: Plan = {
   planId: "",
@@ -40,6 +50,18 @@ const MapClickHandler = ({ onAddPoint }: { onAddPoint: (latlng: [number, number]
   return null;
 };
 
+// FitBounds component for map
+const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [coords, map]);
+  return null;
+};
+
 const SurveyPlanPage = () => {
   const { deedNumber } = useParams<{ deedNumber: string }>();
   const [plan, setPlan] = useState<Plan>(defaultPlan);
@@ -48,8 +70,15 @@ const SurveyPlanPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'map' | 'details' | 'summary'>('map');
+  const [overlappingPlans, setOverlappingPlans] = useState<Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }>>([]);
+  const [allPlans, setAllPlans] = useState<Plan[]>([]);
+  const [loadingOverlaps, setLoadingOverlaps] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingCoords, setEditingCoords] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
+  const [manualInput, setManualInput] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
+  const { account } = useWallet();
 
   const fetchPlan = async () => {
     setIsLoading(true);
@@ -58,7 +87,19 @@ const SurveyPlanPage = () => {
       if (deedNumber) {
         const res = await getPlanByDeedNumber(deedNumber);
         if (res.success) {
-          setPlan(res.data);
+          // Convert coordinates from {longitude, latitude} to {latitude, longitude} if needed
+          const planData = res.data;
+          if (planData.coordinates && Array.isArray(planData.coordinates)) {
+            planData.coordinates = planData.coordinates.map((coord: any) => {
+              // Handle both formats
+              if (coord.latitude !== undefined && coord.longitude !== undefined) {
+                return { latitude: coord.latitude, longitude: coord.longitude };
+              }
+              // If stored as {longitude, latitude}, swap them
+              return { latitude: coord.longitude || coord.latitude, longitude: coord.latitude || coord.longitude };
+            });
+          }
+          setPlan(planData);
           setIsNew(false);
         }
         else if(!res.success) {
@@ -85,6 +126,114 @@ const SurveyPlanPage = () => {
   useEffect(() => {
     fetchPlan();
   }, [deedNumber]);
+
+  // Fetch all plans to check for overlaps
+  useEffect(() => {
+    const fetchAllPlans = async () => {
+      try {
+        // Try to get plans by surveyor first, fallback to all plans
+        let plans: any[] = [];
+        if (account) {
+          try {
+            plans = await getPlanBySeurveyorWalletAddress(account);
+          } catch {
+            // Fallback to all plans if surveyor-specific fails
+            plans = await getAllPlans();
+          }
+        } else {
+          plans = await getAllPlans();
+        }
+        
+        // Convert coordinates format if needed
+        const normalizedPlans: Plan[] = plans.map((p: any) => {
+          if (p.coordinates && Array.isArray(p.coordinates)) {
+            p.coordinates = p.coordinates.map((coord: any) => {
+              // Ensure coordinates are in {latitude, longitude} format
+              if (coord.latitude !== undefined && coord.longitude !== undefined) {
+                return { latitude: coord.latitude, longitude: coord.longitude };
+              }
+              // Handle if stored differently
+              return { latitude: coord.latitude || coord.lat || 0, longitude: coord.longitude || coord.lng || 0 };
+            });
+          }
+          return p as Plan;
+        });
+        
+        setAllPlans(normalizedPlans);
+      } catch (error) {
+        console.error("Error fetching plans for overlap detection:", error);
+      }
+    };
+    fetchAllPlans();
+  }, [account]);
+
+  // Check for overlaps when plan coordinates or boundaries change
+  useEffect(() => {
+    const checkOverlaps = () => {
+      if (!plan.coordinates || plan.coordinates.length < 3) {
+        setOverlappingPlans([]);
+        return;
+      }
+
+      setLoadingOverlaps(true);
+      const overlaps: Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }> = [];
+
+      // Convert current plan coordinates to LocationPoint format
+      // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+      const currentPlanCoords: LocationPoint[] = plan.coordinates.map(coord => ({
+        longitude: coord.longitude,
+        latitude: coord.latitude
+      }));
+
+      // Check against all other plans
+      for (const otherPlan of allPlans) {
+        // Skip the current plan itself
+        if (otherPlan._id === plan._id || otherPlan.planId === plan.planId) {
+          continue;
+        }
+
+        if (!otherPlan.coordinates || otherPlan.coordinates.length < 3) {
+          continue;
+        }
+
+        // Convert other plan coordinates to LocationPoint format
+        // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+        const otherPlanCoords: LocationPoint[] = otherPlan.coordinates.map(coord => ({
+          longitude: coord.longitude,
+          latitude: coord.latitude
+        }));
+
+        // Check polygon overlap
+        const polygonOverlap = doPolygonsOverlap(currentPlanCoords, otherPlanCoords);
+
+        // Check boundary overlap
+        const boundaryOverlap = doBoundariesOverlap(plan.sides, otherPlan.sides);
+
+        if (polygonOverlap || boundaryOverlap) {
+          const overlapType: 'polygon' | 'boundary' | 'both' = 
+            polygonOverlap && boundaryOverlap ? 'both' :
+            polygonOverlap ? 'polygon' : 'boundary';
+
+          const overlapPercentage = polygonOverlap 
+            ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
+            : undefined;
+
+          overlaps.push({
+            plan: otherPlan,
+            overlapType,
+            overlapPercentage,
+          });
+        }
+      }
+
+      setOverlappingPlans(overlaps);
+      setLoadingOverlaps(false);
+    };
+
+    // Debounce overlap checking
+    const timeoutId = setTimeout(checkOverlaps, 500);
+    return () => clearTimeout(timeoutId);
+  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId]);
 
   const coordinateToLatLng = (coord: Coordinate): [number, number] => {
     return [coord.latitude, coord.longitude];
@@ -125,6 +274,95 @@ const SurveyPlanPage = () => {
 
   const clearAllPoints = () => {
     setPlan(prev => ({ ...prev, coordinates: [], areaSize: 0 }));
+    setEditingIndex(null);
+    setManualInput({ latitude: '', longitude: '' });
+  };
+
+  const addManualPoint = () => {
+    const lat = parseFloat(manualInput.latitude);
+    const lng = parseFloat(manualInput.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      showToast("Please enter valid latitude and longitude values", "error");
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      showToast("Latitude must be between -90 and 90", "error");
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      showToast("Longitude must be between -180 and 180", "error");
+      return;
+    }
+
+    const newCoordinate: Coordinate = { latitude: lat, longitude: lng };
+    setPlan((prev) => {
+      const newCoordinates = [...prev.coordinates, newCoordinate];
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
+      return {
+        ...prev,
+        coordinates: newCoordinates,
+        areaSize: calculatedArea
+      };
+    });
+
+    setManualInput({ latitude: '', longitude: '' });
+    showToast("Point added successfully", "success");
+  };
+
+  const startEditing = (index: number) => {
+    const coord = plan.coordinates[index];
+    setEditingIndex(index);
+    setEditingCoords({
+      latitude: coord.latitude.toString(),
+      longitude: coord.longitude.toString()
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditingCoords({ latitude: '', longitude: '' });
+  };
+
+  const saveEdit = (index: number) => {
+    const lat = parseFloat(editingCoords.latitude);
+    const lng = parseFloat(editingCoords.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      showToast("Please enter valid latitude and longitude values", "error");
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      showToast("Latitude must be between -90 and 90", "error");
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      showToast("Longitude must be between -180 and 180", "error");
+      return;
+    }
+
+    setPlan((prev) => {
+      const newCoordinates = [...prev.coordinates];
+      newCoordinates[index] = { latitude: lat, longitude: lng };
+      const coordTuples = newCoordinates.map(coordinateToLatLng);
+      const calculatedArea = coordTuples.length >= 3 ? Math.round(calculatePolygonArea(coordTuples)) : 0;
+      
+      return {
+        ...prev,
+        coordinates: newCoordinates,
+        areaSize: calculatedArea
+      };
+    });
+
+    setEditingIndex(null);
+    setEditingCoords({ latitude: '', longitude: '' });
+    showToast("Point updated successfully", "success");
   };
 
   const validateForm = () => {
@@ -148,26 +386,50 @@ const SurveyPlanPage = () => {
     setIsSaving(true);
     try {
       if (isNew) {
+        // Creating a new plan
         console.log("Creating new plan", plan);
-      } else {
-        console.log("Updating plan", plan);
-      }
-      
-      console.log("created plan: ", plan);
-      try{
-        const res = await createPlan(plan);
-        console.log("res: ",res);
-        if(res){
-          const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber || "", res.planId);
-          console.log("planIdUpdateRes: ", planIdUpdateRes);
+        try {
+          const res = await createPlan(plan);
+          console.log("res: ", res);
+          if (res && res.planId) {
+            // Update the deed with the plan ID
+            const planIdUpdateRes = await updateSurveyPlanNumber(deedNumber || "", res.planId);
+            console.log("planIdUpdateRes: ", planIdUpdateRes);
+            
+            // Update local state with the created plan data
+            setPlan({ ...plan, planId: res.planId });
+            setIsNew(false);
+            showToast("Plan created successfully!", "success");
+          } else {
+            showToast("Error: Plan ID not returned from server", "error");
+          }
+        } catch (error) {
+          console.error("Error creating plan:", error);
+          showToast("Error creating plan", "error");
         }
-        showToast(isNew ? "Plan created successfully!" : "Plan updated successfully!", "success");
-        setIsNew(false);
-      }
-      catch{
-        showToast("Error creating plan", "error");
+      } else {
+        // Updating an existing plan
+        console.log("Updating plan", plan);
+        if (!plan._id) {
+          showToast("Error: Plan ID (_id) is missing. Cannot update plan.", "error");
+          return;
+        }
+        
+        try {
+          // Use MongoDB _id for updating, not planId
+          const res = await updatePlan(plan._id, plan);
+          console.log("Update res: ", res);
+          showToast("Plan updated successfully!", "success");
+          
+          // Refresh the plan data to ensure we have the latest version
+          await fetchPlan();
+        } catch (error) {
+          console.error("Error updating plan:", error);
+          showToast("Error updating plan", "error");
+        }
       }
     } catch (error) {
+      console.error("Error saving plan:", error);
       showToast("Error saving plan", "error");
     } finally {
       setIsSaving(false);
@@ -209,10 +471,56 @@ const SurveyPlanPage = () => {
                   </div>
                 </div>
                 
+                {/* Overlap Warning Banner */}
+                {overlappingPlans.length > 0 && (
+                  <div className="mb-4 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-red-100 rounded-full flex-shrink-0">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-red-900 mb-3">
+                          ⚠️ {overlappingPlans.length} Overlap{overlappingPlans.length !== 1 ? 's' : ''} Detected
+                        </h3>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {overlappingPlans.map((overlap, idx) => (
+                            <div key={idx} className="bg-white rounded-lg p-3 border-2 border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <span className={`px-2.5 py-1 rounded text-xs font-semibold border ${
+                                  overlap.overlapType === 'polygon' 
+                                    ? 'bg-blue-100 text-blue-800 border-blue-300'
+                                    : overlap.overlapType === 'boundary'
+                                    ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                    : 'bg-red-100 text-red-800 border-red-300'
+                                }`}>
+                                  {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
+                                   overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
+                                   '⚠️ Both'}
+                                </span>
+                                {overlap.overlapPercentage !== undefined && (
+                                  <span className="text-xs font-bold text-red-700 bg-red-50 px-2 py-1 rounded border border-red-300">
+                                    {overlap.overlapPercentage.toFixed(1)}% overlap
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-700 break-words">
+                                <span className="font-semibold">Plan:</span> <span className="font-mono">{overlap.plan.planId}</span>
+                                {overlap.plan.deedNumber && (
+                                  <span className="text-gray-600"> • <span className="font-semibold">Deed:</span> <span className="font-mono">{overlap.plan.deedNumber}</span></span>
+                                )}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="h-64 sm:h-96 w-full border border-gray-600 rounded-xl overflow-hidden">
                   <MapContainer
-                    center={[7.8731, 80.7718]}
-                    zoom={8}
+                    center={plan.coordinates.length > 0 ? coordinateToLatLng(plan.coordinates[0]) : [7.8731, 80.7718]}
+                    zoom={plan.coordinates.length > 0 ? 15 : 8}
                     className="h-full w-full"
                   >
                     <TileLayer
@@ -220,8 +528,59 @@ const SurveyPlanPage = () => {
                       attribution="&copy; OpenStreetMap contributors"
                     />
 
+                    {/* Fit bounds to show all polygons */}
+                    {plan.coordinates.length > 0 && (
+                      <FitBounds coords={[
+                        ...plan.coordinates.map(coordinateToLatLng),
+                        ...overlappingPlans.flatMap(op => 
+                          op.plan.coordinates?.map(coord => [coord.latitude, coord.longitude] as [number, number]) || []
+                        )
+                      ]} />
+                    )}
+
                     <MapClickHandler onAddPoint={addPoint} />
 
+                    {/* Render overlapping plans first (in background) */}
+                    {overlappingPlans.map((overlap, idx) => {
+                      const coords = overlap.plan.coordinates?.map(coord => [coord.latitude, coord.longitude] as [number, number]) || [];
+                      if (coords.length < 3) return null;
+                      
+                      const color = overlap.overlapType === 'polygon' ? '#3b82f6' : 
+                                   overlap.overlapType === 'boundary' ? '#f59e0b' : '#ef4444';
+                      
+                      return (
+                        <Polygon
+                          key={`overlap-${idx}`}
+                          positions={coords}
+                          pathOptions={{
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.2,
+                            weight: 2,
+                            dashArray: '5, 5'
+                          }}
+                        >
+                          <Popup>
+                            <div className="text-sm">
+                              <strong className="font-semibold">Overlapping Plan: {overlap.plan.planId}</strong>
+                              {overlap.plan.deedNumber && (
+                                <>
+                                  <br />
+                                  <span className="text-gray-600">Deed: {overlap.plan.deedNumber}</span>
+                                </>
+                              )}
+                              <br />
+                              <span className="text-xs text-gray-500">
+                                Type: {overlap.overlapType}
+                                {overlap.overlapPercentage !== undefined && ` (${overlap.overlapPercentage.toFixed(1)}%)`}
+                              </span>
+                            </div>
+                          </Popup>
+                        </Polygon>
+                      );
+                    })}
+
+                    {/* Current plan markers */}
                     {plan.coordinates.map((coord, idx) => (
                       <Marker
                         key={idx}
@@ -237,10 +596,44 @@ const SurveyPlanPage = () => {
                       />
                     ))}
 
+                    {/* Current plan polygon */}
                     {plan.coordinates.length > 1 && (
+                      <Polygon
+                        positions={[...plan.coordinates.map(coordinateToLatLng), coordinateToLatLng(plan.coordinates[0])]}
+                        pathOptions={{
+                          color: overlappingPlans.length > 0 ? "#ef4444" : "#10B981",
+                          fillColor: overlappingPlans.length > 0 ? "#ef4444" : "#10B981",
+                          fillOpacity: 0.3,
+                          weight: 3
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <strong className="font-semibold">Current Plan: {plan.planId || 'New Plan'}</strong>
+                            {plan.deedNumber && (
+                              <>
+                                <br />
+                                <span className="text-gray-600">Deed: {plan.deedNumber}</span>
+                              </>
+                            )}
+                            {overlappingPlans.length > 0 && (
+                              <>
+                                <br />
+                                <span className="text-red-600 font-semibold">
+                                  ⚠️ {overlappingPlans.length} overlap{overlappingPlans.length !== 1 ? 's' : ''} detected
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </Popup>
+                      </Polygon>
+                    )}
+
+                    {/* Fallback to polyline if no polygon yet */}
+                    {plan.coordinates.length > 1 && plan.coordinates.length < 3 && (
                       <Polyline 
                         positions={[...plan.coordinates.map(coordinateToLatLng), coordinateToLatLng(plan.coordinates[0])]} 
-                        color="#10B981" 
+                        color={overlappingPlans.length > 0 ? "#ef4444" : "#10B981"} 
                         weight={3}
                       />
                     )}
@@ -253,30 +646,154 @@ const SurveyPlanPage = () => {
                     {errors.coordinates}
                   </p>
                 )}
+
+                {loadingOverlaps && (
+                  <p className="text-blue-400 text-sm mt-2 flex items-center gap-1">
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" strokeWidth={4} className="opacity-25" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M4 12a8 8 0 018-8" />
+                    </svg>
+                    Checking for overlaps...
+                  </p>
+                )}
                 
                 <div className="mt-4 text-sm text-gray-400 space-y-1">
                   <p>• Click on the map to add boundary points</p>
+                  <p>• Or manually enter coordinates below</p>
                   <p>• Points will automatically connect to form the boundary</p>
                   <p>• Minimum 3 points required for a valid survey plan</p>
                   <p>• Area will be calculated automatically</p>
                 </div>
 
+                {/* Manual Coordinate Input */}
+                <div className="mt-6 bg-gray-800 rounded-xl p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Add Coordinate Manually
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Latitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualInput.latitude}
+                        onChange={(e) => setManualInput({ ...manualInput, latitude: e.target.value })}
+                        placeholder="e.g., 7.1546"
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Longitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualInput.longitude}
+                        onChange={(e) => setManualInput({ ...manualInput, longitude: e.target.value })}
+                        placeholder="e.g., 81.1360"
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={addManualPoint}
+                    disabled={!manualInput.latitude || !manualInput.longitude}
+                    className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Point
+                  </button>
+                </div>
+
+                {/* Coordinate List */}
                 {plan.coordinates.length > 0 && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {plan.coordinates.map((coord, index) => (
-                      <div key={index} className="bg-gray-700 p-3 rounded-lg border border-gray-600">
-                        <div className="text-xs text-gray-400">Point {index + 1}</div>
-                        <div className="text-sm font-mono text-gray-200">
-                          {coord.latitude.toFixed(4)}, {coord.longitude.toFixed(4)}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                      Boundary Points ({plan.coordinates.length})
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {plan.coordinates.map((coord, index) => (
+                        <div key={index} className="bg-gray-700 p-4 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-semibold text-gray-400">Point {index + 1}</div>
+                            <div className="flex items-center gap-2">
+                              {editingIndex === index ? (
+                                <>
+                                  <button
+                                    onClick={() => saveEdit(index)}
+                                    className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                                    title="Save"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                                    title="Cancel"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(index)}
+                                    className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => removePoint(index)}
+                                    className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                                    title="Remove"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {editingIndex === index ? (
+                            <div className="space-y-2">
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Latitude</label>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={editingCoords.latitude}
+                                  onChange={(e) => setEditingCoords({ ...editingCoords, latitude: e.target.value })}
+                                  className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Longitude</label>
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={editingCoords.longitude}
+                                  onChange={(e) => setEditingCoords({ ...editingCoords, longitude: e.target.value })}
+                                  className="w-full px-2 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm font-mono text-gray-200">
+                              <div className="mb-1">
+                                <span className="text-gray-400 text-xs">Lat:</span> {coord.latitude.toFixed(6)}
+                              </div>
+                              <div>
+                                <span className="text-gray-400 text-xs">Lng:</span> {coord.longitude.toFixed(6)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => removePoint(index)}
-                          className="text-red-400 hover:text-red-300 text-xs mt-1"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -529,6 +1046,23 @@ const SurveyPlanPage = () => {
                         <span className="text-black">Area Calculation</span>
                         <span className={`text-sm px-2 py-1 rounded ${plan.areaSize > 0 ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-yellow-600/20 text-yellow-400 border border-yellow-600/30'}`}>
                           {plan.areaSize > 0 ? 'Calculated' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-black">Overlap Status</span>
+                        <span className={`text-sm px-2 py-1 rounded flex items-center gap-1 ${
+                          overlappingPlans.length > 0 
+                            ? 'bg-red-600/20 text-red-400 border border-red-600/30' 
+                            : 'bg-green-600/20 text-green-400 border border-green-600/30'
+                        }`}>
+                          {overlappingPlans.length > 0 ? (
+                            <>
+                              <AlertTriangle className="w-3 h-3" />
+                              {overlappingPlans.length} overlap{overlappingPlans.length !== 1 ? 's' : ''}
+                            </>
+                          ) : (
+                            'No overlaps'
+                          )}
                         </span>
                       </div>
                     </div>
