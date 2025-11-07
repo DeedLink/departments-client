@@ -9,28 +9,28 @@ const Services: React.FC = () => {
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
     const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
     const [messages, setMessages] = useState([]);
-    
+
 
     const messageModes = [
 
         { id: "all", label: "All" },
         { id: "read", label: "Read" },
         { id: "unread", label: "Unread" },
-        { id: "ent", label: "Sent" },
+        { id: "sent", label: "Sent" },
     ];
 
-    const {user} = useLogin();
+    const { user } = useLogin();
 
-    useEffect(()=>{
+    useEffect(() => {
 
-        if(!user) return;
+        if (!user) return;
 
         const fetchSentMessages = async () => {
-            try{
+            try {
                 const response = await axios.get(`https://api-deedlink-notification-service.vercel.app/api/notifications/sentMessages/${user.email}`);
                 setMessages(response.data);
-            }catch(error){
-                console.error("Error fetching user messages: ",error);
+            } catch (error) {
+                console.error("Error fetching user messages: ", error);
             }
         };
 
@@ -84,61 +84,73 @@ const Services: React.FC = () => {
 
                                             const isActiveMessageMode = messageFilterMode === mode.id;
                                             return (
+
+
                                                 <button key={mode.id} onClick={() => setMessageFilterMode(mode.id as any)}
                                                     className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" :
                                                         "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
                                                     {mode.label}
                                                 </button>
+
                                             )
 
 
                                         })
+
+
+
                                     }
 
 
 
                                 </div>
 
+                                {
+                                    messageFilterMode === "all" ? (
+                                        <div>
 
+                                        </div>
+                                    ) : messageFilterMode === "read" ? (
+                                        <></>
+                                    ) : messageFilterMode === "unread" ? (
+                                        <></>
+                                    ) : messageFilterMode === "sent" ? (
+
+                                        <div>
+
+                                            <h2 className="text-xl font-semibold mb-3">Your Sent Messages</h2>
+
+
+                                        </div>
+                                    ) : null
+                                }
                                 <div>
-                                    {
-                                        messageFilterMode === "all" ? (
-                                                <div> 
-                                                    
-                                                </div>
-                                        ) : messageFilterMode === "read" ? (
-                                            <></>
-                                        ): messageFilterMode === "unread" ? (
-                                            <></>
-                                        ) : messageFilterMode === "sent" ? (
-                                            <></>
-                                        ) : null
-                                    }
+
                                 </div>
 
                             </div>
 
                         ) : activeTab === "history" ?
 
-                        (
-                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+                            (
+                                <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
 
 
+                                    </div>
                                 </div>
-                            </div>
 
-                        ) : activeTab === "activities" ?
-                        (
-                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
-
+                            ) : activeTab === "activities" ?
+                                (
+                                    <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                        <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
 
 
-                                </div>
-                            </div>
 
-                        ) : null
+                                        </div>
+                                    </div>
+
+                                ) : null
 
                 }
 
