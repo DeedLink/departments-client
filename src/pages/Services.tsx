@@ -1,18 +1,37 @@
 import { ClipboardList, Clock, MessageSquare } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLogin } from "../contexts/LoginContext";
+import axios from "axios";
 
 
 const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread">("all");
+    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
+    
 
     const messageModes = [
 
         { id: "all", label: "All" },
         { id: "read", label: "Read" },
         { id: "unread", label: "Unread" },
+        { id: "ent", label: "Sent" },
     ];
+
+    const {user} = useLogin();
+
+    useEffect(()=>{
+
+        if(!user) return;
+
+        const fetchSentMessages = async () => {
+            try{
+                const res = await axios.get(`https://api-deedlink-notification-service.vercel.app/api/notifications/sentMessages/${user.email}`)
+            }catch(error){
+                console.error("Error fetching user messages: ",error);
+            }
+        }
+    })
 
 
     return (
@@ -86,6 +105,8 @@ const Services: React.FC = () => {
                                         ) : messageFilterMode === "read" ? (
                                             <></>
                                         ): messageFilterMode === "unread" ? (
+                                            <></>
+                                        ) : messageFilterMode === "sent" ? (
                                             <></>
                                         ) : null
                                     }
