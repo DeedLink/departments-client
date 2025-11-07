@@ -1,18 +1,48 @@
 import { ClipboardList, Clock, MessageSquare } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLogin } from "../contexts/LoginContext";
+import axios from "axios";
 
 
 const Services: React.FC = () => {
 
+    interface Message {
+        recipientEmail: string;
+        message: string;
+        senderEmail?: string;
+        createdAt?: string;
+    }
+
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
-    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread">("all");
+    const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
+    const [messages, setMessages] = useState<Message[]>([]);
+
 
     const messageModes = [
 
         { id: "all", label: "All" },
         { id: "read", label: "Read" },
         { id: "unread", label: "Unread" },
+        { id: "sent", label: "Sent" },
     ];
+
+    const { user } = useLogin();
+
+    useEffect(() => {
+
+        if (!user) return;
+
+        const fetchSentMessages = async () => {
+            try {
+                const response = await axios.get(`https://api-deedlink-notification-service.vercel.app/api/notifications/sentMessages/${user.email}`);
+                setMessages(response.data);
+            } catch (error) {
+                console.error("Error fetching user messages: ", error);
+            }
+        };
+
+        fetchSentMessages();
+    }, [user]);
 
 
     return (
@@ -61,47 +91,92 @@ const Services: React.FC = () => {
 
                                             const isActiveMessageMode = messageFilterMode === mode.id;
                                             return (
+
+
                                                 <button key={mode.id} onClick={() => setMessageFilterMode(mode.id as any)}
-                                                    className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg shadow-lg scale-105" :
+                                                    className={`flex items-center rounded-md px-2 py-1  transition-all duration-200 ${isActiveMessageMode ? "bg-blue-500 text-gray-50 shadow-lg scale-105" :
                                                         "bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"}`}>
                                                     {mode.label}
                                                 </button>
+
                                             )
 
 
                                         })
+
+
+
                                     }
 
-                               </div>
-                            </div>
-                        ) : null
 
-                }
-
-                {
-                    activeTab === "history" ?
-                        (
-                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
-
-                                    
-                                </div>
-                            </div>
-                        ) : null
-
-                }
-
-                {
-                    activeTab === "activities" ?
-                        (
-                            <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
-                                <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
-
-                                    
 
                                 </div>
+
+                                {
+                                    messageFilterMode === "all" ? (
+                                        <div>
+
+                                        </div>
+                                    ) : messageFilterMode === "read" ? (
+                                        <></>
+                                    ) : messageFilterMode === "unread" ? (
+                                        <></>
+                                    ) : messageFilterMode === "sent" ? (
+
+                                        <div>
+
+                                            <h2 className="text-xl text-gray-700 font-semibold pl-2 pt-1 mb-3">Sent Messages</h2>
+
+                                            <div className="m-3 pt-5">
+                                                <div>
+                                                    {
+                                                        messages.length == 0 ? (
+                                                            <p className="text-2xl text-center pt-10 text-gray-500">You have no mesages yet</p>
+                                                        ) : (
+                                                            <ul className="space-y-2">
+                                                                {messages.map((msg, index) => (
+                                                                    <li key={index} className="border p-3 rounded-lg shadow">
+                                                                        <p><strong>To:</strong> {msg.recipientEmail}</p>
+                                                                        <p><strong>Message:</strong> {msg.message}</p>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )
+                                                    }
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+                                    ) : null
+                                }
+                                <div>
+
+                                </div>
+
                             </div>
-                        ) : null
+
+                        ) : activeTab === "history" ?
+
+                            (
+                                <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                    <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+
+                                    </div>
+                                </div>
+
+                            ) : activeTab === "activities" ?
+                                (
+                                    <div className="w-full border z-40 rounded-lg bg-gradient-to-r from-gray-50 to-emerald-50 border-emerald-100 p-2xl mt-6 h-screen">
+                                        <div className="p-2 bg-gradient-to-r from-gray-50 to-white rounded-lg shadow-sm flex justify-end">
+
+
+
+                                        </div>
+                                    </div>
+
+                                ) : null
 
                 }
 
