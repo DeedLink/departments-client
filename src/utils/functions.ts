@@ -291,8 +291,10 @@ export const detectOverlappingDeeds = (
       const deed1 = deeds[i];
       const deed2 = deeds[j];
 
-      // Skip if checking same deed
-      if (deed1.deedNumber === deed2.deedNumber) continue;
+      // Skip if checking same deed (normalize deed numbers to strings for comparison)
+      const deed1Num = String(deed1.deedNumber).trim();
+      const deed2Num = String(deed2.deedNumber).trim();
+      if (deed1Num === deed2Num) continue;
 
       // Get plan data for both deeds - try multiple lookup methods
       let plan1 = null;
@@ -320,23 +322,39 @@ export const detectOverlappingDeeds = (
       let coords2: LocationPoint[] = [];
 
       if (plan1?.coordinates && plan1.coordinates.length >= 3) {
-        coords1 = plan1.coordinates;
-        console.log(`Deed ${deed1.deedNumber}: Using plan coordinates (${coords1.length} points)`);
+        // Ensure coordinates are in correct format {longitude, latitude}
+        coords1 = plan1.coordinates.map((coord: any) => ({
+          longitude: typeof coord.longitude === 'number' ? coord.longitude : (coord.lng ?? 0),
+          latitude: typeof coord.latitude === 'number' ? coord.latitude : (coord.lat ?? 0),
+        })).filter((c: LocationPoint) => c.longitude !== 0 || c.latitude !== 0);
+        console.log(`Deed ${deed1.deedNumber}: Using plan coordinates (${coords1.length} points)`, coords1[0]);
       } else if (deed1.location && deed1.location.length >= 3) {
-        coords1 = deed1.location;
-        console.log(`Deed ${deed1.deedNumber}: Using deed location (${coords1.length} points)`);
+        // Ensure deed location is in correct format
+        coords1 = deed1.location.map((coord: any) => ({
+          longitude: typeof coord.longitude === 'number' ? coord.longitude : (coord.lng ?? 0),
+          latitude: typeof coord.latitude === 'number' ? coord.latitude : (coord.lat ?? 0),
+        })).filter((c: LocationPoint) => c.longitude !== 0 || c.latitude !== 0);
+        console.log(`Deed ${deed1.deedNumber}: Using deed location (${coords1.length} points)`, coords1[0]);
       } else {
-        console.log(`Deed ${deed1.deedNumber}: No valid coordinates (plan: ${plan1 ? 'exists but no coords' : 'not found'}, location: ${deed1.location?.length || 0} points)`);
+        console.log(`Deed ${deed1.deedNumber}: No valid coordinates (plan: ${plan1 ? `exists with ${plan1.coordinates?.length || 0} coords` : 'not found'}, location: ${deed1.location?.length || 0} points)`);
       }
 
       if (plan2?.coordinates && plan2.coordinates.length >= 3) {
-        coords2 = plan2.coordinates;
-        console.log(`Deed ${deed2.deedNumber}: Using plan coordinates (${coords2.length} points)`);
+        // Ensure coordinates are in correct format {longitude, latitude}
+        coords2 = plan2.coordinates.map((coord: any) => ({
+          longitude: typeof coord.longitude === 'number' ? coord.longitude : (coord.lng ?? 0),
+          latitude: typeof coord.latitude === 'number' ? coord.latitude : (coord.lat ?? 0),
+        })).filter((c: LocationPoint) => c.longitude !== 0 || c.latitude !== 0);
+        console.log(`Deed ${deed2.deedNumber}: Using plan coordinates (${coords2.length} points)`, coords2[0]);
       } else if (deed2.location && deed2.location.length >= 3) {
-        coords2 = deed2.location;
-        console.log(`Deed ${deed2.deedNumber}: Using deed location (${coords2.length} points)`);
+        // Ensure deed location is in correct format
+        coords2 = deed2.location.map((coord: any) => ({
+          longitude: typeof coord.longitude === 'number' ? coord.longitude : (coord.lng ?? 0),
+          latitude: typeof coord.latitude === 'number' ? coord.latitude : (coord.lat ?? 0),
+        })).filter((c: LocationPoint) => c.longitude !== 0 || c.latitude !== 0);
+        console.log(`Deed ${deed2.deedNumber}: Using deed location (${coords2.length} points)`, coords2[0]);
       } else {
-        console.log(`Deed ${deed2.deedNumber}: No valid coordinates (plan: ${plan2 ? 'exists but no coords' : 'not found'}, location: ${deed2.location?.length || 0} points)`);
+        console.log(`Deed ${deed2.deedNumber}: No valid coordinates (plan: ${plan2 ? `exists with ${plan2.coordinates?.length || 0} coords` : 'not found'}, location: ${deed2.location?.length || 0} points)`);
       }
 
       // Skip if either deed has no valid coordinates
@@ -364,11 +382,11 @@ export const detectOverlappingDeeds = (
           ? calculateOverlapPercentage(coords1, coords2)
           : undefined;
 
-        console.log(`✅ OVERLAP DETECTED: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
+        console.log(`✅ OVERLAP DETECTED: Deed ${deed1Num} vs ${deed2Num} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
 
         overlaps.push({
-          deed1: deed1.deedNumber,
-          deed2: deed2.deedNumber,
+          deed1: deed1Num,
+          deed2: deed2Num,
           overlapType,
           overlapPercentage,
         });
@@ -377,6 +395,34 @@ export const detectOverlappingDeeds = (
   }
 
   console.log(`Total overlaps found: ${overlaps.length}`);
+  
+  // Specific check for deeds 002 and 005 (normalize to strings)
+  const check002vs005 = overlaps.find(o => {
+    const d1 = String(o.deed1).trim();
+    const d2 = String(o.deed2).trim();
+    return (d1 === '002' && d2 === '005') || (d1 === '005' && d2 === '002');
+  });
+  if (check002vs005) {
+    console.log('✅ OVERLAP FOUND between 002 and 005:', check002vs005);
+  } else {
+    console.log('❌ NO OVERLAP FOUND between 002 and 005');
+    // Check if both deeds exist (check both string and number formats)
+    const deed002 = deeds.find(d => String(d.deedNumber).trim() === '002' || d.deedNumber === '002' || d.deedNumber === 2);
+    const deed005 = deeds.find(d => String(d.deedNumber).trim() === '005' || d.deedNumber === '005' || d.deedNumber === 5);
+    console.log('Deed 002 exists:', !!deed002, deed002 ? {
+      hasPlan: !!deed002.surveyPlanNumber,
+      planNumber: deed002.surveyPlanNumber,
+      hasLocation: !!deed002.location && deed002.location.length > 0,
+      locationCount: deed002.location?.length || 0,
+    } : null);
+    console.log('Deed 005 exists:', !!deed005, deed005 ? {
+      hasPlan: !!deed005.surveyPlanNumber,
+      planNumber: deed005.surveyPlanNumber,
+      hasLocation: !!deed005.location && deed005.location.length > 0,
+      locationCount: deed005.location?.length || 0,
+    } : null);
+  }
+  
   console.log('=== End detectOverlappingDeeds Debug ===');
 
   return overlaps;

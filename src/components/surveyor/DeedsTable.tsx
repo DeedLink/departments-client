@@ -59,11 +59,21 @@ const DeedsTable = () => {
             try {
               const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
               if (res.success && res.data) {
+                // Convert coordinates from {longitude, latitude} to {longitude, latitude} format
+                // Database stores as {longitude, latitude}, we need to keep it as LocationPoint format
+                const coords = (res.data.coordinates || []).map((coord: any) => ({
+                  longitude: coord.longitude ?? coord.lng ?? 0,
+                  latitude: coord.latitude ?? coord.lat ?? 0,
+                }));
+                
                 plans[deed.surveyPlanNumber] = {
-                  coordinates: res.data.coordinates || [],
+                  coordinates: coords,
                   sides: res.data.sides,
                 };
-                console.log(`✅ Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`);
+                console.log(`✅ Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`, {
+                  coordCount: coords.length,
+                  firstCoord: coords[0],
+                });
                 return;
               }
             } catch (error) {
@@ -77,14 +87,25 @@ const DeedsTable = () => {
             const res = await getPlanByDeedNumber(deed.deedNumber);
             if (res.success && res.data) {
               const planId = res.data.planId || res.data._id || deed.deedNumber;
+              
+              // Convert coordinates from {longitude, latitude} to {longitude, latitude} format
+              // Database stores as {longitude, latitude}, we need to keep it as LocationPoint format
+              const coords = (res.data.coordinates || []).map((coord: any) => ({
+                longitude: coord.longitude ?? coord.lng ?? 0,
+                latitude: coord.latitude ?? coord.lat ?? 0,
+              }));
+              
               const planData = {
-                coordinates: res.data.coordinates || [],
+                coordinates: coords,
                 sides: res.data.sides,
               };
               // Store by both planId and deed number for flexible lookup
               plans[planId] = planData;
               plans[deed.deedNumber] = planData; // Also store by deed number
-              console.log(`✅ Fetched plan by deed number ${deed.deedNumber} (planId: ${planId})`);
+              console.log(`✅ Fetched plan by deed number ${deed.deedNumber} (planId: ${planId})`, {
+                coordCount: coords.length,
+                firstCoord: coords[0],
+              });
             }
           } catch (error) {
             // Silently fail - deed might not have a plan yet
@@ -595,30 +616,46 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
 
   // Get coordinates for a deed
   const getDeedCoordinates = (deedNumber: string): [number, number][] => {
-    const deed = deeds.find(d => d.deedNumber === deedNumber);
-    if (!deed) return [];
+    const deed = deeds.find(d => String(d.deedNumber).trim() === String(deedNumber).trim());
+    if (!deed) {
+      console.log(`⚠️ Deed ${deedNumber} not found in deeds array`);
+      return [];
+    }
 
-    // Try to get plan coordinates first
+    // Try to get plan coordinates first - check by surveyPlanNumber
     if (deed.surveyPlanNumber && plansMap[deed.surveyPlanNumber]) {
       const planCoords = plansMap[deed.surveyPlanNumber].coordinates;
+      console.log(`📍 Using plan ${deed.surveyPlanNumber} for deed ${deedNumber} (${planCoords.length} coords)`);
       // Plan coordinates are stored as {longitude, latitude} but we need [latitude, longitude] for map
-      return planCoords.map(coord => {
-        // Handle both formats: {latitude, longitude} or {longitude, latitude}
-        if ('latitude' in coord && 'longitude' in coord) {
-          return [coord.latitude, coord.longitude] as [number, number];
-        }
-        return [0, 0] as [number, number];
+      return planCoords.map((coord: any) => {
+        const lat = coord.latitude ?? coord.lat ?? 0;
+        const lng = coord.longitude ?? coord.lng ?? 0;
+        return [lat, lng] as [number, number];
+      }).filter(([lat, lng]) => lat !== 0 || lng !== 0);
+    }
+
+    // Also try to get plan by deed number
+    if (plansMap[deedNumber]) {
+      const planCoords = plansMap[deedNumber].coordinates;
+      console.log(`📍 Using plan by deed number ${deedNumber} (${planCoords.length} coords)`);
+      return planCoords.map((coord: any) => {
+        const lat = coord.latitude ?? coord.lat ?? 0;
+        const lng = coord.longitude ?? coord.lng ?? 0;
+        return [lat, lng] as [number, number];
       }).filter(([lat, lng]) => lat !== 0 || lng !== 0);
     }
 
     // Fall back to deed location
     if (deed.location && deed.location.length > 0) {
-      return deed.location.map(coord => {
-        // Deed location is {latitude, longitude}
-        return [coord.latitude, coord.longitude] as [number, number];
-      });
+      console.log(`📍 Using deed location for deed ${deedNumber} (${deed.location.length} coords)`);
+      return deed.location.map((coord: any) => {
+        const lat = coord.latitude ?? coord.lat ?? 0;
+        const lng = coord.longitude ?? coord.lng ?? 0;
+        return [lat, lng] as [number, number];
+      }).filter(([lat, lng]) => lat !== 0 || lng !== 0);
     }
 
+    console.log(`❌ No coordinates found for deed ${deedNumber}`);
     return [];
   };
 
@@ -632,23 +669,6 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
     return allCoords;
   };
 
-  // Color palette for different deeds
-  const colors = [
-    '#ef4444', // red
-    '#3b82f6', // blue
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#f97316', // orange
-  ];
-
-  const getDeedColor = (deedNumber: string): string => {
-    const uniqueDeeds = getUniqueOverlappingDeeds();
-    const index = uniqueDeeds.indexOf(deedNumber);
-    return colors[index % colors.length];
-  };
 
   const allCoords = getAllCoordinates();
   const center: [number, number] = allCoords.length > 0 
@@ -721,53 +741,150 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
                 />
                 {allCoords.length > 0 && <FitBounds coords={allCoords} />}
                 
-                {/* Render polygons for each overlapping deed */}
-                {getUniqueOverlappingDeeds().map((deedNumber) => {
-                  const coords = getDeedCoordinates(deedNumber);
-                  const deed = deeds.find(d => d.deedNumber === deedNumber);
-                  const color = getDeedColor(deedNumber);
+                {/* Render each overlap pair - show both deeds in each overlap */}
+                {overlaps.map((overlap, overlapIndex) => {
+                  console.log(`🗺️ Rendering overlap: ${overlap.deed1} vs ${overlap.deed2}`);
+                  const coords1 = getDeedCoordinates(overlap.deed1);
+                  const coords2 = getDeedCoordinates(overlap.deed2);
+                  console.log(`   Deed ${overlap.deed1}: ${coords1.length} coordinates`);
+                  console.log(`   Deed ${overlap.deed2}: ${coords2.length} coordinates`);
                   
-                  if (coords.length < 3) return null;
+                  const deed1 = deeds.find(d => String(d.deedNumber).trim() === String(overlap.deed1).trim());
+                  const deed2 = deeds.find(d => String(d.deedNumber).trim() === String(overlap.deed2).trim());
+                  
+                  // Use different colors for each deed in the pair to distinguish them
+                  const color1 = overlapIndex % 2 === 0 ? '#ef4444' : '#3b82f6'; // Red or Blue
+                  const color2 = overlapIndex % 2 === 0 ? '#3b82f6' : '#ef4444'; // Blue or Red
                   
                   return (
-                    <React.Fragment key={deedNumber}>
-                      <Polygon
-                        positions={coords}
-                        pathOptions={{
-                          color: color,
-                          fillColor: color,
-                          fillOpacity: 0.3,
-                          weight: 3,
-                        }}
-                      >
-                        <Popup>
-                          <div className="text-sm">
-                            <strong className="font-semibold">Deed: {deedNumber}</strong>
-                            {deed && (
-                              <>
+                    <React.Fragment key={`${overlap.deed1}-${overlap.deed2}-${overlapIndex}`}>
+                      {/* Deed 1 Polygon */}
+                      {coords1.length >= 3 ? (
+                        <>
+                          <Polygon
+                            positions={coords1}
+                            pathOptions={{
+                              color: color1,
+                              fillColor: color1,
+                              fillOpacity: 0.25,
+                              weight: 3,
+                            }}
+                          >
+                            <Popup>
+                              <div className="text-sm">
+                                <strong className="font-semibold text-red-700">Deed: {overlap.deed1}</strong>
+                                {deed1 && (
+                                  <>
+                                    <br />
+                                    <span className="text-gray-600">Owner: {deed1.ownerFullName}</span>
+                                    <br />
+                                    <span className="text-gray-600">Type: {deed1.landType}</span>
+                                  </>
+                                )}
                                 <br />
-                                <span className="text-gray-600">Owner: {deed.ownerFullName}</span>
+                                <span className="text-xs text-gray-500 mt-1 block">
+                                  Overlaps with: <strong className="text-blue-700">{overlap.deed2}</strong>
+                                </span>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded text-xs font-semibold ${
+                                  overlap.overlapType === 'polygon' 
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : overlap.overlapType === 'boundary'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
+                                   overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
+                                   '⚠️ Both'}
+                                  {overlap.overlapPercentage !== undefined && ` (${overlap.overlapPercentage.toFixed(1)}%)`}
+                                </span>
+                              </div>
+                            </Popup>
+                          </Polygon>
+                          {/* Deed 1 Label at centroid */}
+                          {coords1.length > 0 && (
+                            <Marker
+                              position={[
+                                coords1.reduce((sum, [lat]) => sum + lat, 0) / coords1.length,
+                                coords1.reduce((sum, [, lng]) => sum + lng, 0) / coords1.length
+                              ]}
+                              icon={L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="background-color: ${color1}; color: white; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; border: 3px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); text-align: center;">${overlap.deed1}</div>`,
+                                iconSize: [70, 35],
+                                iconAnchor: [35, 17],
+                              })}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <div className="absolute top-2 left-2 bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded z-[1000] text-sm">
+                          ⚠️ Deed {overlap.deed1}: No coordinates found ({coords1.length} points)
+                        </div>
+                      )}
+                      
+                      {/* Deed 2 Polygon */}
+                      {coords2.length >= 3 ? (
+                        <>
+                          <Polygon
+                            positions={coords2}
+                            pathOptions={{
+                              color: color2,
+                              fillColor: color2,
+                              fillOpacity: 0.25,
+                              weight: 3,
+                              dashArray: '10, 5', // Dashed border to distinguish from deed1
+                            }}
+                          >
+                            <Popup>
+                              <div className="text-sm">
+                                <strong className="font-semibold text-blue-700">Deed: {overlap.deed2}</strong>
+                                {deed2 && (
+                                  <>
+                                    <br />
+                                    <span className="text-gray-600">Owner: {deed2.ownerFullName}</span>
+                                    <br />
+                                    <span className="text-gray-600">Type: {deed2.landType}</span>
+                                  </>
+                                )}
                                 <br />
-                                <span className="text-gray-600">Type: {deed.landType}</span>
-                              </>
-                            )}
-                          </div>
-                        </Popup>
-                      </Polygon>
-                      {/* Add marker at centroid */}
-                      {coords.length > 0 && (
-                        <Marker
-                          position={[
-                            coords.reduce((sum, [lat]) => sum + lat, 0) / coords.length,
-                            coords.reduce((sum, [, lng]) => sum + lng, 0) / coords.length
-                          ]}
-                          icon={L.divIcon({
-                            className: 'custom-marker',
-                            html: `<div style="background-color: ${color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${deedNumber}</div>`,
-                            iconSize: [60, 30],
-                            iconAnchor: [30, 15],
-                          })}
-                        />
+                                <span className="text-xs text-gray-500 mt-1 block">
+                                  Overlaps with: <strong className="text-red-700">{overlap.deed1}</strong>
+                                </span>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded text-xs font-semibold ${
+                                  overlap.overlapType === 'polygon' 
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : overlap.overlapType === 'boundary'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {overlap.overlapType === 'polygon' ? '📍 Polygon' : 
+                                   overlap.overlapType === 'boundary' ? '🔗 Boundary' : 
+                                   '⚠️ Both'}
+                                  {overlap.overlapPercentage !== undefined && ` (${overlap.overlapPercentage.toFixed(1)}%)`}
+                                </span>
+                              </div>
+                            </Popup>
+                          </Polygon>
+                          {/* Deed 2 Label at centroid */}
+                          {coords2.length > 0 && (
+                            <Marker
+                              position={[
+                                coords2.reduce((sum, [lat]) => sum + lat, 0) / coords2.length,
+                                coords2.reduce((sum, [, lng]) => sum + lng, 0) / coords2.length
+                              ]}
+                              icon={L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="background-color: ${color2}; color: white; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; border: 3px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); text-align: center;">${overlap.deed2}</div>`,
+                                iconSize: [70, 35],
+                                iconAnchor: [35, 17],
+                              })}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <div className="absolute top-2 right-2 bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded z-[1000] text-sm">
+                          ⚠️ Deed {overlap.deed2}: No coordinates found ({coords2.length} points)
+                        </div>
                       )}
                     </React.Fragment>
                   );
