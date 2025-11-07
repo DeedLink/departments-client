@@ -8,6 +8,7 @@ const Services: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"activities" | "history" | "messages">("activities");
     const [messageFilterMode, setMessageFilterMode] = useState<"all" | "read" | "unread" | "sent">("all");
+    const [messages, setMessages] = useState([]);
     
 
     const messageModes = [
@@ -26,12 +27,15 @@ const Services: React.FC = () => {
 
         const fetchSentMessages = async () => {
             try{
-                const res = await axios.get(`https://api-deedlink-notification-service.vercel.app/api/notifications/sentMessages/${user.email}`)
+                const response = await axios.get(`https://api-deedlink-notification-service.vercel.app/api/notifications/sentMessages/${user.email}`);
+                setMessages(response.data);
             }catch(error){
                 console.error("Error fetching user messages: ",error);
             }
-        }
-    })
+        };
+
+        fetchSentMessages();
+    }, [user]);
 
 
     return (
