@@ -201,6 +201,26 @@ export const getPlanByDeedNumber = async (deedNumber: string): Promise<any> => {
   }
 };
 
+// Get all plans by deed number (protected) - sorted by timestamp (latest first)
+export const getAllPlansByDeedNumber = async (deedNumber: string): Promise<any> => {
+  try {
+    const res = await planApi.get(`/deed/${deedNumber}/all`, {
+      validateStatus: (status) => {
+        // Don't throw errors for 404s (plan not found is expected)
+        return status < 500;
+      },
+    });
+    // Return the response data, which will have success: false for 404s
+    return res.data;
+  } catch (error: any) {
+    // Only catch non-404 errors
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'No plans found', data: [] };
+    }
+    throw error;
+  }
+};
+
 // Get plan by plan number (protected)
 export const getPlanByPlanNumber = async (planId: string): Promise<any> => {
   const res = await planApi.get(`/plan/${planId}`, {
