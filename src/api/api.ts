@@ -183,10 +183,22 @@ planApi.interceptors.request.use((config) => {
 
 // Get plan by deed ID (protected)
 export const getPlanByDeedNumber = async (deedNumber: string): Promise<any> => {
-  const res = await planApi.get(`/deed/${deedNumber}`, {
-    validateStatus: () => true,
-  });
-  return res.data;
+  try {
+    const res = await planApi.get(`/deed/${deedNumber}`, {
+      validateStatus: (status) => {
+        // Don't throw errors for 404s (plan not found is expected)
+        return status < 500;
+      },
+    });
+    // Return the response data, which will have success: false for 404s
+    return res.data;
+  } catch (error: any) {
+    // Only catch non-404 errors
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'Plan not found' };
+    }
+    throw error;
+  }
 };
 
 // Get plan by plan number (protected)
