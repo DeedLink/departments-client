@@ -76,6 +76,7 @@ const SurveyPlanPage = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingCoords, setEditingCoords] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
   const [manualInput, setManualInput] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
+  const [planPrefix] = useState<string>('DeedLinkPlan-');
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
   const { account } = useWallet();
@@ -99,6 +100,15 @@ const SurveyPlanPage = () => {
               return { latitude: coord.longitude || coord.latitude, longitude: coord.latitude || coord.longitude };
             });
           }
+          
+          // Extract prefix from planId if it exists
+          if (planData.planId) {
+            const planIdStr = String(planData.planId);
+            if (planIdStr.startsWith('DeedLinkPlan-')) {
+              planData.planId = planIdStr.replace('DeedLinkPlan-', '');
+            }
+          }
+          
           setPlan(planData);
           setIsNew(false);
         }
@@ -370,8 +380,11 @@ const SurveyPlanPage = () => {
     
     if (!plan.planId.trim()) newErrors.planId = "Plan ID is required";
     if (!plan.createdBy.trim()) newErrors.createdBy = "Created By is required";
-    if (plan.coordinates.length < 3) newErrors.coordinates = "At least 3 boundary points are required";
-    if (plan.areaSize <= 0) newErrors.areaSize = "Area size must be greater than 0";
+    if (plan.coordinates.length < 3) {
+      newErrors.coordinates = "At least 3 boundary points are required";
+    } else if (plan.areaSize <= 0) {
+      newErrors.areaSize = "Area size must be greater than 0. Please check your boundary coordinates.";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -385,11 +398,20 @@ const SurveyPlanPage = () => {
 
     setIsSaving(true);
     try {
+      // Combine prefix with plan ID
+      const fullPlanId = planPrefix + plan.planId;
+      
+      // Create plan object with full plan ID
+      const planToSave = {
+        ...plan,
+        planId: fullPlanId
+      };
+
       if (isNew) {
         // Creating a new plan
-        console.log("Creating new plan", plan);
+        console.log("Creating new plan", planToSave);
         try {
-          const res = await createPlan(plan);
+          const res = await createPlan(planToSave);
           console.log("res: ", res);
           if (res && res.planId) {
             // Update the deed with the plan ID
@@ -397,7 +419,7 @@ const SurveyPlanPage = () => {
             console.log("planIdUpdateRes: ", planIdUpdateRes);
             
             // Update local state with the created plan data
-            setPlan({ ...plan, planId: res.planId });
+            setPlan({ ...planToSave, planId: res.planId });
             setIsNew(false);
             showToast("Plan created successfully!", "success");
           } else {
@@ -409,7 +431,7 @@ const SurveyPlanPage = () => {
         }
       } else {
         // Updating an existing plan
-        console.log("Updating plan", plan);
+        console.log("Updating plan", planToSave);
         if (!plan._id) {
           showToast("Error: Plan ID (_id) is missing. Cannot update plan.", "error");
           return;
@@ -417,7 +439,7 @@ const SurveyPlanPage = () => {
         
         try {
           // Use MongoDB _id for updating, not planId
-          const res = await updatePlan(plan._id, plan);
+          const res = await updatePlan(plan._id, planToSave);
           console.log("Update res: ", res);
           showToast("Plan updated successfully!", "success");
           
@@ -803,20 +825,47 @@ const SurveyPlanPage = () => {
               <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 h-full">
                 <h2 className="text-xl font-semibold mb-6 text-white">Plan Details</h2>
                 
+                {/* Validation Errors Banner */}
+                {(errors.coordinates || errors.areaSize) && (
+                  <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                    <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Please fix the following errors:
+                    </h3>
+                    <ul className="list-disc list-inside space-y-1 text-red-300 text-sm">
+                      {errors.coordinates && <li>{errors.coordinates}</li>}
+                      {errors.areaSize && <li>{errors.areaSize}</li>}
+                    </ul>
+                    <p className="mt-3 text-sm text-gray-400">
+                      💡 <strong>Tip:</strong> Go to the <strong>"Boundary Map"</strong> tab and click on the map to add at least 3 boundary points. The area will be calculated automatically.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Plan ID *
                     </label>
-                    <input
-                      type="text"
-                      value={plan.planId}
-                      onChange={(e) => setPlan({ ...plan, planId: e.target.value })}
-                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400 ${
-                        errors.planId ? 'border-red-500' : 'border-gray-600'
-                      }`}
-                      placeholder="Enter unique plan identifier"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-3 bg-gray-600 border border-gray-600 rounded-l-lg text-gray-300 text-sm whitespace-nowrap">
+                        DeedLinkPlan-
+                      </div>
+                      <input
+                        type="text"
+                        value={plan.planId}
+                        onChange={(e) => setPlan({ ...plan, planId: e.target.value })}
+                        className={`flex-1 px-4 py-3 bg-gray-700 border rounded-r-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400 ${
+                          errors.planId ? 'border-red-500' : 'border-gray-600'
+                        }`}
+                        placeholder="Enter plan number"
+                      />
+                    </div>
+                    <div className="mt-1 text-xs text-gray-400">
+                      Full Plan ID: <span className="text-green-400 font-mono">
+                        DeedLinkPlan-{plan.planId || 'XXXX'}
+                      </span>
+                    </div>
                     {errors.planId && <p className="text-red-400 text-xs mt-1">{errors.planId}</p>}
                   </div>
 
