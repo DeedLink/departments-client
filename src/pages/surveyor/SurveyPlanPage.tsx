@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, Polygon, Popup, useMapEvents, useMap } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getPlanBySeurveyorWalletAddress } from "../../api/api";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
@@ -137,32 +137,62 @@ const SurveyPlanPage = () => {
     fetchPlan();
   }, [deedNumber]);
 
-  // Fetch all plans to check for overlaps
+  // Fetch latest plans for each deed assigned to the surveyor
   useEffect(() => {
-    const fetchAllPlans = async () => {
+    const fetchLatestPlansForDeeds = async () => {
       try {
-        // Try to get plans by surveyor first, fallback to all plans
-        let plans: any[] = [];
+        let plans: Plan[] = [];
+        
         if (account) {
-          try {
-            plans = await getPlanBySeurveyorWalletAddress(account);
-          } catch {
-            // Fallback to all plans if surveyor-specific fails
-            plans = await getAllPlans();
-          }
+          const deeds = await getDeedBySurveyorWalletAddress(account);
+          console.log(`Fetched ${deeds.length} deeds for surveyor`);
+
+          const planPromises = deeds.map(async (deed: any) => {
+            try {
+              if (deed.surveyPlanNumber) {
+                try {
+                  const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+                  if (res.success && res.data) {
+                    console.log(`Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`);
+                    return res.data;
+                  }
+                } catch (error) {
+                  console.error(`Failed to fetch plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}:`, error);
+                }
+              }
+              try {
+                const res = await getPlanByDeedNumber(deed.deedNumber);
+                if (res && res.success && res.data) {
+                  console.log(`Fetched plan by deed number ${deed.deedNumber}`);
+                  return res.data;
+                }
+              } catch (error: any) {
+                if (error?.response?.status !== 404) {
+                  console.error(`Error fetching plan for deed ${deed.deedNumber}:`, error);
+                }
+              }
+              
+              return null;
+            } catch (error) {
+              console.error(`Error fetching plan for deed ${deed.deedNumber}:`, error);
+              return null;
+            }
+          });
+          
+          const fetchedPlans = await Promise.all(planPromises);
+          plans = fetchedPlans.filter((p): p is Plan => p !== null);
+          console.log(`Fetched ${plans.length} plans for overlap detection (from ${deeds.length} deeds)`);
         } else {
           plans = await getAllPlans();
+          console.log(`Fetched ${plans.length} plans (fallback - no account)`);
         }
         
-        // Convert coordinates format if needed
         const normalizedPlans: Plan[] = plans.map((p: any) => {
           if (p.coordinates && Array.isArray(p.coordinates)) {
             p.coordinates = p.coordinates.map((coord: any) => {
-              // Ensure coordinates are in {latitude, longitude} format
               if (coord.latitude !== undefined && coord.longitude !== undefined) {
                 return { latitude: coord.latitude, longitude: coord.longitude };
               }
-              // Handle if stored differently
               return { latitude: coord.latitude || coord.lat || 0, longitude: coord.longitude || coord.lng || 0 };
             });
           }
@@ -171,13 +201,12 @@ const SurveyPlanPage = () => {
         
         setAllPlans(normalizedPlans);
       } catch (error) {
-        console.error("Error fetching plans for overlap detection:", error);
+        console.error("Error fetching latest plans for overlap detection:", error);
       }
     };
-    fetchAllPlans();
+    fetchLatestPlansForDeeds();
   }, [account]);
 
-  // Check for overlaps when plan coordinates or boundaries change
   useEffect(() => {
     const checkOverlaps = () => {
       if (!plan.coordinates || plan.coordinates.length < 3) {
@@ -188,35 +217,33 @@ const SurveyPlanPage = () => {
       setLoadingOverlaps(true);
       const overlaps: Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }> = [];
 
-      // Convert current plan coordinates to LocationPoint format
-      // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+      console.log(`Checking overlaps for plan ${plan.planId || deedNumber} against ${allPlans.length} other plans`);
+
       const currentPlanCoords: LocationPoint[] = plan.coordinates.map(coord => ({
         longitude: coord.longitude,
         latitude: coord.latitude
       }));
 
-      // Check against all other plans
       for (const otherPlan of allPlans) {
-        // Skip the current plan itself
-        if (otherPlan._id === plan._id || otherPlan.planId === plan.planId) {
+        if (otherPlan._id === plan._id || 
+            otherPlan.planId === plan.planId || 
+            (deedNumber && otherPlan.deedNumber === deedNumber)) {
+          console.log(`Skipping current plan: ${otherPlan.planId || otherPlan.deedNumber}`);
           continue;
         }
 
         if (!otherPlan.coordinates || otherPlan.coordinates.length < 3) {
+          console.log(`Skipping plan ${otherPlan.planId || otherPlan.deedNumber} - insufficient coordinates`);
           continue;
         }
 
-        // Convert other plan coordinates to LocationPoint format
-        // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
         const otherPlanCoords: LocationPoint[] = otherPlan.coordinates.map(coord => ({
           longitude: coord.longitude,
           latitude: coord.latitude
         }));
 
-        // Check polygon overlap
         const polygonOverlap = doPolygonsOverlap(currentPlanCoords, otherPlanCoords);
 
-        // Check boundary overlap
         const boundaryOverlap = doBoundariesOverlap(plan.sides, otherPlan.sides);
 
         if (polygonOverlap || boundaryOverlap) {
@@ -228,6 +255,8 @@ const SurveyPlanPage = () => {
             ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
             : undefined;
 
+          console.log(`✅ OVERLAP DETECTED: Plan ${plan.planId || deedNumber} vs ${otherPlan.planId || otherPlan.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
+
           overlaps.push({
             plan: otherPlan,
             overlapType,
@@ -236,14 +265,14 @@ const SurveyPlanPage = () => {
         }
       }
 
+      console.log(`Found ${overlaps.length} overlapping plans`);
       setOverlappingPlans(overlaps);
       setLoadingOverlaps(false);
     };
 
-    // Debounce overlap checking
     const timeoutId = setTimeout(checkOverlaps, 500);
     return () => clearTimeout(timeoutId);
-  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId]);
+  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId, deedNumber]);
 
   const coordinateToLatLng = (coord: Coordinate): [number, number] => {
     return [coord.latitude, coord.longitude];

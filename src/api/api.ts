@@ -162,6 +162,23 @@ export const updateSurveyPlanNumber = async (deedNumber: string, surveyPlanNumbe
   return res.data;
 };
 
+// Get latest plan for a deed (protected)
+export const getLatestPlanByDeedId = async (deedId: string): Promise<any> => {
+  try {
+    const res = await deedApi.get(`/${deedId}/plan`, {
+      validateStatus: (status) => {
+        return status < 500;
+      },
+    });
+    return res.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'Plan not found' };
+    }
+    throw error;
+  }
+};
+
 // Plan related api calls
 
 const SURVEY_PLAN_API_URL = import.meta.env.VITE_SURVEY_PLAN_API_URL || "http://localhost:5003/api/plans";
