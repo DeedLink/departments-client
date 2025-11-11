@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Search, Eye, Map, FileText, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import type { Deed } from "../../types/deed";
 import SurveyPlan from "./SurveyPlan";
-import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber, getAllPlansByDeedNumber } from "../../api/api";
+import { getDeedBySurveyorWalletAddress, getPlanByPlanNumber, getPlanByDeedNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useNavigate } from "react-router-dom";
@@ -48,86 +48,83 @@ const DeedsTable = () => {
       if (deeds.length === 0) return;
 
       setLoadingOverlaps(true);
-      type PlanData = { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string }; planId?: string; createdAt?: Date | string | number };
+      type PlanData = { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string }; planId?: string };
       const plans: Record<string, PlanData> = {};
 
       try {
-        // Fetch all plans for each deed and filter for the latest one based on timestamp
+        // Fetch all plan data - try both by plan number and by deed number
         const planPromises = deeds.map(async (deed) => {
+          // Try to fetch by surveyPlanNumber first
+          if (deed.surveyPlanNumber) {
+            try {
+              const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+              if (res.success && res.data) {
+                // Convert coordinates from {longitude, latitude} to {longitude, latitude} format
+                // Database stores as {longitude, latitude}, we need to keep it as LocationPoint format
+                const coords = (res.data.coordinates || []).map((coord: any) => ({
+                  longitude: coord.longitude ?? coord.lng ?? 0,
+                  latitude: coord.latitude ?? coord.lat ?? 0,
+                }));
+                
+                plans[deed.surveyPlanNumber] = {
+                  coordinates: coords,
+                  sides: res.data.sides,
+                  planId: res.data.planId || deed.surveyPlanNumber,
+                };
+                console.log(`✅ Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`, {
+                  coordCount: coords.length,
+                  firstCoord: coords[0],
+                });
+                return;
+              }
+            } catch (error) {
+              console.error(`❌ Failed to fetch plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}:`, error);
+            }
+          }
+          
+          // Also try to fetch plan by deed number (in case plan number is same as deed number)
+          // Store it both by planId and by deed number for lookup
           try {
-            // Fetch all plans for this deed number
-            const res = await getAllPlansByDeedNumber(deed.deedNumber);
-            
-            if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
-              // Plans are already sorted by createdAt descending (latest first) from backend
-              // Get the latest plan (first in the array)
-              const latestPlan = res.data[0];
+            const res = await getPlanByDeedNumber(deed.deedNumber);
+            // Check if response indicates success and has data
+            if (res && res.success && res.data) {
+              const planId = res.data.planId || res.data._id || deed.deedNumber;
               
               // Convert coordinates from {longitude, latitude} to {longitude, latitude} format
-              const coords = (latestPlan.coordinates || []).map((coord: any) => ({
+              // Database stores as {longitude, latitude}, we need to keep it as LocationPoint format
+              const coords = (res.data.coordinates || []).map((coord: any) => ({
                 longitude: coord.longitude ?? coord.lng ?? 0,
                 latitude: coord.latitude ?? coord.lat ?? 0,
               }));
               
-              const planId = latestPlan.planId || latestPlan._id || deed.deedNumber;
-              
               const planData = {
                 coordinates: coords,
-                sides: latestPlan.sides,
-                planId: planId,
-                createdAt: latestPlan.createdAt,
+                sides: res.data.sides,
+                planId: res.data.planId || planId,
               };
-              
               // Store by both planId and deed number for flexible lookup
               plans[planId] = planData;
-              plans[deed.deedNumber] = planData;
-              
+              plans[deed.deedNumber] = planData; // Also store by deed number
               // Also store by surveyPlanNumber if it exists and is different
               if (deed.surveyPlanNumber && deed.surveyPlanNumber !== planId) {
                 plans[deed.surveyPlanNumber] = planData;
               }
-              
-              console.log(`✅ Fetched latest plan for deed ${deed.deedNumber} (planId: ${planId}, total plans: ${res.data.length})`, {
+              console.log(`✅ Fetched plan by deed number ${deed.deedNumber} (planId: ${planId})`, {
                 coordCount: coords.length,
                 firstCoord: coords[0],
-                createdAt: latestPlan.createdAt,
               });
             } else {
-              // No plans found for this deed - try fallback to surveyPlanNumber
-              if (deed.surveyPlanNumber) {
-                try {
-                  const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
-                  if (res.success && res.data) {
-                    const coords = (res.data.coordinates || []).map((coord: any) => ({
-                      longitude: coord.longitude ?? coord.lng ?? 0,
-                      latitude: coord.latitude ?? coord.lat ?? 0,
-                    }));
-                    
-                    plans[deed.surveyPlanNumber] = {
-                      coordinates: coords,
-                      sides: res.data.sides,
-                      planId: res.data.planId || deed.surveyPlanNumber,
-                      createdAt: res.data.createdAt,
-                    };
-                    console.log(`✅ Fetched plan by surveyPlanNumber ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`, {
-                      coordCount: coords.length,
-                      firstCoord: coords[0],
-                    });
-                  }
-                } catch (error) {
-                  console.error(`❌ Failed to fetch plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}:`, error);
-                }
-              }
-              
-              // Plan not found - this is expected for deeds without plans
+              // Plan not found (404 or no data) - this is expected for deeds without plans
+              // Only log if we're in debug mode or if it's unexpected
               if (process.env.NODE_ENV === 'development') {
                 console.log(`ℹ️ No plan found for deed ${deed.deedNumber} (this is OK - deed may not have a plan yet)`);
               }
             }
           } catch (error: any) {
             // Handle network errors or other unexpected errors
+            // 404s are expected and handled above, so this is for other errors
             if (error?.response?.status !== 404) {
-              console.error(`❌ Error fetching plans for deed ${deed.deedNumber}:`, error);
+              console.error(`❌ Error fetching plan for deed ${deed.deedNumber}:`, error);
             } else {
               // 404 is expected - deed doesn't have a plan yet
               if (process.env.NODE_ENV === 'development') {
@@ -414,43 +411,17 @@ const getLatestValuation = (deed: Deed) => {
                 <p className="text-black"><strong>Estimated Value:</strong> LKR {estimated.toLocaleString()}</p>
                 <div className="pt-2 border-t border-gray-200">
                   <p className="text-black font-semibold mb-1">Status:</p>
-                  {deedHasOverlaps ? (() => {
-                    const overlappingDeeds = getOverlappingDeeds(deed.deedNumber);
-                    const overlapTypes = new Set(overlappingDeeds.map(o => o.overlapType));
-                    const hasPolygon = overlapTypes.has('polygon') || overlapTypes.has('both');
-                    const hasBoundary = overlapTypes.has('boundary') || overlapTypes.has('both');
-                    
-                    return (
-                      <div className="flex flex-col gap-1">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-1 rounded-full">
-                          <AlertTriangle className="w-3 h-3" />
-                          Plan Overlap Detected
-                        </span>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-xs text-red-600 font-medium">
-                            {overlappingDeeds.length} overlap{overlappingDeeds.length !== 1 ? 's' : ''} found
-                          </span>
-                          <div className="flex gap-1 flex-wrap">
-                            {hasPolygon && (
-                              <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded border border-blue-300">
-                                Polygon
-                              </span>
-                            )}
-                            {hasBoundary && (
-                              <span className="text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded border border-yellow-300">
-                                Boundary
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })() : (
+                  {deedHasOverlaps ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-1 rounded-full">
+                      <AlertTriangle className="w-3 h-3" />
+                      {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                    </span>
+                  ) : (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2 py-1 rounded-full">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      No Overlap
+                      No issues
                     </span>
                   )}
                   {(() => {
@@ -502,7 +473,7 @@ const getLatestValuation = (deed: Deed) => {
               <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
               <th className="px-4 py-3 text-left font-medium text-black">Requested Value (LKR)</th>
               <th className="px-4 py-3 text-left font-medium text-black">Estimated Value (LKR)</th>
-              <th className="px-4 py-3 text-center font-medium text-black min-w-[180px]">Status</th>
+              <th className="px-4 py-3 text-center font-medium text-black min-w-[140px]">Status</th>
               <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
           </thead>
@@ -527,45 +498,19 @@ const getLatestValuation = (deed: Deed) => {
                   <td className="px-4 py-3">{deed.landType}</td>
                   <td className="px-4 py-3 font-mono">{requested.toLocaleString()}</td>
                   <td className="px-4 py-3 font-mono">{estimated.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center min-w-[180px]">
+                  <td className="px-4 py-3 text-center min-w-[140px]">
                     <div className="flex flex-col items-center gap-1.5">
-                      {deedHasOverlaps ? (() => {
-                        const overlappingDeeds = getOverlappingDeeds(deed.deedNumber);
-                        const overlapTypes = new Set(overlappingDeeds.map(o => o.overlapType));
-                        const hasPolygon = overlapTypes.has('polygon') || overlapTypes.has('both');
-                        const hasBoundary = overlapTypes.has('boundary') || overlapTypes.has('both');
-                        
-                        return (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-                              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                              Plan Overlap Detected
-                            </span>
-                            <div className="flex flex-col gap-0.5 text-xs">
-                              <span className="text-red-600 font-medium">
-                                {overlappingDeeds.length} overlap{overlappingDeeds.length !== 1 ? 's' : ''} found
-                              </span>
-                              <div className="flex gap-1 flex-wrap justify-center">
-                                {hasPolygon && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded border border-blue-300">
-                                    Polygon
-                                  </span>
-                                )}
-                                {hasBoundary && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded border border-yellow-300">
-                                    Boundary
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })() : (
+                      {deedHasOverlaps ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                          {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
                           <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          No Overlap
+                          No issues
                         </span>
                       )}
                       {(() => {
