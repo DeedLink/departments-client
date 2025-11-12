@@ -185,29 +185,26 @@ const DeedsTable = () => {
     return deeds.find(d => d.deedNumber === deedNumber);
   };
 
-  // Get display plan ID - prioritize planId from fetched plan data, otherwise normalize surveyPlanNumber
   const getDisplayPlanId = (deed: Deed): string | null => {
-    if (!deed.surveyPlanNumber) return null;
-    
-    // First, check if we have plan data with the actual planId
-    const planData = plansMap[deed.surveyPlanNumber] || plansMap[deed.deedNumber];
+
+    const planData = plansMap[deed.surveyPlanNumber || ''] || plansMap[deed.deedNumber];
+
     if (planData?.planId) {
       return planData.planId;
     }
-    
-    // If surveyPlanNumber already has the prefix, return it as is
-    if (deed.surveyPlanNumber.startsWith('DeedLinkPlan-')) {
-      return deed.surveyPlanNumber;
+
+    if (planData && planData.coordinates && planData.coordinates.length > 0) {
+      if (deed.surveyPlanNumber) {
+        if (deed.surveyPlanNumber.startsWith('DeedLinkPlan-')) {
+          return deed.surveyPlanNumber;
+        }
+        if (/^\d+$/.test(deed.surveyPlanNumber.trim())) {
+          return `DeedLinkPlan-${deed.surveyPlanNumber}`;
+        }
+        return deed.surveyPlanNumber;
+      }
     }
-    
-    // Otherwise, add the prefix if it's missing
-    // Check if it's a numeric value that needs prefix
-    if (/^\d+$/.test(deed.surveyPlanNumber.trim())) {
-      return `DeedLinkPlan-${deed.surveyPlanNumber}`;
-    }
-    
-    // Return as is if it doesn't match expected patterns
-    return deed.surveyPlanNumber;
+    return null;
   };
 
   const filteredDeeds = useMemo(() => {

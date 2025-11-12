@@ -246,21 +246,25 @@ const SurveyPlanPage = () => {
 
         const boundaryOverlap = doBoundariesOverlap(plan.sides, otherPlan.sides);
 
-        if (polygonOverlap || boundaryOverlap) {
+        // Calculate overlap percentage if polygons overlap
+        const overlapPercentage = polygonOverlap 
+          ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
+          : undefined;
+
+        // Only consider polygon overlaps as errors if the overlap percentage is > 0%
+        const hasSignificantPolygonOverlap = polygonOverlap && overlapPercentage !== undefined && overlapPercentage > 0;
+
+        if (hasSignificantPolygonOverlap || boundaryOverlap) {
           const overlapType: 'polygon' | 'boundary' | 'both' = 
-            polygonOverlap && boundaryOverlap ? 'both' :
-            polygonOverlap ? 'polygon' : 'boundary';
+            hasSignificantPolygonOverlap && boundaryOverlap ? 'both' :
+            hasSignificantPolygonOverlap ? 'polygon' : 'boundary';
 
-          const overlapPercentage = polygonOverlap 
-            ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
-            : undefined;
-
-          console.log(`✅ OVERLAP DETECTED: Plan ${plan.planId || deedNumber} vs ${otherPlan.planId || otherPlan.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
+          console.log(`OVERLAP DETECTED: Plan ${plan.planId || deedNumber} vs ${otherPlan.planId || otherPlan.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
 
           overlaps.push({
             plan: otherPlan,
             overlapType,
-            overlapPercentage,
+            overlapPercentage: hasSignificantPolygonOverlap ? overlapPercentage : undefined,
           });
         }
       }
@@ -471,8 +475,14 @@ const SurveyPlanPage = () => {
           const res = await updatePlan(plan._id, planToSave);
           console.log("Update res: ", res);
           showToast("Plan updated successfully!", "success");
-          
-          // Refresh the plan data to ensure we have the latest version
+
+          let planIdWithoutPrefix = planToSave.planId;
+          if (typeof planToSave.planId === 'string' && planToSave.planId.startsWith('DeedLinkPlan-')) {
+            planIdWithoutPrefix = planToSave.planId.replace('DeedLinkPlan-', '');
+          }
+
+          setPlan({ ...plan, planId: planIdWithoutPrefix });
+
           await fetchPlan();
         } catch (error) {
           console.error("Error updating plan:", error);

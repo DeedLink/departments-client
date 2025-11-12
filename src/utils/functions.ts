@@ -373,22 +373,26 @@ export const detectOverlappingDeeds = (
       const boundaryOverlap = doBoundariesOverlap(sides1, sides2);
       console.log(`Boundary overlap check: Deed ${deed1.deedNumber} vs ${deed2.deedNumber} = ${boundaryOverlap}`, { sides1, sides2 });
 
-      if (polygonOverlap || boundaryOverlap) {
+      // Calculate overlap percentage if polygons overlap
+      const overlapPercentage = polygonOverlap 
+        ? calculateOverlapPercentage(coords1, coords2)
+        : undefined;
+
+      // Only consider polygon overlaps as errors if the overlap percentage is > 0%
+      const hasSignificantPolygonOverlap = polygonOverlap && overlapPercentage !== undefined && overlapPercentage > 0;
+
+      if (hasSignificantPolygonOverlap || boundaryOverlap) {
         const overlapType: 'polygon' | 'boundary' | 'both' = 
-          polygonOverlap && boundaryOverlap ? 'both' :
-          polygonOverlap ? 'polygon' : 'boundary';
+          hasSignificantPolygonOverlap && boundaryOverlap ? 'both' :
+          hasSignificantPolygonOverlap ? 'polygon' : 'boundary';
 
-        const overlapPercentage = polygonOverlap 
-          ? calculateOverlapPercentage(coords1, coords2)
-          : undefined;
-
-        console.log(`✅ OVERLAP DETECTED: Deed ${deed1Num} vs ${deed2Num} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
+        console.log(`OVERLAP DETECTED: Deed ${deed1Num} vs ${deed2Num} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
 
         overlaps.push({
           deed1: deed1Num,
           deed2: deed2Num,
           overlapType,
-          overlapPercentage,
+          overlapPercentage: hasSignificantPolygonOverlap ? overlapPercentage : undefined,
         });
       }
     }
