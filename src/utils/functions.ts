@@ -1,4 +1,5 @@
 import type { AnalaticsType } from "../types/analatics";
+import type { Certificate } from "../types/certificate";
 
 export const compressAddress = (address : string) => {
   return `${address.slice(0, 6)}`+'...'+`${address.slice(-4)}`
@@ -50,6 +51,30 @@ export const calculateAnalatics = (data:any[]) =>{
   }
   return analatics;
 }
+
+export const calculateCertificateAnalytics = (certificates: Certificate[]) => {
+  const totalDeeds = certificates.length;
+  const signedDeeds = certificates.filter(c => c.verified).length;
+  const rejectedDeeds = certificates.filter(c => c.rejected).length;
+  const pendingDeeds = certificates.filter(c => !c.verified && !c.rejected).length;
+
+  const completionRate = totalDeeds ? Math.round((signedDeeds / totalDeeds) * 100) : 0;
+
+  const monthlyGrowth = 0;
+  const avgProcessingTime = totalDeeds
+    ? Math.round(certificates.reduce((acc, c) => {
+        if (c.createdAt && c.verifiedAt) {
+          const created = new Date(c.createdAt).getTime();
+          const verified = new Date(c.verifiedAt).getTime();
+          return acc + (verified - created) / (1000 * 60 * 60 * 24);
+        }
+        return acc;
+      }, 0) / signedDeeds)
+    : 0;
+
+  return { totalDeeds, signedDeeds, rejectedDeeds, pendingDeeds, completionRate, monthlyGrowth, avgProcessingTime };
+};
+
 
 // Overlap detection utilities
 export interface LocationPoint {
