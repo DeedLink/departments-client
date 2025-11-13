@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Polyline, Polygon, Popup, useMapEvents, useMap } from "react-leaflet";
-import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getPlanBySeurveyorWalletAddress } from "../../api/api";
+import { createPlan, getPlanByDeedNumber, updateSurveyPlanNumber, updatePlan, getAllPlans, getDeedBySurveyorWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useToast } from "../../contexts/ToastContext";
 import type { Coordinate, Plan } from "../../types/plan";
 import L from "leaflet";
@@ -76,6 +76,7 @@ const SurveyPlanPage = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingCoords, setEditingCoords] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
   const [manualInput, setManualInput] = useState<{ latitude: string; longitude: string }>({ latitude: '', longitude: '' });
+  const [planPrefix] = useState<string>('DeedLinkPlan-');
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
   const { account } = useWallet();
@@ -99,6 +100,15 @@ const SurveyPlanPage = () => {
               return { latitude: coord.longitude || coord.latitude, longitude: coord.latitude || coord.longitude };
             });
           }
+          
+          // Extract prefix from planId if it exists
+          if (planData.planId) {
+            const planIdStr = String(planData.planId);
+            if (planIdStr.startsWith('DeedLinkPlan-')) {
+              planData.planId = planIdStr.replace('DeedLinkPlan-', '');
+            }
+          }
+          
           setPlan(planData);
           setIsNew(false);
         }
@@ -127,32 +137,62 @@ const SurveyPlanPage = () => {
     fetchPlan();
   }, [deedNumber]);
 
-  // Fetch all plans to check for overlaps
+  // Fetch latest plans for each deed assigned to the surveyor
   useEffect(() => {
-    const fetchAllPlans = async () => {
+    const fetchLatestPlansForDeeds = async () => {
       try {
-        // Try to get plans by surveyor first, fallback to all plans
-        let plans: any[] = [];
+        let plans: Plan[] = [];
+        
         if (account) {
-          try {
-            plans = await getPlanBySeurveyorWalletAddress(account);
-          } catch {
-            // Fallback to all plans if surveyor-specific fails
-            plans = await getAllPlans();
-          }
+          const deeds = await getDeedBySurveyorWalletAddress(account);
+          console.log(`Fetched ${deeds.length} deeds for surveyor`);
+
+          const planPromises = deeds.map(async (deed: any) => {
+            try {
+              if (deed.surveyPlanNumber) {
+                try {
+                  const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+                  if (res.success && res.data) {
+                    console.log(`Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`);
+                    return res.data;
+                  }
+                } catch (error) {
+                  console.error(`Failed to fetch plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}:`, error);
+                }
+              }
+              try {
+                const res = await getPlanByDeedNumber(deed.deedNumber);
+                if (res && res.success && res.data) {
+                  console.log(`Fetched plan by deed number ${deed.deedNumber}`);
+                  return res.data;
+                }
+              } catch (error: any) {
+                if (error?.response?.status !== 404) {
+                  console.error(`Error fetching plan for deed ${deed.deedNumber}:`, error);
+                }
+              }
+              
+              return null;
+            } catch (error) {
+              console.error(`Error fetching plan for deed ${deed.deedNumber}:`, error);
+              return null;
+            }
+          });
+          
+          const fetchedPlans = await Promise.all(planPromises);
+          plans = fetchedPlans.filter((p): p is Plan => p !== null);
+          console.log(`Fetched ${plans.length} plans for overlap detection (from ${deeds.length} deeds)`);
         } else {
           plans = await getAllPlans();
+          console.log(`Fetched ${plans.length} plans (fallback - no account)`);
         }
         
-        // Convert coordinates format if needed
         const normalizedPlans: Plan[] = plans.map((p: any) => {
           if (p.coordinates && Array.isArray(p.coordinates)) {
             p.coordinates = p.coordinates.map((coord: any) => {
-              // Ensure coordinates are in {latitude, longitude} format
               if (coord.latitude !== undefined && coord.longitude !== undefined) {
                 return { latitude: coord.latitude, longitude: coord.longitude };
               }
-              // Handle if stored differently
               return { latitude: coord.latitude || coord.lat || 0, longitude: coord.longitude || coord.lng || 0 };
             });
           }
@@ -161,13 +201,12 @@ const SurveyPlanPage = () => {
         
         setAllPlans(normalizedPlans);
       } catch (error) {
-        console.error("Error fetching plans for overlap detection:", error);
+        console.error("Error fetching latest plans for overlap detection:", error);
       }
     };
-    fetchAllPlans();
+    fetchLatestPlansForDeeds();
   }, [account]);
 
-  // Check for overlaps when plan coordinates or boundaries change
   useEffect(() => {
     const checkOverlaps = () => {
       if (!plan.coordinates || plan.coordinates.length < 3) {
@@ -178,62 +217,66 @@ const SurveyPlanPage = () => {
       setLoadingOverlaps(true);
       const overlaps: Array<{ plan: Plan; overlapType: 'polygon' | 'boundary' | 'both'; overlapPercentage?: number }> = [];
 
-      // Convert current plan coordinates to LocationPoint format
-      // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
+      console.log(`Checking overlaps for plan ${plan.planId || deedNumber} against ${allPlans.length} other plans`);
+
       const currentPlanCoords: LocationPoint[] = plan.coordinates.map(coord => ({
         longitude: coord.longitude,
         latitude: coord.latitude
       }));
 
-      // Check against all other plans
       for (const otherPlan of allPlans) {
-        // Skip the current plan itself
-        if (otherPlan._id === plan._id || otherPlan.planId === plan.planId) {
+        if (otherPlan._id === plan._id || 
+            otherPlan.planId === plan.planId || 
+            (deedNumber && otherPlan.deedNumber === deedNumber)) {
+          console.log(`Skipping current plan: ${otherPlan.planId || otherPlan.deedNumber}`);
           continue;
         }
 
         if (!otherPlan.coordinates || otherPlan.coordinates.length < 3) {
+          console.log(`Skipping plan ${otherPlan.planId || otherPlan.deedNumber} - insufficient coordinates`);
           continue;
         }
 
-        // Convert other plan coordinates to LocationPoint format
-        // Plan coordinates are {latitude, longitude}, LocationPoint is {longitude, latitude}
         const otherPlanCoords: LocationPoint[] = otherPlan.coordinates.map(coord => ({
           longitude: coord.longitude,
           latitude: coord.latitude
         }));
 
-        // Check polygon overlap
         const polygonOverlap = doPolygonsOverlap(currentPlanCoords, otherPlanCoords);
 
-        // Check boundary overlap
         const boundaryOverlap = doBoundariesOverlap(plan.sides, otherPlan.sides);
 
-        if (polygonOverlap || boundaryOverlap) {
-          const overlapType: 'polygon' | 'boundary' | 'both' = 
-            polygonOverlap && boundaryOverlap ? 'both' :
-            polygonOverlap ? 'polygon' : 'boundary';
+        // Calculate overlap percentage if polygons overlap
+        const overlapPercentage = polygonOverlap 
+          ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
+          : undefined;
 
-          const overlapPercentage = polygonOverlap 
-            ? calculateOverlapPercentage(currentPlanCoords, otherPlanCoords)
-            : undefined;
+        // Only consider polygon overlaps as errors if the overlap percentage is > 0%
+        const hasSignificantPolygonOverlap = polygonOverlap && overlapPercentage !== undefined && overlapPercentage > 0;
+
+        if (hasSignificantPolygonOverlap || boundaryOverlap) {
+          const overlapType: 'polygon' | 'boundary' | 'both' = 
+            hasSignificantPolygonOverlap && boundaryOverlap ? 'both' :
+            hasSignificantPolygonOverlap ? 'polygon' : 'boundary';
+
+          console.log(`OVERLAP DETECTED: Plan ${plan.planId || deedNumber} vs ${otherPlan.planId || otherPlan.deedNumber} - Type: ${overlapType}, Percentage: ${overlapPercentage?.toFixed(1)}%`);
 
           overlaps.push({
             plan: otherPlan,
             overlapType,
-            overlapPercentage,
+            overlapPercentage: hasSignificantPolygonOverlap ? overlapPercentage : undefined,
           });
         }
       }
 
+      console.log(`Found ${overlaps.length} overlapping plans`);
       setOverlappingPlans(overlaps);
       setLoadingOverlaps(false);
     };
 
-    // Debounce overlap checking
     const timeoutId = setTimeout(checkOverlaps, 500);
     return () => clearTimeout(timeoutId);
-  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId]);
+  }, [plan.coordinates, plan.sides, allPlans, plan._id, plan.planId, deedNumber]);
 
   const coordinateToLatLng = (coord: Coordinate): [number, number] => {
     return [coord.latitude, coord.longitude];
@@ -370,8 +413,11 @@ const SurveyPlanPage = () => {
     
     if (!plan.planId.trim()) newErrors.planId = "Plan ID is required";
     if (!plan.createdBy.trim()) newErrors.createdBy = "Created By is required";
-    if (plan.coordinates.length < 3) newErrors.coordinates = "At least 3 boundary points are required";
-    if (plan.areaSize <= 0) newErrors.areaSize = "Area size must be greater than 0";
+    if (plan.coordinates.length < 3) {
+      newErrors.coordinates = "At least 3 boundary points are required";
+    } else if (plan.areaSize <= 0) {
+      newErrors.areaSize = "Area size must be greater than 0. Please check your boundary coordinates.";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -385,11 +431,20 @@ const SurveyPlanPage = () => {
 
     setIsSaving(true);
     try {
+      // Combine prefix with plan ID
+      const fullPlanId = planPrefix + plan.planId;
+      
+      // Create plan object with full plan ID
+      const planToSave = {
+        ...plan,
+        planId: fullPlanId
+      };
+
       if (isNew) {
         // Creating a new plan
-        console.log("Creating new plan", plan);
+        console.log("Creating new plan", planToSave);
         try {
-          const res = await createPlan(plan);
+          const res = await createPlan(planToSave);
           console.log("res: ", res);
           if (res && res.planId) {
             // Update the deed with the plan ID
@@ -397,7 +452,7 @@ const SurveyPlanPage = () => {
             console.log("planIdUpdateRes: ", planIdUpdateRes);
             
             // Update local state with the created plan data
-            setPlan({ ...plan, planId: res.planId });
+            setPlan({ ...planToSave, planId: res.planId });
             setIsNew(false);
             showToast("Plan created successfully!", "success");
           } else {
@@ -409,7 +464,7 @@ const SurveyPlanPage = () => {
         }
       } else {
         // Updating an existing plan
-        console.log("Updating plan", plan);
+        console.log("Updating plan", planToSave);
         if (!plan._id) {
           showToast("Error: Plan ID (_id) is missing. Cannot update plan.", "error");
           return;
@@ -417,11 +472,17 @@ const SurveyPlanPage = () => {
         
         try {
           // Use MongoDB _id for updating, not planId
-          const res = await updatePlan(plan._id, plan);
+          const res = await updatePlan(plan._id, planToSave);
           console.log("Update res: ", res);
           showToast("Plan updated successfully!", "success");
-          
-          // Refresh the plan data to ensure we have the latest version
+
+          let planIdWithoutPrefix = planToSave.planId;
+          if (typeof planToSave.planId === 'string' && planToSave.planId.startsWith('DeedLinkPlan-')) {
+            planIdWithoutPrefix = planToSave.planId.replace('DeedLinkPlan-', '');
+          }
+
+          setPlan({ ...plan, planId: planIdWithoutPrefix });
+
           await fetchPlan();
         } catch (error) {
           console.error("Error updating plan:", error);
@@ -803,20 +864,47 @@ const SurveyPlanPage = () => {
               <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-gray-700 h-full">
                 <h2 className="text-xl font-semibold mb-6 text-white">Plan Details</h2>
                 
+                {/* Validation Errors Banner */}
+                {(errors.coordinates || errors.areaSize) && (
+                  <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                    <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Please fix the following errors:
+                    </h3>
+                    <ul className="list-disc list-inside space-y-1 text-red-300 text-sm">
+                      {errors.coordinates && <li>{errors.coordinates}</li>}
+                      {errors.areaSize && <li>{errors.areaSize}</li>}
+                    </ul>
+                    <p className="mt-3 text-sm text-gray-400">
+                      💡 <strong>Tip:</strong> Go to the <strong>"Boundary Map"</strong> tab and click on the map to add at least 3 boundary points. The area will be calculated automatically.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Plan ID *
                     </label>
-                    <input
-                      type="text"
-                      value={plan.planId}
-                      onChange={(e) => setPlan({ ...plan, planId: e.target.value })}
-                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400 ${
-                        errors.planId ? 'border-red-500' : 'border-gray-600'
-                      }`}
-                      placeholder="Enter unique plan identifier"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-3 bg-gray-600 border border-gray-600 rounded-l-lg text-gray-300 text-sm whitespace-nowrap">
+                        DeedLinkPlan-
+                      </div>
+                      <input
+                        type="text"
+                        value={plan.planId}
+                        onChange={(e) => setPlan({ ...plan, planId: e.target.value })}
+                        className={`flex-1 px-4 py-3 bg-gray-700 border rounded-r-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400 ${
+                          errors.planId ? 'border-red-500' : 'border-gray-600'
+                        }`}
+                        placeholder="Enter plan number"
+                      />
+                    </div>
+                    <div className="mt-1 text-xs text-gray-400">
+                      Full Plan ID: <span className="text-green-400 font-mono">
+                        DeedLinkPlan-{plan.planId || 'XXXX'}
+                      </span>
+                    </div>
                     {errors.planId && <p className="text-red-400 text-xs mt-1">{errors.planId}</p>}
                   </div>
 

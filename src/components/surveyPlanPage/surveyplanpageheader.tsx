@@ -2,6 +2,11 @@ import { Calendar, FileText, Map, Save } from "lucide-react";
 import type { Plan } from "../../types/plan";
 
 const SurveyPlanPageHeader=({handleSave, isSaving, isNew, deedNumber, plan}: {handleSave: ()=>void, isSaving: boolean, isNew: boolean, deedNumber: string | undefined, plan:Plan})=>{
+    const getFullPlanId = () => {
+      if (!plan.planId) return '';
+      return 'DeedLinkPlan-' + plan.planId;
+    };
+    
     return(
         <div className="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -17,7 +22,7 @@ const SurveyPlanPageHeader=({handleSave, isSaving, isNew, deedNumber, plan}: {ha
                 {plan.planId && (
                   <span className="flex items-center gap-1">
                     <Map className="w-4 h-4 text-green-500" />
-                    Plan: {plan.planId}
+                    Plan: {getFullPlanId()}
                   </span>
                 )}
                 <span className="flex items-center gap-1">

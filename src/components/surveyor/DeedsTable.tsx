@@ -23,7 +23,7 @@ const DeedsTable = () => {
   const [overlaps, setOverlaps] = useState<OverlapResult[]>([]);
   const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
   const [loadingOverlaps, setLoadingOverlaps] = useState(false);
-  const [plansMap, setPlansMap] = useState<Record<string, { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string } }>>({});
+  const [plansMap, setPlansMap] = useState<Record<string, { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string }; planId?: string }>>({});
   const { account } = useWallet();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const DeedsTable = () => {
       if (deeds.length === 0) return;
 
       setLoadingOverlaps(true);
-      type PlanData = { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string } };
+      type PlanData = { coordinates: { longitude: number; latitude: number }[]; sides?: { North?: string; South?: string; East?: string; West?: string }; planId?: string };
       const plans: Record<string, PlanData> = {};
 
       try {
@@ -69,6 +69,7 @@ const DeedsTable = () => {
                 plans[deed.surveyPlanNumber] = {
                   coordinates: coords,
                   sides: res.data.sides,
+                  planId: res.data.planId || deed.surveyPlanNumber,
                 };
                 console.log(`✅ Fetched plan ${deed.surveyPlanNumber} for deed ${deed.deedNumber}`, {
                   coordCount: coords.length,
@@ -85,7 +86,8 @@ const DeedsTable = () => {
           // Store it both by planId and by deed number for lookup
           try {
             const res = await getPlanByDeedNumber(deed.deedNumber);
-            if (res.success && res.data) {
+            // Check if response indicates success and has data
+            if (res && res.success && res.data) {
               const planId = res.data.planId || res.data._id || deed.deedNumber;
               
               // Convert coordinates from {longitude, latitude} to {longitude, latitude} format
@@ -98,18 +100,37 @@ const DeedsTable = () => {
               const planData = {
                 coordinates: coords,
                 sides: res.data.sides,
+                planId: res.data.planId || planId,
               };
               // Store by both planId and deed number for flexible lookup
               plans[planId] = planData;
               plans[deed.deedNumber] = planData; // Also store by deed number
+              // Also store by surveyPlanNumber if it exists and is different
+              if (deed.surveyPlanNumber && deed.surveyPlanNumber !== planId) {
+                plans[deed.surveyPlanNumber] = planData;
+              }
               console.log(`✅ Fetched plan by deed number ${deed.deedNumber} (planId: ${planId})`, {
                 coordCount: coords.length,
                 firstCoord: coords[0],
               });
+            } else {
+              // Plan not found (404 or no data) - this is expected for deeds without plans
+              // Only log if we're in debug mode or if it's unexpected
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`ℹ️ No plan found for deed ${deed.deedNumber} (this is OK - deed may not have a plan yet)`);
+              }
             }
-          } catch (error) {
-            // Silently fail - deed might not have a plan yet
-            console.log(`ℹ️ No plan found for deed ${deed.deedNumber} (this is OK if deed has location data)`);
+          } catch (error: any) {
+            // Handle network errors or other unexpected errors
+            // 404s are expected and handled above, so this is for other errors
+            if (error?.response?.status !== 404) {
+              console.error(`❌ Error fetching plan for deed ${deed.deedNumber}:`, error);
+            } else {
+              // 404 is expected - deed doesn't have a plan yet
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`ℹ️ No plan found for deed ${deed.deedNumber} (404 - this is OK)`);
+              }
+            }
           }
         });
 
@@ -162,6 +183,28 @@ const DeedsTable = () => {
   // Get deed info helper (used in error display)
   const getDeedInfo = (deedNumber: string) => {
     return deeds.find(d => d.deedNumber === deedNumber);
+  };
+
+  const getDisplayPlanId = (deed: Deed): string | null => {
+
+    const planData = plansMap[deed.surveyPlanNumber || ''] || plansMap[deed.deedNumber];
+
+    if (planData?.planId) {
+      return planData.planId;
+    }
+
+    if (planData && planData.coordinates && planData.coordinates.length > 0) {
+      if (deed.surveyPlanNumber) {
+        if (deed.surveyPlanNumber.startsWith('DeedLinkPlan-')) {
+          return deed.surveyPlanNumber;
+        }
+        if (/^\d+$/.test(deed.surveyPlanNumber.trim())) {
+          return `DeedLinkPlan-${deed.surveyPlanNumber}`;
+        }
+        return deed.surveyPlanNumber;
+      }
+    }
+    return null;
   };
 
   const filteredDeeds = useMemo(() => {
@@ -378,11 +421,14 @@ const getLatestValuation = (deed: Deed) => {
                       No issues
                     </span>
                   )}
-                  {deed.surveyPlanNumber && (
-                    <p className="text-xs text-blue-600 font-medium mt-1">
-                      Plan: {deed.surveyPlanNumber}
-                    </p>
-                  )}
+                  {(() => {
+                    const displayPlanId = getDisplayPlanId(deed);
+                    return displayPlanId ? (
+                      <p className="text-xs text-blue-600 font-medium mt-1">
+                        Plan: {displayPlanId}
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div className="flex flex-col gap-2">
@@ -464,11 +510,14 @@ const getLatestValuation = (deed: Deed) => {
                           No issues
                         </span>
                       )}
-                      {deed.surveyPlanNumber && (
-                        <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
-                          Plan: {deed.surveyPlanNumber}
-                        </span>
-                      )}
+                      {(() => {
+                        const displayPlanId = getDisplayPlanId(deed);
+                        return displayPlanId ? (
+                          <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
+                            Plan: {displayPlanId}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                   </td>
                   <td className="px-4 py-3">

@@ -162,6 +162,23 @@ export const updateSurveyPlanNumber = async (deedNumber: string, surveyPlanNumbe
   return res.data;
 };
 
+// Get latest plan for a deed (protected)
+export const getLatestPlanByDeedId = async (deedId: string): Promise<any> => {
+  try {
+    const res = await deedApi.get(`/${deedId}/plan`, {
+      validateStatus: (status) => {
+        return status < 500;
+      },
+    });
+    return res.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'Plan not found' };
+    }
+    throw error;
+  }
+};
+
 // Plan related api calls
 
 const SURVEY_PLAN_API_URL = import.meta.env.VITE_SURVEY_PLAN_API_URL || "http://localhost:5003/api/plans";
@@ -183,10 +200,42 @@ planApi.interceptors.request.use((config) => {
 
 // Get plan by deed ID (protected)
 export const getPlanByDeedNumber = async (deedNumber: string): Promise<any> => {
-  const res = await planApi.get(`/deed/${deedNumber}`, {
-    validateStatus: () => true,
-  });
-  return res.data;
+  try {
+    const res = await planApi.get(`/deed/${deedNumber}`, {
+      validateStatus: (status) => {
+        // Don't throw errors for 404s (plan not found is expected)
+        return status < 500;
+      },
+    });
+    // Return the response data, which will have success: false for 404s
+    return res.data;
+  } catch (error: any) {
+    // Only catch non-404 errors
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'Plan not found' };
+    }
+    throw error;
+  }
+};
+
+// Get all plans by deed number (protected) - sorted by timestamp (latest first)
+export const getAllPlansByDeedNumber = async (deedNumber: string): Promise<any> => {
+  try {
+    const res = await planApi.get(`/deed/${deedNumber}/all`, {
+      validateStatus: (status) => {
+        // Don't throw errors for 404s (plan not found is expected)
+        return status < 500;
+      },
+    });
+    // Return the response data, which will have success: false for 404s
+    return res.data;
+  } catch (error: any) {
+    // Only catch non-404 errors
+    if (error?.response?.status === 404) {
+      return { success: false, message: 'No plans found', data: [] };
+    }
+    throw error;
+  }
 };
 
 // Get plan by plan number (protected)
