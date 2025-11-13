@@ -5,6 +5,7 @@ import type { Plan } from "../types/plan";
 
 const USER_API_URL = import.meta.env.VITE_USER_API_URL || "http://localhost:5000/api/users";
 const DEED_API_URL = import.meta.env.VITE_DEED_API_URL || "http://localhost:5001/api/deeds";
+const CERTIFICATE_API_URL = import.meta.env.VITE_CERTIFICATE_SERVICE_URL || "http://localhost:4004/api/certificates";
 
 const api = axios.create({
   baseURL: USER_API_URL,
@@ -323,5 +324,42 @@ export const setPasswordForUnsetDepartmentUser = async (
       otp,
     }
   );
+  return res.data;
+};
+
+// Certificate related api calls will be added here later
+// const API_BASE = import.meta.env.VITE_CERTIFICATE_SERVICE_URL || "http://localhost:4004/api/certificates";
+const certificatesApi = axios.create({
+  baseURL: CERTIFICATE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+certificatesApi.interceptors.request.use((config) => {
+  const token = getItem("local", "token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const getAllCertificates = async (): Promise<any[]> => {
+  const res: AxiosResponse<any[]> = await certificatesApi.get(`/`);
+  return res.data;
+};
+
+export const getCertificateById = async (certificateId: string): Promise<any> => {
+  const res: AxiosResponse<any> = await certificatesApi.get(`/${certificateId}`);
+  return res.data;
+};
+
+export const createCertificate = async (data: any): Promise<any> => {
+  const res: AxiosResponse<any> = await certificatesApi.post(`/`, data);
+  return res.data;
+};
+
+export const verifyCertificate = async (certificateId: string): Promise<any> => {
+  const res: AxiosResponse<any> = await certificatesApi.post(`/${certificateId}/verify`);
   return res.data;
 };
