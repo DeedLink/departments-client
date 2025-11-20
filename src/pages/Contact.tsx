@@ -48,7 +48,7 @@ function contact() {
 
             }
 
-            const response = await axios.post("https://api-deedlink-notification-service.vercel.app/api/notifications/message", payload);
+            const response = await axios.post("https://notification-service-beta-opal.vercel.app/api/notifications/message", payload);
 
             console.log("✅ Message sent:", response.data);
             alert("✅ Message sent successfully!");
