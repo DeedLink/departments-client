@@ -11,6 +11,7 @@ import { detectOverlappingDeeds, type OverlapResult } from "../../utils/function
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { formatToETH } from "../../utils/formatCurrency";
 
 const DeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -404,8 +405,8 @@ const getLatestValuation = (deed: Deed) => {
               </div>
               <div className="space-y-2 text-sm mb-4">
                 <p className="text-black"><strong>Owner:</strong> {deed.ownerFullName}</p>
-                <p className="text-black"><strong>Requested Value:</strong> LKR {requested.toLocaleString()}</p>
-                <p className="text-black"><strong>Estimated Value:</strong> LKR {estimated.toLocaleString()}</p>
+                <p className="text-black"><strong>Requested Value:</strong> {formatToETH(requested)}</p>
+                <p className="text-black"><strong>Estimated Value:</strong> {formatToETH(estimated)}</p>
                 <div className="pt-2 border-t border-gray-200">
                   <p className="text-black font-semibold mb-1">Status:</p>
                   {deedHasOverlaps ? (
@@ -468,8 +469,8 @@ const getLatestValuation = (deed: Deed) => {
               <th className="px-4 py-3 text-left font-medium text-black">Deed Number</th>
               <th className="px-4 py-3 text-left font-medium text-black">Owner</th>
               <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Requested Value (LKR)</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Estimated Value (LKR)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Requested Value (ETH)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Estimated Value (ETH)</th>
               <th className="px-4 py-3 text-center font-medium text-black min-w-[140px]">Status</th>
               <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
@@ -493,8 +494,8 @@ const getLatestValuation = (deed: Deed) => {
                   </td>
                   <td className="px-4 py-3">{deed.ownerFullName}</td>
                   <td className="px-4 py-3">{deed.landType}</td>
-                  <td className="px-4 py-3 font-mono">{requested.toLocaleString()}</td>
-                  <td className="px-4 py-3 font-mono">{estimated.toLocaleString()}</td>
+                  <td className="px-4 py-3 font-mono">{formatToETH(requested)}</td>
+                  <td className="px-4 py-3 font-mono">{formatToETH(estimated)}</td>
                   <td className="px-4 py-3 text-center min-w-[140px]">
                     <div className="flex flex-col items-center gap-1.5">
                       {deedHasOverlaps ? (

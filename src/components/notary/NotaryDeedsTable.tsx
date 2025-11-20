@@ -5,6 +5,7 @@ import { getDeedByNotaryorWalletAddress, getPlanByPlanNumber } from "../../api/a
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import NotaryDeedPopup from "./NotaryDeedPopup";
+import { formatToETH } from "../../utils/formatCurrency";
 import NotaryPlan from "./NotaryPlan";
 
 const NotaryDeedsTable = () => {
@@ -94,8 +95,8 @@ const NotaryDeedsTable = () => {
               <th className="px-4 py-3 text-left font-medium text-black">Deed Number</th>
               <th className="px-4 py-3 text-left font-medium text-black">Owner</th>
               <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Requested (LKR)</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Estimated (LKR)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Requested (ETH)</th>
+              <th className="px-4 py-3 text-left font-medium text-black">Estimated (ETH)</th>
               <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
             </tr>
           </thead>
@@ -107,8 +108,8 @@ const NotaryDeedsTable = () => {
                   <td className="px-4 py-3 text-green-600 font-mono font-medium">{deed.deedNumber}</td>
                   <td className="px-4 py-3">{deed.ownerFullName}</td>
                   <td className="px-4 py-3">{deed.landType}</td>
-                  <td className="px-4 py-3 font-mono">{latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}</td>
-                  <td className="px-4 py-3 font-mono">{latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}</td>
+                  <td className="px-4 py-3 font-mono">{formatToETH(latestValuation?.requestedValue ?? null)}</td>
+                  <td className="px-4 py-3 font-mono">{formatToETH(latestValuation?.estimatedValue ?? null)}</td>
                   <td className="px-4 py-3 text-center flex justify-center gap-2">
                     <button
                       onClick={() => setSelectedDeed(deed)}
@@ -154,8 +155,8 @@ const NotaryDeedsTable = () => {
               </div>
               <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
               <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
-              <p><span className="font-semibold">Requested:</span> LKR {latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}</p>
-              <p><span className="font-semibold">Estimated:</span> LKR {latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0"}</p>
+              <p><span className="font-semibold">Requested:</span> {formatToETH(latestValuation?.requestedValue ?? null)}</p>
+              <p><span className="font-semibold">Estimated:</span> {formatToETH(latestValuation?.estimatedValue ?? null)}</p>
             </div>
           );
         })}

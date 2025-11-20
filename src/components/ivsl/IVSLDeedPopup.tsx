@@ -4,6 +4,7 @@ import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
 import { estimateValuation, signDeed } from "../../api/api";
 import { BrowserProvider } from "ethers";
+import { formatToETH, parseETHString } from "../../utils/formatCurrency";
 
 type Props = {
   deed: Deed | null;
@@ -72,7 +73,8 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
 
   const updateEstimation = async () => {
     if (deed._id) {
-      const res = await estimateValuation(deed._id, parseFloat(ivslEstimatedValue.replace(/,/g, "")), true);
+      const numeric = parseETHString(ivslEstimatedValue);
+      const res = await estimateValuation(deed._id, numeric, true);
       console.log(res);
       showToast("Estimation updated", "success");
     } else {
@@ -90,7 +92,7 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
     ? deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0]
     : null;
 
-    const [ ivslEstimatedValue, setIVSLEstimatedValue] = useState(latestValuation?.estimatedValue?.toLocaleString("en-LK") || "0");
+  const [ ivslEstimatedValue, setIVSLEstimatedValue] = useState(latestValuation ? formatToETH(latestValuation.estimatedValue) : "0 ETH");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
@@ -141,17 +143,17 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
               <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">Property Information</h3>
               <div className="space-y-3">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Requested Value (LKR)</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Requested Value (ETH)</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {latestValuation?.requestedValue?.toLocaleString("en-LK") || "0"}
+                    {formatToETH(latestValuation?.requestedValue ?? null)}
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estimated Value (LKR)</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estimated Value (ETH)</p>
                   <input
-                    type="number"
+                    type="text"
                     onChange={(e) => setIVSLEstimatedValue(e.target.value)}
-                    value={ivslEstimatedValue.replace(/,/g, "")}
+                    value={ivslEstimatedValue}
                     className="text-2xl font-bold text-green-700 w-full border-b border-gray-300 focus:outline-none"
                   />
                   <div className="flex items-center w-full justify-end mt-2">

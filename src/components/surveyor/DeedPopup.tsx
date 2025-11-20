@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useToast } from "../../contexts/ToastContext";
+import { formatToETH } from "../../utils/formatCurrency";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures, getRolesOf } from "../../web3.0/contractService";
 import { useWallet } from "../../contexts/WalletContext";
@@ -168,19 +169,19 @@ const DeedPopup = ({ deed, onClose }: Props) => {
                 <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Requested Value (LKR)
-                    </p>
-                    <p className="text-lg font-medium text-blue-700">
-                      {latestValuation.requested.toLocaleString("en-LK")}
-                    </p>
+                        Requested Value (ETH)
+                      </p>
+                      <p className="text-lg font-medium text-blue-700">
+                        {formatToETH(latestValuation.requested)}
+                      </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Estimated Value (LKR)
-                    </p>
-                    <p className="text-lg font-medium text-purple-700">
-                      {latestValuation.estimated.toLocaleString("en-LK")}
-                    </p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Estimated Value (ETH)
+                      </p>
+                      <p className="text-lg font-medium text-purple-700">
+                        {formatToETH(latestValuation.estimated)}
+                      </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
