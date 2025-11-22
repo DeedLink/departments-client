@@ -48,7 +48,7 @@ function contact() {
 
             }
 
-            const response = await axios.post("https://notification-service-beta-opal.vercel.app/api/notifications/message", payload);
+            const response = await axios.post("https://api-deedlink-notification-service.vercel.app/api/notifications/message", payload);
 
             console.log("✅ Message sent:", response.data);
             alert("✅ Message sent successfully!");
@@ -163,10 +163,13 @@ function contact() {
                                 ) : users.length > 0 ? (
                                     <ul className="space-y-2">
                                         {filterUsers.map((sendUser, index) => (
-                                            <li className="p-2 border rounded-lg hover:bg-emerald-50 transition-all" key={index} onClick={() => {
+                                            <li key={index} onClick={() => {
                                                 setRecipientName(sendUser.name);
                                                 setRecipientEmail(sendUser.email);
-                                            }}>
+                                            }} className={`p-2 border rounded-lg transition-all
+                                                ${recipientEmail === sendUser.email
+                                                    ? "bg-emerald-600 text-white scale-102 shadow-md border-emerald-600"
+                                                    : null}`}>
                                                 <span className="font-medium">{sendUser.name || "Unnamed User"}</span> {" "}
                                                 <span className="text-gray-500 text-sm">({sendUser.email})</span>
                                             </li>
