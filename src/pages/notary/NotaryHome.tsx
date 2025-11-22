@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
-import { User, Mail, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, Wallet } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { User, Mail, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, Wallet, Camera } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
+import { useToast } from "../../contexts/ToastContext";
+import { useLoader } from "../../contexts/LoaderContext";
 import { compressAddress, calculateCertificateAnalytics } from "../../utils/functions";
+import { uploadProfilePicture, IPFS_MICROSERVICE_URL } from "../../api/api";
 //import { getCertificatesByNotaryWalletAddress } from "../../api/api";
 import { type AnalaticsType } from "../../types/analatics";
 
@@ -17,9 +20,16 @@ const sampleAnalatics: AnalaticsType = {
 };
 
 const NotaryHome = () => {
-  const { user } = useLogin();
+  const { user, setUser } = useLogin();
   const { account } = useWallet();
+  const { showToast } = useToast();
+  const { showLoader, hideLoader } = useLoader();
   const [analytics, setAnalytics] = useState<AnalaticsType>(sampleAnalatics);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [objectUrl, setObjectUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -30,17 +40,89 @@ const NotaryHome = () => {
     }
   };
 
+  const profileImage = objectUrl
+    ? objectUrl
+    : uploadedUrl
+    ? `${IPFS_MICROSERVICE_URL}/file/${uploadedUrl}`
+    : user.profilePicture
+    ? `${IPFS_MICROSERVICE_URL}/file/${user.profilePicture}`
+    : "";
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith('image/')) {
+      showToast("Please select an image file", "error");
+      return;
+    }
+
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+    }
+    setFile(selectedFile);
+    setObjectUrl(URL.createObjectURL(selectedFile));
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setIsUploading(true);
+    showLoader();
+    try {
+      const res = await uploadProfilePicture(file);
+      console.log(res);
+      setUploadedUrl(res.dp);
+      const updatedUser = { ...res.user, profilePicture: res.dp || res.user.profilePicture };
+      setUser(updatedUser);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      setFile(null);
+      setObjectUrl("");
+      showToast("Profile Picture Updated Successfully", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Failed to upload profile picture", "error");
+    } finally {
+      setIsUploading(false);
+      hideLoader();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   useEffect(() => {
     fetchCertificates();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [objectUrl]);
 
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-              {user.name.charAt(0)}
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+              {profileImage ? (
+                <img 
+                  src={profileImage} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user.name.charAt(0)
+              )}
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.name}</h1>
@@ -62,9 +144,44 @@ const NotaryHome = () => {
               </div>
               <div className="p-6 space-y-4">
                 <div className="text-center mb-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                    {user.name.split(" ").map(n => n.charAt(0)).join("")}
+                  <div className="relative mx-auto mb-4 w-24 h-24">
+                    <div 
+                      onClick={handleProfilePictureClick}
+                      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto cursor-pointer hover:opacity-90 transition-opacity relative overflow-hidden bg-gradient-to-br from-blue-500 to-cyan-600"
+                    >
+                      {profileImage ? (
+                        <img 
+                          src={profileImage} 
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.name.split(" ").map(n => n.charAt(0)).join("")
+                      )}
+                    </div>
+                    <div 
+                      onClick={handleProfilePictureClick}
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-lg"
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </div>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {file && (
+                    <button
+                      onClick={handleUpload}
+                      disabled={isUploading}
+                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploading ? "Uploading..." : "Upload Picture"}
+                    </button>
+                  )}
                   <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
                   <p className="text-blue-600 font-medium">Licensed Notary</p>
                 </div>
