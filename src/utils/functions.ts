@@ -38,18 +38,78 @@ export const calculatePolygonArea = (coordinates: [number, number][]): number =>
   return Math.abs(area) / 2 * 111320 * 111320;
 };
 
-export const calculateAnalatics = (data:any[]) =>{
-  console.log(data);
-  const analatics: AnalaticsType = {
-    totalDeeds: data?.length ?? 0,
-    signedDeeds: 0,
-    rejectedDeeds: 0,
-    pendingDeeds: 0,
-    monthlyGrowth: 0,
-    completionRate: 0,
-    avgProcessingTime: 0
+export const calculateAnalatics = (data: any[]): AnalaticsType => {
+  if (!data || data.length === 0) {
+    return {
+      totalDeeds: 0,
+      signedDeeds: 0,
+      rejectedDeeds: 0,
+      pendingDeeds: 0,
+      monthlyGrowth: 0,
+      completionRate: 0,
+      avgProcessingTime: 0
+    };
   }
-  return analatics;
+
+  const totalDeeds = data.length;
+  
+  // Count deeds with surveyor signature
+  const signedDeeds = data.filter(deed => deed.surveySignature && deed.surveySignedBy).length;
+  
+  // For surveyors, rejected deeds might be those that have been explicitly rejected
+  // or deeds that have been pending for too long. For now, we'll set this to 0
+  // as there's no explicit rejection field in the deed structure
+  const rejectedDeeds = 0;
+  
+  // Pending deeds are those without surveyor signature
+  const pendingDeeds = totalDeeds - signedDeeds - rejectedDeeds;
+
+  // Calculate completion rate
+  const completionRate = totalDeeds > 0 ? Math.round((signedDeeds / totalDeeds) * 100) : 0;
+
+  // Calculate average processing time for signed deeds
+  const signedDeedsWithTimestamp = data.filter(deed => 
+    deed.surveySignature && deed.surveySignedBy && deed.timestamp
+  );
+
+  let avgProcessingTime = 0;
+  if (signedDeedsWithTimestamp.length > 0) {
+    // For surveyors, processing time might be from deed creation to signature
+    // This is a simplified calculation - can be enhanced based on actual timestamp fields
+    avgProcessingTime = 0; // Placeholder - would need signature timestamp to calculate properly
+  }
+
+  // Calculate monthly growth
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  const currentMonthDeeds = data.filter(deed => {
+    if (!deed.timestamp) return false;
+    const deedDate = new Date(deed.timestamp);
+    return deedDate.getMonth() === currentMonth && deedDate.getFullYear() === currentYear;
+  }).length;
+
+  const lastMonthDeeds = data.filter(deed => {
+    if (!deed.timestamp) return false;
+    const deedDate = new Date(deed.timestamp);
+    return deedDate.getMonth() === lastMonth && deedDate.getFullYear() === lastMonthYear;
+  }).length;
+
+  const monthlyGrowth = lastMonthDeeds > 0 
+    ? Math.round(((currentMonthDeeds - lastMonthDeeds) / lastMonthDeeds) * 100)
+    : (currentMonthDeeds > 0 ? 100 : 0);
+
+  return {
+    totalDeeds,
+    signedDeeds,
+    rejectedDeeds,
+    pendingDeeds,
+    monthlyGrowth,
+    completionRate,
+    avgProcessingTime
+  };
 }
 
 export const calculateCertificateAnalytics = (certificates: Certificate[]) => {
@@ -73,6 +133,96 @@ export const calculateCertificateAnalytics = (certificates: Certificate[]) => {
     : 0;
 
   return { totalDeeds, signedDeeds, rejectedDeeds, pendingDeeds, completionRate, monthlyGrowth, avgProcessingTime };
+};
+
+export const calculateIVSLAnalytics = (deeds: any[]): AnalaticsType => {
+  if (!deeds || deeds.length === 0) {
+    return {
+      totalDeeds: 0,
+      signedDeeds: 0,
+      rejectedDeeds: 0,
+      pendingDeeds: 0,
+      monthlyGrowth: 0,
+      completionRate: 0,
+      avgProcessingTime: 0
+    };
+  }
+
+  const totalDeeds = deeds.length;
+  
+  // Count deeds with accepted valuations (isAccepted === true)
+  const signedDeeds = deeds.filter(deed => {
+    if (!deed.valuation || deed.valuation.length === 0) return false;
+    const latestValuation = deed.valuation.slice().sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
+    return latestValuation.isAccepted === true;
+  }).length;
+
+  // Count deeds with rejected valuations (isAccepted === false)
+  const rejectedDeeds = deeds.filter(deed => {
+    if (!deed.valuation || deed.valuation.length === 0) return false;
+    const latestValuation = deed.valuation.slice().sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
+    return latestValuation.isAccepted === false;
+  }).length;
+
+  // Count pending deeds (no valuation or no decision made)
+  const pendingDeeds = totalDeeds - signedDeeds - rejectedDeeds;
+
+  // Calculate completion rate
+  const completionRate = totalDeeds > 0 ? Math.round(((signedDeeds + rejectedDeeds) / totalDeeds) * 100) : 0;
+
+  // Calculate average processing time (for completed valuations)
+  const completedDeeds = deeds.filter(deed => {
+    if (!deed.valuation || deed.valuation.length === 0) return false;
+    const latestValuation = deed.valuation.slice().sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
+    return latestValuation.isAccepted !== undefined;
+  });
+
+  let avgProcessingTime = 0;
+  if (completedDeeds.length > 0) {
+    const totalDays = completedDeeds.reduce((acc, deed) => {
+      if (deed.timestamp && deed.valuation && deed.valuation.length > 0) {
+        const latestValuation = deed.valuation.slice().sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
+        const deedCreated = new Date(deed.timestamp).getTime();
+        const valuationDone = latestValuation.timestamp * 1000; // Convert to milliseconds if needed
+        const daysDiff = Math.abs(valuationDone - deedCreated) / (1000 * 60 * 60 * 24);
+        return acc + daysDiff;
+      }
+      return acc;
+    }, 0);
+    avgProcessingTime = Math.round(totalDays / completedDeeds.length);
+  }
+
+  // Calculate monthly growth (simplified - can be enhanced)
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  const currentMonthDeeds = deeds.filter(deed => {
+    if (!deed.timestamp) return false;
+    const deedDate = new Date(deed.timestamp);
+    return deedDate.getMonth() === currentMonth && deedDate.getFullYear() === currentYear;
+  }).length;
+
+  const lastMonthDeeds = deeds.filter(deed => {
+    if (!deed.timestamp) return false;
+    const deedDate = new Date(deed.timestamp);
+    return deedDate.getMonth() === lastMonth && deedDate.getFullYear() === lastMonthYear;
+  }).length;
+
+  const monthlyGrowth = lastMonthDeeds > 0 
+    ? Math.round(((currentMonthDeeds - lastMonthDeeds) / lastMonthDeeds) * 100)
+    : (currentMonthDeeds > 0 ? 100 : 0);
+
+  return {
+    totalDeeds,
+    signedDeeds,
+    rejectedDeeds,
+    pendingDeeds,
+    monthlyGrowth,
+    completionRate,
+    avgProcessingTime
+  };
 };
 
 

@@ -11,6 +11,7 @@ import { LoaderProvider } from "./contexts/LoaderContext";
 import SurveyorDeeds from "./pages/surveyor/SurveyorDeeds";
 import SurveyPlanPage from "./pages/surveyor/SurveyPlanPage";
 import IVSLDeeds from "./pages/ivsl/IVSLDeeds";
+import IVSLHome from "./pages/ivsl/IVSLHome";
 import NotaryHome from "./pages/notary/NotaryHome";
 import NotaryDeeds from "./pages/notary/NotaryDeeds";
 import Contact from "./pages/Contact";
@@ -44,6 +45,7 @@ export default function App() {
                     <Route path="/surveyor" element={<SurveyorHome />} />
                     <Route path="/surveyor/deeds" element={<SurveyorDeeds />} />
                     <Route path="/surveyor/plan/:deedNumber" element={<SurveyPlanPage />} />
+                    <Route path="/ivsl" element={<IVSLHome />} />
                     <Route path="/ivsl/deeds" element={<IVSLDeeds />} />
                     <Route path="/notary" element={<NotaryHome />} />
                     <Route path="/notary/deeds" element={<NotaryDeeds />} />
