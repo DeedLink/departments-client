@@ -42,6 +42,24 @@ export const getProfile = async (): Promise<User> => {
   return res.data;
 };
 
+export const uploadProfilePicture = async (file: File): Promise<{ dp: string; user: User }> => {
+  const formData = new FormData();
+  formData.append("profilePicture", file);
+
+  const res: AxiosResponse<{ dp: string; user: User }> = await api.post(
+    "/profile-picture",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${getItem("local", "token") || ""}`,
+      },
+    }
+  );
+
+  return res.data;
+};
+
 // Upload KYC documents (protected, multipart/form-data)
 export const uploadKYC = async (
     id: string,
