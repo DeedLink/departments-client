@@ -6,6 +6,7 @@ import type { Plan } from "../types/plan";
 const USER_API_URL = import.meta.env.VITE_USER_API_URL || "http://localhost:5000/api/users";
 const DEED_API_URL = import.meta.env.VITE_DEED_API_URL || "http://localhost:5001/api/deeds";
 const CERTIFICATE_API_URL = import.meta.env.VITE_CERTIFICATE_SERVICE_URL || "http://localhost:4004/api/certificates";
+export const IPFS_MICROSERVICE_URL = import.meta.env.VITE_IPFS_MICROSERVICE_URL || import.meta.env.VITE_PINATA_API_URL || "";
 
 const api = axios.create({
   baseURL: USER_API_URL,

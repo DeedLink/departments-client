@@ -5,7 +5,7 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useLoader } from "../../contexts/LoaderContext";
 import { compressAddress, calculateIVSLAnalytics } from "../../utils/functions";
-import { getDeedByIVSLWalletAddress, uploadProfilePicture } from "../../api/api";
+import { getDeedByIVSLWalletAddress, uploadProfilePicture, IPFS_MICROSERVICE_URL } from "../../api/api";
 import { type AnalaticsType } from "../../types/analatics";
 
 const sampleAnalatics: AnalaticsType = {
@@ -24,6 +24,10 @@ const IVSLHome = () => {
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
   const [analytics, setAnalytics] = useState<AnalaticsType>(sampleAnalatics);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [objectUrl, setObjectUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if(!user) return null;
@@ -40,28 +44,55 @@ const IVSLHome = () => {
     }
   }
 
+  const profileImage = objectUrl
+    ? objectUrl
+    : uploadedUrl
+    ? `${IPFS_MICROSERVICE_URL}/file/${uploadedUrl}`
+    : user.profilePicture
+    ? `${IPFS_MICROSERVICE_URL}/file/${user.profilePicture}`
+    : "";
+
   const handleProfilePictureClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!selectedFile.type.startsWith('image/')) {
       showToast("Please select an image file", "error");
       return;
     }
 
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+    }
+    setFile(selectedFile);
+    setObjectUrl(URL.createObjectURL(selectedFile));
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setIsUploading(true);
+    showLoader();
     try {
-      showLoader();
-      const response = await uploadProfilePicture(file);
-      const updatedUser = { ...response.user, profilePicture: response.dp || response.user.profilePicture };
+      const res = await uploadProfilePicture(file);
+      console.log(res);
+      setUploadedUrl(res.dp);
+      const updatedUser = { ...res.user, profilePicture: res.dp || res.user.profilePicture };
       setUser(updatedUser);
-      showToast("Profile picture updated successfully", "success");
-    } catch (error: any) {
-      showToast(error?.response?.data?.message || "Failed to upload profile picture", "error");
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      setFile(null);
+      setObjectUrl("");
+      showToast("Profile Picture Updated Successfully", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Failed to upload profile picture", "error");
     } finally {
+      setIsUploading(false);
       hideLoader();
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -74,6 +105,14 @@ const IVSLHome = () => {
     fetchRelatedDeeds();
   }, [account]);
 
+  useEffect(() => {
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [objectUrl]);
+
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -81,9 +120,9 @@ const IVSLHome = () => {
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-              {user.profilePicture ? (
+              {profileImage ? (
                 <img 
-                  src={user.profilePicture} 
+                  src={profileImage} 
                   alt={user.name}
                   className="w-full h-full object-cover"
                 />
@@ -118,9 +157,9 @@ const IVSLHome = () => {
                       onClick={handleProfilePictureClick}
                       className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto cursor-pointer hover:opacity-90 transition-opacity relative overflow-hidden bg-gradient-to-br from-purple-500 to-indigo-600"
                     >
-                      {user.profilePicture ? (
+                      {profileImage ? (
                         <img 
-                          src={user.profilePicture} 
+                          src={profileImage} 
                           alt={user.name}
                           className="w-full h-full object-cover"
                         />
@@ -142,6 +181,15 @@ const IVSLHome = () => {
                     onChange={handleFileChange}
                     className="hidden"
                   />
+                  {file && (
+                    <button
+                      onClick={handleUpload}
+                      disabled={isUploading}
+                      className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploading ? "Uploading..." : "Upload Picture"}
+                    </button>
+                  )}
                   <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
                   <p className="text-purple-600 font-medium">Valuation Officer</p>
                 </div>
