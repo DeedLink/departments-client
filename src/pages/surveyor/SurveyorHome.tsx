@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, Camera } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
+import { useToast } from "../../contexts/ToastContext";
+import { useLoader } from "../../contexts/LoaderContext";
 import { calculateAnalatics, compressAddress } from "../../utils/functions";
-import { getDeedBySurveyorWalletAddress } from "../../api/api";
+import { getDeedBySurveyorWalletAddress, uploadProfilePicture } from "../../api/api";
 import { type AnalaticsType } from "../../types/analatics";
 
 const sampleAnalatics: AnalaticsType = {
@@ -17,9 +19,12 @@ const sampleAnalatics: AnalaticsType = {
 }
 
 const SurveyorHome = () => {
-  const { user } = useLogin();
+  const { user, setUser } = useLogin();
   const { account } = useWallet();
+  const { showToast } = useToast();
+  const { showLoader, hideLoader } = useLoader();
   const [ analytics, setAnalatics ] = useState<AnalaticsType>(sampleAnalatics);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if(!user) return;
 
@@ -30,6 +35,35 @@ const SurveyorHome = () => {
       setAnalatics(calculateAnalatics(res));
     }
   }
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast("Please select an image file", "error");
+      return;
+    }
+
+    try {
+      showLoader();
+      const response = await uploadProfilePicture(file);
+      const updatedUser = { ...response.user, profilePicture: response.dp || response.user.profilePicture };
+      setUser(updatedUser);
+      showToast("Profile picture updated successfully", "success");
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || "Failed to upload profile picture", "error");
+    } finally {
+      hideLoader();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   useEffect(() => {
     console.log("Dashboard loaded");
@@ -42,8 +76,16 @@ const SurveyorHome = () => {
 
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-              {user.name.charAt(0)}
+            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+              {user.profilePicture ? (
+                <img 
+                  src={user.profilePicture} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user.name.charAt(0)
+              )}
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.name}</h1>
@@ -67,9 +109,35 @@ const SurveyorHome = () => {
               
               <div className="p-6">
                 <div className="text-center mb-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                    {user.name.split(' ').map(n => n.charAt(0)).join('')}
+                  <div className="relative mx-auto mb-4 w-24 h-24">
+                    <div 
+                      onClick={handleProfilePictureClick}
+                      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto cursor-pointer hover:opacity-90 transition-opacity relative overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600"
+                    >
+                      {user.profilePicture ? (
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.name.split(' ').map(n => n.charAt(0)).join('')
+                      )}
+                    </div>
+                    <div 
+                      onClick={handleProfilePictureClick}
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-700 transition-colors shadow-lg"
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </div>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                   <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
                   <p className="text-green-600 font-medium">Licensed Professional</p>
                 </div>

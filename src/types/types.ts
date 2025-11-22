@@ -63,6 +63,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   licensedSurveyorNumber?: string;
+  profilePicture?: string;
 }
 
 export interface RegisterRequest {
