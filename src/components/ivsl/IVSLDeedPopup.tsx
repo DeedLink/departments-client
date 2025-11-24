@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import type { Deed } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
-import { estimateValuation, signDeed } from "../../api/api";
+import { estimateValuation, signDeed, getNearbyLandSales } from "../../api/api";
 import { BrowserProvider } from "ethers";
 import { formatToETH, parseETHString } from "../../utils/formatCurrency";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type Props = {
   deed: Deed | null;
@@ -17,6 +18,9 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
   const { showToast } = useToast();
   const [isIVSLSigned, setIsIVSLSigned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [nearbySales, setNearbySales] = useState<any>(null);
+  const [loadingSales, setLoadingSales] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(10);
 
   const callGetSignatures = async () => {
     try {
@@ -31,7 +35,22 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
 
   useEffect(() => {
     callGetSignatures();
-  }, []);
+    loadNearbySales();
+  }, [deed?._id, radiusKm]);
+
+  const loadNearbySales = async () => {
+    if (!deed?._id) return;
+    setLoadingSales(true);
+    try {
+      const data = await getNearbyLandSales(deed._id, radiusKm);
+      setNearbySales(data);
+    } catch (error) {
+      console.error("Failed to load nearby sales:", error);
+      setNearbySales(null);
+    } finally {
+      setLoadingSales(false);
+    }
+  };
 
   const handleSign = async () => {
     console.log("Signing deed (IVSL):", deed.tokenId);
@@ -93,6 +112,17 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
     : null;
 
   const [ ivslEstimatedValue, setIVSLEstimatedValue] = useState(latestValuation ? formatToETH(latestValuation.estimatedValue) : "0 ETH");
+
+  const chartData = nearbySales ? Object.entries(nearbySales.salesByType || {})
+    .filter(([_, data]: [string, any]) => data.count > 0)
+    .map(([type, data]: [string, any]) => ({
+      type: type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      average: parseFloat(formatToETH(data.averageAmount).replace(' ETH', '')) || 0,
+      count: data.count,
+      total: parseFloat(formatToETH(data.totalAmount).replace(' ETH', '')) || 0
+    })) : [];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
@@ -177,6 +207,119 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Owner Address</p>
                 <p className="text-gray-900 leading-relaxed">{deed.ownerAddress}</p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 mt-4">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Nearby Land Sales Analysis</h3>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Radius (km):</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={radiusKm}
+                      onChange={(e) => setRadiusKm(Number(e.target.value))}
+                      className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                    <button
+                      onClick={loadNearbySales}
+                      disabled={loadingSales}
+                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {loadingSales ? "Loading..." : "Refresh"}
+                    </button>
+                  </div>
+                </div>
+
+                {loadingSales ? (
+                  <div className="text-center py-8 text-gray-500">Loading nearby sales data...</div>
+                ) : nearbySales && chartData.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Nearby Properties Found</p>
+                        <p className="text-2xl font-bold text-blue-600">{nearbySales.nearbyDeedsCount}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Search Radius</p>
+                        <p className="text-2xl font-bold text-indigo-600">{radiusKm} km</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Average Sale Price by Transaction Type</h4>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="type" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                          <YAxis label={{ value: 'ETH', angle: -90, position: 'insideLeft' }} />
+                          <Tooltip formatter={(value: number) => `${value.toFixed(4)} ETH`} />
+                          <Legend />
+                          <Bar dataKey="average" fill="#3b82f6" name="Average Price (ETH)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Number of Sales by Type</h4>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                          <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ type, count }) => `${type}: ${count}`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="count"
+                          >
+                            {chartData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Transaction Details by Type</h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {Object.entries(nearbySales.salesByType || {})
+                          .filter(([_, data]: [string, any]) => data.count > 0)
+                          .map(([type, data]: [string, any]) => (
+                            <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </p>
+                                <p className="text-xs text-gray-500">{data.count} transaction(s)</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold text-green-600">
+                                  {formatToETH(data.averageAmount)}
+                                </p>
+                                <p className="text-xs text-gray-500">avg</p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : nearbySales ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No nearby land sales found within {radiusKm} km radius.</p>
+                    <p className="text-sm mt-2">Try increasing the search radius.</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Unable to load nearby sales data.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

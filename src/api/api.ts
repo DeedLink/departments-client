@@ -382,3 +382,8 @@ export const verifyCertificate = async (certificateId: string): Promise<any> => 
   const res: AxiosResponse<any> = await certificatesApi.post(`/${certificateId}/verify`);
   return res.data;
 };
+
+export const getNearbyLandSales = async (deedId: string, radiusKm: number = 10): Promise<any> => {
+  const res: AxiosResponse<any> = await deedApi.get(`/${deedId}/nearby-sales?radiusKm=${radiusKm}`);
+  return res.data;
+};
