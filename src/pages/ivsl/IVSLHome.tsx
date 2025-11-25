@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, DollarSign, Camera } from "lucide-react";
+import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, Camera } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";

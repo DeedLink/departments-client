@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { getAllCertificates } from "../../api/api";
-import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, isWillReadyForExecution } from "../../web3.0/lastWillIntegration";
+import { getAllCertificates, verifyCertificate } from "../../api/api";
+import { verifyOwnerDeath, getDeathVerification, executeWill, getWill } from "../../web3.0/lastWillIntegration";
 import { useToast } from "../../contexts/ToastContext";
-import { useWallet } from "../../contexts/WalletContext";
 
 type Party = {
   name: string;
@@ -42,8 +41,8 @@ const NotaryCertificates: React.FC = () => {
   const [deathCertHash, setDeathCertHash] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isVerifyingCert, setIsVerifyingCert] = useState(false);
   const { showToast } = useToast();
-  const { account } = useWallet();
 
   useEffect(() => {
     fetchCertificates();
@@ -124,6 +123,22 @@ const NotaryCertificates: React.FC = () => {
       showToast(error.message || "Failed to execute will", "error");
     } finally {
       setIsExecuting(false);
+    }
+  };
+
+  const handleVerify = async (certificateId: string) => {
+    setIsVerifyingCert(true);
+    try {
+      const result = await verifyCertificate(certificateId);
+      showToast("Certificate verified successfully", "success");
+      await fetchCertificates();
+      if (selectedCert?._id === certificateId) {
+        setSelectedCert({ ...selectedCert, ...result });
+      }
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || "Failed to verify certificate", "error");
+    } finally {
+      setIsVerifyingCert(false);
     }
   };
 
@@ -293,9 +308,10 @@ const NotaryCertificates: React.FC = () => {
               {selectedCert.type !== "last_will" && (
                 <button
                   onClick={() => handleVerify(selectedCert._id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  disabled={isVerifyingCert}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Verify Certificate
+                  {isVerifyingCert ? "Verifying..." : "Verify Certificate"}
                 </button>
               )}
             </div>
