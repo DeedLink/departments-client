@@ -96,10 +96,10 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
           <p className="text-gray-700"><strong>Owner:</strong> {deed.ownerFullName}</p>
           <p className="text-gray-700"><strong>NIC:</strong> {deed.ownerNIC}</p>
           <p className="text-gray-700">
-            <strong>Requested Value:</strong> Rs. {latestValuation?.requestedValue?.toLocaleString() || "0"}
+            <strong>Requested Value:</strong> ETH {latestValuation?.requestedValue?.toLocaleString() || "0"}
           </p>
           <p className="text-gray-700">
-            <strong>Estimated Value:</strong> Rs. {latestValuation?.estimatedValue?.toLocaleString() || "0"}
+            <strong>Estimated Value:</strong> ETH {latestValuation?.estimatedValue?.toLocaleString() || "0"}
           </p>
           <p className="text-gray-700"><strong>Land Type:</strong> {deed.landType}</p>
           <p className="text-gray-700"><strong>Deed Number:</strong> {deed.deedNumber}</p>

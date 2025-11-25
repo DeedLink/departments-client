@@ -168,7 +168,7 @@ const NotaryPlan: React.FC<NotaryPlanProps> = ({ points, sides, isOpen, onClose 
           <p className="text-xs sm:text-sm text-gray-700">
             Area: {area ? `${area.toFixed(2)} m²` : "Calculating..."}<br/>
             Area in perches: {perches ? perches.toFixed(2) : "..."}<br/>
-            Estimated Value: {value ? `Rs. ${value.toLocaleString()}` : "..."}<br/>
+            Estimated Value: {value ? `ETH ${value.toLocaleString()}` : "..."}<br/>
             Nearest Road: {nearestRoad || "Fetching..."}
           </p>
         </div>
