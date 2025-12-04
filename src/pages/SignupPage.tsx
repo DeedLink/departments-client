@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, Mail, Lock, Wallet, KeyIcon } from "lucide-react";
+import { User, Mail, Lock, Wallet, KeyIcon, Shield, FileText, CheckCircle, TrendingUp, Globe, Zap, Users, MapPin, Award } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress, isValidPassword } from "../utils/functions";
 import { useLoader } from "../contexts/LoaderContext";
@@ -55,17 +55,96 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        
-        <div className="p-8 text-center">
-          <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-emerald-600" />
+    <div className="min-h-screen flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 p-12 flex-col justify-center text-white">
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-white/20 backdrop-blur-sm w-16 h-16 rounded-2xl flex items-center justify-center">
+              <Shield className="w-8 h-8" />
+            </div>
+            <h1 className="text-4xl font-bold">Join Our Platform</h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Create Account</h1>
-        </div>
+          
+          <p className="text-xl mb-12 text-white/90 leading-relaxed">
+            Create your department account to access secure land registry management, property valuation, and certificate services.
+          </p>
 
-        <div className="px-8 pb-8 space-y-4">
+          <div className="space-y-6 mb-12">
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">For Department Users</h3>
+                <p className="text-white/80 text-sm">Exclusive access for Surveyors, IVSL Officers, and Notaries to manage land-related operations.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Survey Plan Management</h3>
+                <p className="text-white/80 text-sm">Create, update, and manage survey plans with digital mapping and blockchain verification.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">KYC Verification</h3>
+                <p className="text-white/80 text-sm">Secure identity verification process ensures only authorized personnel can access the system.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
+                <Wallet className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Wallet Integration</h3>
+                <p className="text-white/80 text-sm">Connect your blockchain wallet for secure, decentralized authentication and transaction signing.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <h3 className="font-semibold text-lg mb-3">Account Requirements</h3>
+            <ul className="space-y-2 text-sm text-white/90">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-300" />
+                Valid department email address
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-300" />
+                Blockchain wallet connection
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-300" />
+                OTP verification from admin
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-300" />
+                Strong password (8+ characters)
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-gradient-to-br p-4">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="p-8 text-center">
+            <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Create Account</h1>
+          </div>
+
+          <div className="px-8 pb-8 space-y-4">
 
           <div className="group">
             {account ? (
@@ -145,6 +224,7 @@ export default function SignupPage() {
               Sign In
             </Link>
           </p>
+          </div>
         </div>
       </div>
     </div>
