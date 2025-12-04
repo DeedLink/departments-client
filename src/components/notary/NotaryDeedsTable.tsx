@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deed } from "../../types/deed";
-import { getDeedByNotaryorWalletAddress, getPlanByPlanNumber } from "../../api/api";
+import { getDeedByNotaryorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import NotaryDeedPopup from "./NotaryDeedPopup";
 import { formatToETH } from "../../utils/formatCurrency";
-import NotaryPlan from "./NotaryPlan";
 
 const NotaryDeedsTable = () => {
   const [search, setSearch] = useState("");
@@ -15,9 +14,6 @@ const NotaryDeedsTable = () => {
   const [deeds, setDeeds] = useState<Deed[]>([]);
   const { account } = useWallet();
   const { showToast } = useToast();
-  const [isPlanOpen, setIsPlanOpen] = useState(false);
-  const [sides, setSides] = useState();
-  const [points, setPoints] = useState([]);
 
   const rowsPerPage = 10;
 
@@ -53,24 +49,6 @@ const NotaryDeedsTable = () => {
       return deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0];
     }
     return null;
-  };
-
-  const handleViewPlan = async (deed: Deed) => {
-    if (!deed.surveyPlanNumber) {
-      showToast("No survey plan available for this deed.", "error");
-      return;
-    }
-    try {
-      const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
-      if (res.success) {
-        showToast(`Survey plan fetched with ${res.data.coordinates.length} points`, "success");
-        setPoints(res.data.coordinates);
-        setSides(res.data.sides);
-        setIsPlanOpen(true);
-      }
-    } catch {
-      showToast("Error fetching survey plan", "error");
-    }
   };
 
   return (
@@ -115,13 +93,7 @@ const NotaryDeedsTable = () => {
                       onClick={() => setSelectedDeed(deed)}
                       className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
                     >
-                      <Eye className="w-3 h-3" /> Open
-                    </button>
-                    <button
-                      onClick={() => handleViewPlan(deed)}
-                      className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
-                    >
-                      View Plan
+                      <Eye className="w-3 h-3" /> View Details
                     </button>
                   </td>
                 </tr>
@@ -138,20 +110,12 @@ const NotaryDeedsTable = () => {
             <div key={deed.deedNumber} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <span className="font-mono font-semibold text-green-600">#{deed.deedNumber}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedDeed(deed)}
-                    className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
-                  >
-                    <Eye className="w-4 h-4" /> Open
-                  </button>
-                  <button
-                    onClick={() => handleViewPlan(deed)}
-                    className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1 shadow-sm"
-                  >
-                    View Plan
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSelectedDeed(deed)}
+                  className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
+                >
+                  <Eye className="w-4 h-4" /> View Details
+                </button>
               </div>
               <p><span className="font-semibold">Owner:</span> {deed.ownerFullName}</p>
               <p><span className="font-semibold">Land Type:</span> {deed.landType}</p>
@@ -193,12 +157,6 @@ const NotaryDeedsTable = () => {
       )}
 
       <NotaryDeedPopup deed={selectedDeed} onClose={() => setSelectedDeed(null)} />
-      <NotaryPlan
-        isOpen={isPlanOpen}
-        onClose={() => setIsPlanOpen(false)}
-        points={points}
-        sides={sides}
-      />
     </div>
   );
 };

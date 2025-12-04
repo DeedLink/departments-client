@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, Mail, Lock, Wallet, KeyIcon, Shield, FileText, CheckCircle, TrendingUp, Globe, Zap, Users, MapPin, Award } from "lucide-react";
+import { User, Mail, Lock, Wallet, KeyIcon, Shield, CheckCircle, Users, MapPin, Award } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress, isValidPassword } from "../utils/functions";
 import { useLoader } from "../contexts/LoaderContext";

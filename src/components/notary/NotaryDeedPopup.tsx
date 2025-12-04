@@ -1,14 +1,77 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../../contexts/ToastContext";
-import type { Deed } from "../../types/deed";
+import { formatToETH } from "../../utils/formatCurrency";
+import type { Deed, Sides } from "../../types/deed";
 import { signProperty, getSignatures } from "../../web3.0/contractService";
-import { signDeed } from "../../api/api";
+import { signDeed, getPlanByPlanNumber } from "../../api/api";
 import { BrowserProvider } from "ethers";
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 type Props = {
   deed: Deed | null;
   onClose: () => void;
 };
+
+const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
+  }, [coords, map]);
+  return null;
+};
+
+function offsetPoint([lat, lng]: [number, number], dx: number, dy: number): [number, number] {
+  const latOffset = dy / 111320;
+  const lngOffset = dx / (111320 * Math.cos((lat * Math.PI) / 180));
+  return [lat + latOffset, lng + lngOffset];
+}
+
+function createAngledPolygon(start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W") {
+  const dx = end[1] - start[1];
+  const dy = end[0] - start[0];
+  const length = Math.sqrt(dx * dx + dy * dy) * 111320;
+  const offset = length * 0.3;
+
+  if (direction === "N") {
+    const p1 = offsetPoint(start, -offset, offset);
+    const p2 = offsetPoint(end, offset, offset);
+    return [start, end, p2, p1];
+  }
+  if (direction === "S") {
+    const p1 = offsetPoint(start, offset, -offset);
+    const p2 = offsetPoint(end, -offset, -offset);
+    return [start, end, p2, p1];
+  }
+  if (direction === "E") {
+    const p1 = offsetPoint(start, offset, offset);
+    const p2 = offsetPoint(end, offset, -offset);
+    return [start, end, p2, p1];
+  }
+  if (direction === "W") {
+    const p1 = offsetPoint(start, -offset, -offset);
+    const p2 = offsetPoint(end, -offset, offset);
+    return [start, end, p2, p1];
+  }
+  return [];
+}
+
+function getCentroid(coords: [number, number][]): [number, number] {
+  let lat = 0, lng = 0;
+  coords.forEach(([la, lo]) => { lat += la; lng += lo; });
+  return [lat / coords.length, lng / coords.length];
+}
 
 const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   if (!deed) return null;
@@ -16,10 +79,64 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   const { showToast } = useToast();
   const [isSigned, setIsSigned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'map'>('details');
+  const [planPoints, setPlanPoints] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [planSides, setPlanSides] = useState<Sides | undefined>();
+  const [loadingPlan, setLoadingPlan] = useState(false);
 
   const latestValuation = deed.valuation && deed.valuation.length > 0
     ? deed.valuation.slice().sort((a, b) => b.timestamp - a.timestamp)[0]
     : null;
+
+  const locationCoords = deed.location && deed.location.length > 0
+    ? deed.location.map((loc) => [loc.latitude, loc.longitude] as [number, number])
+    : [];
+
+  const mapCoords = planPoints.length > 0
+    ? planPoints.map((p) => [p.latitude, p.longitude] as [number, number])
+    : locationCoords;
+
+  const mapCenter: [number, number] = mapCoords.length > 0
+    ? mapCoords[0]
+    : [7.2906, 80.6337];
+
+  useEffect(() => {
+    const fetchSurveyPlan = async () => {
+      if (deed.surveyPlanNumber && activeTab === 'map') {
+        setLoadingPlan(true);
+        try {
+          const res = await getPlanByPlanNumber(deed.surveyPlanNumber);
+          if (res.success && res.data?.coordinates) {
+            setPlanPoints(res.data.coordinates);
+            setPlanSides(res.data.sides);
+          }
+        } catch (error) {
+          console.error("Error fetching survey plan:", error);
+        } finally {
+          setLoadingPlan(false);
+        }
+      }
+    };
+    fetchSurveyPlan();
+  }, [deed.surveyPlanNumber, activeTab]);
+
+  const renderSide = (label: string, start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W", color: string) => {
+    const poly = createAngledPolygon(start, end, direction);
+    if (poly.length === 0) return null;
+    const centroid = getCentroid(poly);
+
+    const divIcon = L.divIcon({
+      className: "custom-label",
+      html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:4px;font-size:12px;white-space:nowrap;">${label}</div>`,
+    });
+
+    return (
+      <>
+        <Polygon positions={poly} pathOptions={{ color, fillOpacity: 0.4 }} />
+        <Marker position={centroid} icon={divIcon} />
+      </>
+    );
+  };
 
   const checkSignatures = async () => {
     try {
@@ -81,46 +198,280 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 lg:ml-64">
-      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md lg:max-w-2xl relative max-h-[95vh] overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 relative bg-gray-50">
-          <h2 className="text-xl font-bold text-gray-800">Notary Deed Details</h2>
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-4xl relative max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-4 border-b border-gray-200 relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-white/80 rounded-full transition-all duration-200"
           >
-            ✕
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="pr-12">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
+              Notary Deed Details
+            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                #{deed.deedNumber}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                {deed.landType}
+              </span>
+              {deed.surveyPlanNumber ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                  Plan: {deed.surveyPlanNumber}
+                </span>
+              ) : null}
+              {isSigned && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  ✓ Signed
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex border-b border-gray-200 bg-gray-50">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'details'
+                ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setActiveTab('map')}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'map'
+                ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            Map View
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)] space-y-2">
-          <p className="text-gray-700"><strong>Owner:</strong> {deed.ownerFullName}</p>
-          <p className="text-gray-700"><strong>NIC:</strong> {deed.ownerNIC}</p>
-          <p className="text-gray-700">
-            <strong>Requested Value:</strong> ETH {latestValuation?.requestedValue?.toLocaleString() || "0"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Estimated Value:</strong> ETH {latestValuation?.estimatedValue?.toLocaleString() || "0"}
-          </p>
-          <p className="text-gray-700"><strong>Land Type:</strong> {deed.landType}</p>
-          <p className="text-gray-700"><strong>Deed Number:</strong> {deed.deedNumber}</p>
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === 'details' ? (
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                    Owner Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Full Name
+                      </p>
+                      <p className="text-gray-900 font-medium">{deed.ownerFullName}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        NIC Number
+                      </p>
+                      <p className="text-gray-900 font-mono">{deed.ownerNIC}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Phone Number
+                      </p>
+                      <p className="text-gray-900">{deed.ownerPhone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                    Property Information
+                  </h3>
+                  <div className="space-y-3">
+                    {latestValuation && (
+                      <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                            Requested Value (ETH)
+                          </p>
+                          <p className="text-lg font-medium text-blue-700">
+                            {latestValuation.requestedValue ? formatToETH(latestValuation.requestedValue) : "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                            Estimated Value (ETH)
+                          </p>
+                          <p className="text-lg font-medium text-purple-700">
+                            {latestValuation.estimatedValue ? formatToETH(latestValuation.estimatedValue) : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                          District
+                        </p>
+                        <p className="text-gray-900 font-medium">{deed.district || "N/A"}</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                          Division
+                        </p>
+                        <p className="text-gray-900 font-medium">{deed.division || "N/A"}</p>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Land Area
+                      </p>
+                      <p className="text-gray-900 font-medium">
+                        {deed.landArea ? `${deed.landArea} ${deed.landSizeUnit || ""}` : "N/A"}
+                      </p>
+                    </div>
+                    {deed.landTitleNumber && (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                          Land Title Number
+                        </p>
+                        <p className="text-gray-900 font-mono">{deed.landTitleNumber}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Owner Address
+                    </p>
+                    <p className="text-gray-900 leading-relaxed">{deed.ownerAddress}</p>
+                  </div>
+                  {deed.landAddress && (
+                    <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Property Address
+                      </p>
+                      <p className="text-gray-900 leading-relaxed">{deed.landAddress}</p>
+                    </div>
+                  )}
+                  {deed.boundaries && (
+                    <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Boundaries
+                      </p>
+                      <p className="text-gray-900 leading-relaxed">{deed.boundaries}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-[calc(95vh-280px)] w-full">
+              {loadingPlan ? (
+                <div className="h-full flex items-center justify-center bg-gray-100">
+                  <div className="text-center">
+                    <svg className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" strokeWidth={4} className="opacity-25" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M4 12a8 8 0 018-8" />
+                    </svg>
+                    <p className="text-gray-600">Loading survey plan...</p>
+                  </div>
+                </div>
+              ) : mapCoords.length > 0 ? (
+                <MapContainer
+                  center={mapCenter}
+                  zoom={13}
+                  scrollWheelZoom={true}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                  />
+                  <FitBounds coords={mapCoords} />
+                  {mapCoords.map((coord, index) => (
+                    <Marker key={index} position={coord}>
+                      <Popup>
+                        <div className="text-xs">
+                          <strong>Point {index + 1}</strong><br/>
+                          Lat: {coord[0].toFixed(6)}<br/>
+                          Lng: {coord[1].toFixed(6)}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                  {mapCoords.length > 2 && (
+                    <Polygon
+                      positions={mapCoords}
+                      pathOptions={{ color: planPoints.length > 0 ? "green" : "#3b82f6", fillOpacity: 0.3, weight: 2 }}
+                    />
+                  )}
+                  {planSides && mapCoords.length >= 4 && (
+                    <>
+                      {planSides.North && renderSide(planSides.North, mapCoords[0], mapCoords[1], "N", "red")}
+                      {planSides.East && renderSide(planSides.East, mapCoords[1], mapCoords[2], "E", "blue")}
+                      {planSides.South && renderSide(planSides.South, mapCoords[2], mapCoords[3], "S", "orange")}
+                      {planSides.West && renderSide(planSides.West, mapCoords[3], mapCoords[0], "W", "purple")}
+                    </>
+                  )}
+                </MapContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center bg-gray-100">
+                  <p className="text-gray-500">No location data available</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
-          <button
-            onClick={handleSign}
-            disabled={isSigned || loading}
-            className={`flex-1 px-6 py-2 rounded-lg font-semibold text-white 
-              ${isSigned ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
-          >
-            {loading ? "Signing..." : isSigned ? "Already Signed" : "Sign as Notary"}
-          </button>
-          <button
-            onClick={handleReject}
-            disabled={isSigned}
-            className="flex-1 px-6 py-2 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-300"
-          >
-            Reject
-          </button>
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleSign}
+              disabled={isSigned || loading}
+              className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform shadow-lg text-sm sm:text-base
+                ${isSigned
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
+                }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                {loading ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" strokeWidth={4} className="opacity-25" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M4 12a8 8 0 018-8" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {isSigned ? "Already Signed" : "Sign as Notary"}
+              </div>
+            </button>
+            
+            <button
+              onClick={handleReject}
+              disabled={isSigned}
+              className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform shadow-lg text-sm sm:text-base
+                ${isSigned
+                  ? "bg-gray-300 cursor-not-allowed text-white"
+                  : "bg-red-600 hover:bg-red-700 active:bg-red-800 text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
+                }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {isSigned ? "Cannot Reject" : "Reject"}
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
