@@ -55,45 +55,32 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   return null;
 };
 
-function offsetPoint([lat, lng]: [number, number], dx: number, dy: number): [number, number] {
-  const latOffset = dy / 111320;
-  const lngOffset = dx / (111320 * Math.cos((lat * Math.PI) / 180));
-  return [lat + latOffset, lng + lngOffset];
+function getMidpoint(start: [number, number], end: [number, number]): [number, number] {
+  return [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
 }
 
-function createAngledPolygon(start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W") {
-  const dx = end[1] - start[1];
-  const dy = end[0] - start[0];
-  const length = Math.sqrt(dx * dx + dy * dy) * 111320;
-  const offset = length * 0.3;
-
-  if (direction === "N") {
-    const p1 = offsetPoint(start, -offset, offset);
-    const p2 = offsetPoint(end, offset, offset);
-    return [start, end, p2, p1];
+function findSideIndex(coords: [number, number][], targetSide: "N"|"S"|"E"|"W"): number {
+  let bestIndex = 0;
+  let bestScore = -Infinity;
+  
+  for (let i = 0; i < coords.length; i++) {
+    const start = coords[i];
+    const end = coords[(i + 1) % coords.length];
+    const midpoint = getMidpoint(start, end);
+    
+    let score = 0;
+    if (targetSide === "N") score = midpoint[0];
+    else if (targetSide === "S") score = -midpoint[0];
+    else if (targetSide === "E") score = midpoint[1];
+    else if (targetSide === "W") score = -midpoint[1];
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
   }
-  if (direction === "S") {
-    const p1 = offsetPoint(start, offset, -offset);
-    const p2 = offsetPoint(end, -offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "E") {
-    const p1 = offsetPoint(start, offset, offset);
-    const p2 = offsetPoint(end, offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "W") {
-    const p1 = offsetPoint(start, -offset, -offset);
-    const p2 = offsetPoint(end, -offset, offset);
-    return [start, end, p2, p1];
-  }
-  return [];
-}
-
-function getCentroid(coords: [number, number][]): [number, number] {
-  let lat = 0, lng = 0;
-  coords.forEach(([la, lo]) => { lat += la; lng += lo; });
-  return [lat / coords.length, lng / coords.length];
+  
+  return bestIndex;
 }
 
 function polygonArea(coords: [number, number][]): number {
@@ -134,22 +121,22 @@ const NotaryPlan: React.FC<NotaryPlanProps> = ({ points, sides, isOpen, onClose 
   const coords = points.map((p) => [p.latitude, p.longitude] as [number, number]);
   const center = coords[0];
 
-  const renderSide = (label: string, start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W", color: string) => {
-    const poly = createAngledPolygon(start, end, direction);
-    if (poly.length === 0) return null;
-    const centroid = getCentroid(poly);
-
+  const renderSide = (label: string, targetSide: "N"|"S"|"E"|"W", color: string) => {
+    if (coords.length < 4) return null;
+    
+    const sideIndex = findSideIndex(coords, targetSide);
+    const start = coords[sideIndex];
+    const end = coords[(sideIndex + 1) % coords.length];
+    const midpoint = getMidpoint(start, end);
+    
     const divIcon = L.divIcon({
-      className: "custom-label",
-      html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:4px;font-size:12px;white-space:nowrap;">${label}</div>`,
+      className: "custom-boundary-label",
+      html: `<div style="background:${color};color:white;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);text-align:center;display:inline-block;">${targetSide}: ${label}</div>`,
+      iconSize: [200, 35],
+      iconAnchor: [100, 17],
     });
 
-    return (
-      <>
-        <Polygon positions={poly} pathOptions={{ color, fillOpacity: 0.4 }} />
-        <Marker position={centroid} icon={divIcon} />
-      </>
-    );
+    return <Marker position={midpoint} icon={divIcon} />;
   };
 
   return (
@@ -180,10 +167,10 @@ const NotaryPlan: React.FC<NotaryPlanProps> = ({ points, sides, isOpen, onClose 
             )}
             {sides && coords.length >= 4 && (
               <>
-                {sides.North && renderSide(sides.North, coords[0], coords[1], "N", "red")}
-                {sides.East && renderSide(sides.East, coords[1], coords[2], "E", "blue")}
-                {sides.South && renderSide(sides.South, coords[2], coords[3], "S", "orange")}
-                {sides.West && renderSide(sides.West, coords[3], coords[0], "W", "purple")}
+                {sides.North && renderSide(sides.North, "N", "#ef4444")}
+                {sides.East && renderSide(sides.East, "E", "#3b82f6")}
+                {sides.South && renderSide(sides.South, "S", "#f97316")}
+                {sides.West && renderSide(sides.West, "W", "#8b5cf6")}
               </>
             )}
           </MapContainer>
