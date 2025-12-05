@@ -1,4 +1,4 @@
-import { Menu, X, Home, FileText, Settings, Phone, LogOut } from "lucide-react";
+import { Menu, X, Home, FileText, Settings, Phone, LogOut, Map } from "lucide-react";
 import { useLogin } from "../contexts/LoginContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { compressAddress } from "../utils/functions";
@@ -21,11 +21,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const navItems = [
     { name: "Survey Home", href: "/surveyor", icon: Home, role: "surveyor" },
     { name: "Deeds", href: "/surveyor/deeds", icon: FileText, role: "surveyor" },
+    { name: "Plans Map", href: "/plans/map", icon: Map, role: "surveyor" },
     { name: "IVSL Home", href: "/ivsl", icon: Home, role: "IVSL" },
     { name: "Deeds", href: "/ivsl/deeds", icon: FileText, role: "IVSL" },
+    { name: "Plans Map", href: "/plans/map", icon: Map, role: "IVSL" },
     { name: "Notary Home", href: "/notary", icon: Home, role: "notary" },
     { name: "Deeds", href: "/notary/deeds", icon: FileText, role: "notary" },
     { name: "Certificates", href: "/notary/certificates", icon: FileText, role: "notary" },
+    { name: "Plans Map", href: "/plans/map", icon: Map, role: "notary" },
     { name: "Services", href: "/services", icon: Settings, role: "all" },
     { name: "Contact", href: "/contact", icon: Phone, role: "all" },
   ];
