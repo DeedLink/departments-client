@@ -1,3 +1,4 @@
+import React from "react";
 import { Polygon, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import type { Plan } from "../../types/plan";
@@ -26,6 +27,16 @@ const PlanMarker = ({ plan, color = "#10b981", onPlanClick }: PlanMarkerProps) =
     iconAnchor: [60, 20],
   });
 
+  const handleClick = (e: L.LeafletMouseEvent) => {
+    e.originalEvent.stopPropagation();
+    onPlanClick?.(plan);
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onPlanClick?.(plan);
+  };
+
   return (
     <>
       <Polygon
@@ -37,39 +48,18 @@ const PlanMarker = ({ plan, color = "#10b981", onPlanClick }: PlanMarkerProps) =
           weight: 2.5,
         }}
         eventHandlers={{
-          click: () => onPlanClick?.(plan),
+          click: handleClick,
         }}
-      >
-        <Popup className="plan-popup" maxWidth={250}>
-          <div className="text-sm">
-            <div className="font-semibold text-gray-900 mb-2">Plan: {plan.planId || plan.deedNumber}</div>
-            <div className="text-xs text-gray-600 mb-1">Deed: {plan.deedNumber}</div>
-            {plan.areaSize && (
-              <div className="text-xs text-gray-600 mb-1">
-                Area: {plan.areaSize} {plan.areaType}
-              </div>
-            )}
-            {plan.status && (
-              <div className="text-xs text-gray-600 capitalize mb-1">Status: {plan.status}</div>
-            )}
-            <button
-              onClick={() => onPlanClick?.(plan)}
-              className="mt-2 px-3 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors"
-            >
-              View Details
-            </button>
-          </div>
-        </Popup>
-      </Polygon>
+      />
       <Marker
         position={[centerLat, centerLng]}
         icon={markerIcon}
         zIndexOffset={1000}
         eventHandlers={{
-          click: () => onPlanClick?.(plan),
+          click: handleClick,
         }}
       >
-        <Popup className="plan-popup" maxWidth={250}>
+        <Popup className="plan-popup" maxWidth={280} closeButton={true}>
           <div className="text-sm">
             <div className="font-semibold text-gray-900 mb-2">Plan: {plan.planId || plan.deedNumber}</div>
             <div className="text-xs text-gray-600 mb-1">Deed: {plan.deedNumber}</div>
@@ -79,13 +69,13 @@ const PlanMarker = ({ plan, color = "#10b981", onPlanClick }: PlanMarkerProps) =
               </div>
             )}
             {plan.status && (
-              <div className="text-xs text-gray-600 capitalize mb-1">Status: {plan.status}</div>
+              <div className="text-xs text-gray-600 capitalize mb-2">Status: {plan.status}</div>
             )}
             <button
-              onClick={() => onPlanClick?.(plan)}
-              className="mt-2 px-3 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors"
+              onClick={handleButtonClick}
+              className="w-full mt-2 px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 transition-colors"
             >
-              View Details
+              View Full Details
             </button>
           </div>
         </Popup>
