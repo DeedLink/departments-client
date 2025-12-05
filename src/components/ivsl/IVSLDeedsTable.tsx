@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Eye, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Map } from "lucide-react";
+import { Search, Eye, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Map, Filter, XCircle } from "lucide-react";
 import type { Deed } from "../../types/deed";
 import { getDeedByIVSLWalletAddress, getPlanByPlanNumber } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
@@ -11,6 +11,7 @@ import IVSLPlan from "./IVSLPlan";
 const IVSLDeedsTable = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [signatureFilter, setSignatureFilter] = useState<"all" | "signed" | "not-signed">("all");
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const [deeds, setDeeds] = useState<Deed[]>([]);
   const { account } = useWallet();
@@ -19,7 +20,7 @@ const IVSLDeedsTable = () => {
   const [sides, setSides] = useState();
   const [points, setPoints] = useState([]);
 
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   useEffect(() => {
     const fetchDeeds = async () => {
@@ -33,12 +34,54 @@ const IVSLDeedsTable = () => {
     fetchDeeds();
   }, [account]);
 
+  const [ivslSignatures, setIvslSignatures] = useState<Record<string, boolean>>({});
+  const [loadingSignatures, setLoadingSignatures] = useState(false);
+
+  useEffect(() => {
+    const checkSignatures = async () => {
+      if (deeds.length === 0) return;
+      setLoadingSignatures(true);
+      const signatures: Record<string, boolean> = {};
+      const promises = deeds.map(async (deed) => {
+        if (deed.tokenId) {
+          try {
+            const { getSignatures } = await import("../../web3.0/contractService");
+            const res = await getSignatures(parseInt(deed.tokenId));
+            signatures[deed.deedNumber] = res.ivsl;
+          } catch {
+            signatures[deed.deedNumber] = false;
+          }
+        } else {
+          signatures[deed.deedNumber] = false;
+        }
+      });
+      await Promise.all(promises);
+      setIvslSignatures(signatures);
+      setLoadingSignatures(false);
+    };
+    checkSignatures();
+  }, [deeds]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [signatureFilter, search]);
+
   const filteredDeeds = useMemo(() => {
-    return deeds.filter((deed) =>
-      deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
-      deed.deedNumber.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, deeds]);
+    return deeds.filter((deed) => {
+      const matchesSearch = deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
+        deed.deedNumber.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      
+      if (signatureFilter === "signed") {
+        return ivslSignatures[deed.deedNumber] === true;
+      } else if (signatureFilter === "not-signed") {
+        return ivslSignatures[deed.deedNumber] !== true;
+      }
+      
+      return true;
+    });
+  }, [search, deeds, signatureFilter, ivslSignatures]);
 
   const totalPages = Math.ceil(filteredDeeds.length / rowsPerPage);
   const paginatedDeeds = filteredDeeds.slice((page - 1) * rowsPerPage, page * rowsPerPage);
@@ -70,16 +113,59 @@ const IVSLDeedsTable = () => {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by owner or deed number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors shadow-sm"
-          />
+      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by owner or deed number..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="flex bg-white border border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setSignatureFilter("all")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  signatureFilter === "all"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setSignatureFilter("signed")}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-l border-r border-gray-300 ${
+                  signatureFilter === "signed"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Signed
+                </div>
+              </button>
+              <button
+                onClick={() => setSignatureFilter("not-signed")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  signatureFilter === "not-signed"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <XCircle className="w-4 h-4" />
+                  Not Signed
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -101,7 +187,7 @@ const IVSLDeedsTable = () => {
               const latestValuation = getLatestValuation(deed);
               const isAccepted = latestValuation?.isAccepted ?? false;
               const hasPlan = !!deed.surveyPlanNumber;
-              const isSigned = !!deed.surveySignature;
+              const isSigned = ivslSignatures[deed.deedNumber] === true;
               const regDate = deed.registrationDate ? new Date(deed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
               
               return (
@@ -167,7 +253,7 @@ const IVSLDeedsTable = () => {
                         onClick={() => handleViewPlan(deed)}
                         disabled={!hasPlan}
                         className="p-2 text-blue-700 hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors border border-blue-200"
-                        title="View Plan"
+                        title="View Survey Plan"
                       >
                         <Map className="w-4 h-4" />
                       </button>
@@ -185,7 +271,7 @@ const IVSLDeedsTable = () => {
           const latestValuation = getLatestValuation(deed);
           const isAccepted = latestValuation?.isAccepted ?? false;
           const hasPlan = !!deed.surveyPlanNumber;
-          const isSigned = !!deed.surveySignature;
+          const isSigned = ivslSignatures[deed.deedNumber] === true;
           const regDate = deed.registrationDate ? new Date(deed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
           
           return (
@@ -262,7 +348,7 @@ const IVSLDeedsTable = () => {
                   className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Map className="w-4 h-4" />
-                  View Plan
+                  View Survey Plan
                 </button>
               </div>
             </div>

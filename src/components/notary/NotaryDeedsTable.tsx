@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Eye, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Shield } from "lucide-react";
+import { Search, Eye, FileText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Shield, Filter, XCircle } from "lucide-react";
 import type { Deed } from "../../types/deed";
 import { getDeedByNotaryorWalletAddress } from "../../api/api";
 import { useWallet } from "../../contexts/WalletContext";
@@ -10,12 +10,13 @@ import { formatToETH } from "../../utils/formatCurrency";
 const NotaryDeedsTable = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [signatureFilter, setSignatureFilter] = useState<"all" | "signed" | "not-signed">("all");
   const [selectedDeed, setSelectedDeed] = useState<Deed | null>(null);
   const [deeds, setDeeds] = useState<Deed[]>([]);
   const { account } = useWallet();
   const { showToast } = useToast();
 
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   useEffect(() => {
     const fetchDeeds = async () => {
@@ -30,13 +31,26 @@ const NotaryDeedsTable = () => {
     fetchDeeds();
   }, [account]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [signatureFilter, search]);
+
   const filteredDeeds = useMemo(() => {
-    return deeds.filter(
-      (deed) =>
-        deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
-        deed.deedNumber.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, deeds]);
+    return deeds.filter((deed) => {
+      const matchesSearch = deed.ownerFullName.toLowerCase().includes(search.toLowerCase()) ||
+        deed.deedNumber.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      
+      if (signatureFilter === "signed") {
+        return !!deed.notarySignature;
+      } else if (signatureFilter === "not-signed") {
+        return !deed.notarySignature;
+      }
+      
+      return true;
+    });
+  }, [search, deeds, signatureFilter]);
 
   const totalPages = Math.ceil(filteredDeeds.length / rowsPerPage);
   const paginatedDeeds = filteredDeeds.slice(
@@ -53,16 +67,59 @@ const NotaryDeedsTable = () => {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by owner or deed number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors shadow-sm"
-          />
+      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by owner or deed number..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="flex bg-white border border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setSignatureFilter("all")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  signatureFilter === "all"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setSignatureFilter("signed")}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-l border-r border-gray-300 ${
+                  signatureFilter === "signed"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Shield className="w-4 h-4" />
+                  Notarized
+                </div>
+              </button>
+              <button
+                onClick={() => setSignatureFilter("not-signed")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  signatureFilter === "not-signed"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <XCircle className="w-4 h-4" />
+                  Not Notarized
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
