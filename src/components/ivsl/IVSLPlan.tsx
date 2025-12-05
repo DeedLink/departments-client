@@ -65,22 +65,8 @@ function getBearing(start: [number, number], end: [number, number]): number {
   const dLng = (end[1] - start[1]) * Math.PI / 180;
   const y = Math.sin(dLng) * Math.cos(lat2);
   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return Math.atan2(y, x) * 180 / Math.PI;
-}
-
-function identifySide(coords: [number, number][], sideIndex: number): "N"|"S"|"E"|"W" | null {
-  if (coords.length < 4 || sideIndex >= coords.length) return null;
-  
-  const start = coords[sideIndex];
-  const end = coords[(sideIndex + 1) % coords.length];
-  const bearing = getBearing(start, end);
-  
-  const absBearing = Math.abs(bearing);
-  if (absBearing < 45 || absBearing > 135) {
-    return bearing > 0 ? "N" : "S";
-  } else {
-    return bearing > 0 ? "E" : "W";
-  }
+  let bearing = Math.atan2(y, x) * 180 / Math.PI;
+  return (bearing + 360) % 360;
 }
 
 function findSideIndex(coords: [number, number][], targetSide: "N"|"S"|"E"|"W"): number {
@@ -91,12 +77,20 @@ function findSideIndex(coords: [number, number][], targetSide: "N"|"S"|"E"|"W"):
     const start = coords[i];
     const end = coords[(i + 1) % coords.length];
     const midpoint = getMidpoint(start, end);
+    const avgLat = (start[0] + end[0]) / 2;
+    const avgLng = (start[1] + end[1]) / 2;
     
     let score = 0;
-    if (targetSide === "N") score = midpoint[0];
-    else if (targetSide === "S") score = -midpoint[0];
-    else if (targetSide === "E") score = midpoint[1];
-    else if (targetSide === "W") score = -midpoint[1];
+    
+    if (targetSide === "N") {
+      score = avgLat;
+    } else if (targetSide === "S") {
+      score = -avgLat;
+    } else if (targetSide === "E") {
+      score = avgLng;
+    } else if (targetSide === "W") {
+      score = -avgLng;
+    }
     
     if (score > bestScore) {
       bestScore = score;
