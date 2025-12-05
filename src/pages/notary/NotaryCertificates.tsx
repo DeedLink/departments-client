@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { getAllCertificates, verifyCertificate } from "../../api/api";
 import { verifyOwnerDeath, getDeathVerification, executeWill, getWill } from "../../web3.0/lastWillIntegration";
 import { useToast } from "../../contexts/ToastContext";
+import { Search, Filter, CheckCircle2, XCircle, Clock, FileText, Shield, ChevronLeft, ChevronRight, Eye, X, AlertCircle, User, Calendar, Hash } from "lucide-react";
 
 type Party = {
   name: string;
@@ -20,6 +21,9 @@ type Certificate = {
   createdAt?: string;
   updatedAt?: string;
   tokenId?: number;
+  verified?: boolean;
+  rejected?: boolean;
+  verifiedAt?: string;
 };
 
 type DeathVerification = {
@@ -42,7 +46,13 @@ const NotaryCertificates: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isVerifyingCert, setIsVerifyingCert] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "pending" | "rejected">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | string>("all");
+  const [page, setPage] = useState(1);
   const { showToast } = useToast();
+
+  const rowsPerPage = 5;
 
   useEffect(() => {
     fetchCertificates();
@@ -52,14 +62,51 @@ const NotaryCertificates: React.FC = () => {
     try {
       setLoading(true);
       const res = await getAllCertificates();
-      const list = Array.isArray(res) ? res : Array.isArray(res) ? res : [];
+      const list = Array.isArray(res) ? res : [];
       setCertificates(list);
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load certificates");
+      showToast("Failed to load certificates", "error");
     } finally {
       setLoading(false);
     }
   };
+
+  const certificateTypes = useMemo(() => {
+    const types = new Set(certificates.map(cert => cert.type));
+    return Array.from(types);
+  }, [certificates]);
+
+  const filteredCertificates = useMemo(() => {
+    return certificates.filter((cert) => {
+      const matchesSearch = cert.title.toLowerCase().includes(search.toLowerCase()) ||
+        cert.description?.toLowerCase().includes(search.toLowerCase()) ||
+        cert._id.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      
+      if (statusFilter === "verified") {
+        if (cert.verified !== true) return false;
+      } else if (statusFilter === "pending") {
+        if (cert.verified === true || cert.rejected === true) return false;
+      } else if (statusFilter === "rejected") {
+        if (cert.rejected !== true) return false;
+      }
+      
+      if (typeFilter !== "all" && cert.type !== typeFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [search, certificates, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, typeFilter]);
+
+  const totalPages = Math.ceil(filteredCertificates.length / rowsPerPage);
+  const paginatedCertificates = filteredCertificates.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   const loadWillData = async (tokenId: number) => {
     if (!tokenId) return;
@@ -145,155 +192,537 @@ const NotaryCertificates: React.FC = () => {
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg font-semibold text-gray-700">Loading certificates...</p>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-gray-700">Loading certificates...</p>
+        </div>
       </div>
     );
 
   if (error)
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-red-500">{error}</p>
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <p className="text-lg text-red-600 font-semibold">{error}</p>
+          <button
+            onClick={fetchCertificates}
+            className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Assigned Certificates</h1>
-      {certificates.length === 0 ? (
-        <p className="text-gray-600">No certificates found.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {certificates.map((cert) => (
-            <div
-              key={cert._id}
-              className="bg-white shadow-md rounded-2xl p-4 border hover:shadow-lg transition cursor-pointer"
-              onClick={() => setSelectedCert(cert)}
-            >
-              <h2 className="text-lg font-semibold text-gray-800">{cert.title}</h2>
-              <p className="text-sm text-gray-600 capitalize mt-1">Type: {cert.type.replaceAll("_", " ")}</p>
-              <p className="text-sm text-gray-500 mt-2 line-clamp-2">{cert.description}</p>
-              <p className="text-xs text-gray-400 mt-3">
-                Created: {cert.createdAt ? new Date(cert.createdAt).toLocaleDateString() : "N/A"}
-              </p>
-            </div>
-          ))}
+    <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Certificate Management</h1>
+          <p className="text-gray-600">Review, verify, and manage assigned certificates</p>
         </div>
-      )}
-      {selectedCert && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedCert(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"
-            >
-              ✕
-            </button>
-            <h2 className="text-2xl font-bold text-gray-800">{selectedCert.title}</h2>
-            <p className="text-gray-600 mb-4 capitalize">Type: {selectedCert.type.replaceAll("_", " ")}</p>
-            <div className="mb-6 border-b pb-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Basic Information</h3>
-              <p className="text-gray-700 mb-2"><span className="font-medium">Certificate ID:</span> {selectedCert._id}</p>
-              <p className="text-gray-700 mb-2"><span className="font-medium">Created By:</span> {selectedCert.createdBy || "N/A"}</p>
-              <p className="text-gray-700 mb-2"><span className="font-medium">Created At:</span> {selectedCert.createdAt ? new Date(selectedCert.createdAt).toLocaleString() : "N/A"}</p>
-              <p className="text-gray-700"><span className="font-medium">Updated At:</span> {selectedCert.updatedAt ? new Date(selectedCert.updatedAt).toLocaleString() : "N/A"}</p>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50">
+            <div className="flex flex-col gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by title, description, or certificate ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-gray-600" />
+                  <div className="flex bg-white border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setStatusFilter("all")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        statusFilter === "all"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      All Status
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("verified")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors border-l border-r border-gray-300 ${
+                        statusFilter === "verified"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Verified
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("pending")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 ${
+                        statusFilter === "pending"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        Pending
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("rejected")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        statusFilter === "rejected"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <XCircle className="w-4 h-4" />
+                        Rejected
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                {certificateTypes.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                      <option value="all">All Types</option>
+                      {certificateTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type.replaceAll("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
             </div>
-            {selectedCert.description && (
-              <div className="mb-6 border-b pb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
-                <p className="text-gray-700">{selectedCert.description}</p>
+          </div>
+
+          {filteredCertificates.length === 0 ? (
+            <div className="p-12 text-center">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-700 text-lg font-semibold mb-1">No certificates found</p>
+              <p className="text-gray-500 text-sm">Try adjusting your search or filter criteria</p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-emerald-600 border-b-2 border-emerald-700">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Certificate ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider min-w-[140px]">Status</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedCertificates.map((cert) => {
+                      const isVerified = cert.verified === true;
+                      const isRejected = cert.rejected === true;
+                      const isPending = !isVerified && !isRejected;
+                      const createdDate = cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                      
+                      return (
+                        <tr key={cert._id} className="hover:bg-emerald-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-emerald-700 font-mono font-semibold text-sm">{cert._id.slice(0, 12)}...</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-gray-900">{cert.title}</div>
+                            {cert.description && (
+                              <div className="text-xs text-gray-500 mt-1 line-clamp-1">{cert.description}</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-300">
+                              {cert.type.replaceAll("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {createdDate}
+                          </td>
+                          <td className="px-6 py-4 text-center min-w-[140px]">
+                            {isVerified ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Verified
+                              </span>
+                            ) : isRejected ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-full">
+                                <XCircle className="w-3.5 h-3.5" />
+                                Rejected
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-full">
+                                <Clock className="w-3.5 h-3.5" />
+                                Pending
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <button
+                              onClick={() => setSelectedCert(cert)}
+                              className="p-2 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            )}
-            {selectedCert.parties && selectedCert.parties.length > 0 && (
-              <div className="mb-6 border-b pb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Involved Parties</h3>
-                <ul className="space-y-2">
-                  {selectedCert.parties.map((p, idx) => (
-                    <li key={idx} className="text-gray-700 text-sm">
-                      <span className="font-medium">{p.name}</span> — {p.role} ({p.contact})
-                    </li>
-                  ))}
-                </ul>
+
+              <div className="block md:hidden p-4 space-y-4">
+                {paginatedCertificates.map((cert) => {
+                  const isVerified = cert.verified === true;
+                  const isRejected = cert.rejected === true;
+                  const isPending = !isVerified && !isRejected;
+                  const createdDate = cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                  
+                  return (
+                    <div
+                      key={cert._id}
+                      className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-200">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-emerald-700 text-base mb-1">{cert.title}</h3>
+                          <p className="text-xs text-gray-500 font-mono">{cert._id.slice(0, 12)}...</p>
+                        </div>
+                        {isVerified ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Verified
+                          </span>
+                        ) : isRejected ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1 rounded-full">
+                            <XCircle className="w-3 h-3" />
+                            Rejected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full">
+                            <Clock className="w-3 h-3" />
+                            Pending
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Type</span>
+                          <span className="text-sm font-medium text-gray-900">{cert.type.replaceAll("_", " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Created</span>
+                          <span className="text-sm text-gray-900">{createdDate}</span>
+                        </div>
+                        {cert.description && (
+                          <div className="pt-2 border-t border-gray-200">
+                            <p className="text-xs text-gray-600 line-clamp-2">{cert.description}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <button
+                        onClick={() => setSelectedCert(cert)}
+                        className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Details
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            {selectedCert.data && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Additional Data</h3>
-                <div className="bg-gray-100 rounded-lg p-3 max-h-72 overflow-auto">
-                  <pre className="text-xs text-gray-700">{JSON.stringify(selectedCert.data, null, 2)}</pre>
+
+              {totalPages > 0 && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing <span className="font-semibold">{(page - 1) * rowsPerPage + 1}</span> to <span className="font-semibold">{Math.min(page * rowsPerPage, filteredCertificates.length)}</span> of <span className="font-semibold">{filteredCertificates.length}</span> certificates
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => p - 1)}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-50 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 flex items-center gap-2 transition-colors font-medium"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Previous
+                    </button>
+                    <span className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg">
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      disabled={page === totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-50 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 flex items-center gap-2 transition-colors font-medium"
+                    >
+                      Next <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {selectedCert && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 lg:ml-64" onClick={() => {
+          setSelectedCert(null);
+          setDeathVerification(null);
+          setWillDetails(null);
+          setDeathCertHash("");
+        }}>
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl relative max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-emerald-600 px-6 py-4 border-b border-emerald-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{selectedCert.title}</h2>
+                  <p className="text-emerald-100 text-sm mt-1 capitalize">{selectedCert.type.replaceAll("_", " ").replace(/\b\w/g, l => l.toUpperCase())}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedCert(null);
+                    setDeathVerification(null);
+                    setWillDetails(null);
+                    setDeathCertHash("");
+                  }}
+                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-emerald-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="mb-6 border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-emerald-600" />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2">
+                    <Hash className="w-4 h-4 text-gray-400 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Certificate ID</p>
+                      <p className="text-sm font-mono text-gray-900">{selectedCert._id}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <User className="w-4 h-4 text-gray-400 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Created By</p>
+                      <p className="text-sm text-gray-900">{selectedCert.createdBy || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Created At</p>
+                      <p className="text-sm text-gray-900">{selectedCert.createdAt ? new Date(selectedCert.createdAt).toLocaleString() : "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400 mt-1" />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Updated At</p>
+                      <p className="text-sm text-gray-900">{selectedCert.updatedAt ? new Date(selectedCert.updatedAt).toLocaleString() : "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  {selectedCert.verified ? (
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Verified {selectedCert.verifiedAt ? `on ${new Date(selectedCert.verifiedAt).toLocaleDateString()}` : ''}
+                    </span>
+                  ) : selectedCert.rejected ? (
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-full">
+                      <XCircle className="w-4 h-4" />
+                      Rejected
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-full">
+                      <Clock className="w-4 h-4" />
+                      Pending Verification
+                    </span>
+                  )}
                 </div>
               </div>
-            )}
-            {selectedCert.type === "last_will" && selectedCert.tokenId && (
-              <div className="mb-6 border-t pt-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Last Will Management</h3>
-                
-                {willDetails && (
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-gray-700"><span className="font-medium">Beneficiary:</span> {willDetails.beneficiary}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Status:</span> {willDetails.isActive ? "Active" : "Inactive"}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Executed:</span> {willDetails.isExecuted ? "Yes" : "No"}</p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Witnesses:</span> {
-                        willDetails.witness1Status === 1 && willDetails.witness2Status === 1 
-                          ? "Both signed" 
-                          : "Pending signatures"
-                      }
-                    </p>
+              {selectedCert.description && (
+                <div className="mb-6 border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Description</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedCert.description}</p>
+                </div>
+              )}
+              
+              {selectedCert.parties && selectedCert.parties.length > 0 && (
+                <div className="mb-6 border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5 text-emerald-600" />
+                    Involved Parties
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {selectedCert.parties.map((p, idx) => (
+                      <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <p className="text-sm font-semibold text-gray-900">{p.name}</p>
+                        <p className="text-xs text-gray-600 mt-1">Role: {p.role}</p>
+                        <p className="text-xs text-gray-600">Contact: {p.contact}</p>
+                      </div>
+                    ))}
                   </div>
-                )}
-
-                {deathVerification && (
-                  <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <h4 className="font-semibold text-yellow-900 mb-2">Death Verification Status</h4>
-                    <p className="text-sm text-yellow-800"><span className="font-medium">Verified:</span> Yes</p>
-                    <p className="text-sm text-yellow-800"><span className="font-medium">Verified At:</span> {new Date(deathVerification.verifiedAt * 1000).toLocaleString()}</p>
-                    <p className="text-sm text-yellow-800"><span className="font-medium">Verified By:</span> {deathVerification.verifiedBy.slice(0, 10)}...{deathVerification.verifiedBy.slice(-8)}</p>
-                    <p className="text-sm text-yellow-800"><span className="font-medium">Certificate Hash:</span> {deathVerification.deathCertificateHash}</p>
-                    <p className="text-sm text-yellow-800"><span className="font-medium">Waiting Period Ends:</span> {new Date(deathVerification.waitingPeriodEnd * 1000).toLocaleString()}</p>
-                    <p className={`text-sm font-semibold mt-2 ${deathVerification.canExecute ? 'text-green-700' : 'text-yellow-700'}`}>
-                      {deathVerification.canExecute ? "✅ Ready to Execute" : "⏳ Waiting Period Active"}
-                    </p>
+                </div>
+              )}
+              
+              {selectedCert.data && Object.keys(selectedCert.data).length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Additional Data</h3>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-72 overflow-auto">
+                    <pre className="text-xs text-gray-700 font-mono">{JSON.stringify(selectedCert.data, null, 2)}</pre>
                   </div>
-                )}
+                </div>
+              )}
+              {selectedCert.type === "last_will" && selectedCert.tokenId && (
+                <div className="mb-6 border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-emerald-600" />
+                    Last Will Management
+                  </h3>
+                  
+                  {willDetails && (
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-900 mb-3">Will Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Beneficiary</p>
+                          <p className="text-sm text-blue-900 font-medium">{willDetails.beneficiary}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Status</p>
+                          <p className="text-sm text-blue-900">{willDetails.isActive ? "Active" : "Inactive"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Executed</p>
+                          <p className="text-sm text-blue-900">{willDetails.isExecuted ? "Yes" : "No"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Witnesses</p>
+                          <p className="text-sm text-blue-900">
+                            {willDetails.witness1Status === 1 && willDetails.witness2Status === 1 
+                              ? "Both signed" 
+                              : "Pending signatures"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {!deathVerification && (
-                  <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                    <h4 className="font-semibold text-red-900 mb-2">Verify Owner Death</h4>
-                    <p className="text-sm text-red-800 mb-3">To execute this last will, you must first verify the owner's death with a death certificate.</p>
-                    <input
-                      type="text"
-                      value={deathCertHash}
-                      onChange={(e) => setDeathCertHash(e.target.value)}
-                      placeholder="Enter death certificate hash (IPFS hash or document hash)"
-                      className="w-full px-3 py-2 border border-red-300 rounded-lg mb-3 text-sm"
-                    />
-                    <button
-                      onClick={handleVerifyDeath}
-                      disabled={isVerifying || !deathCertHash.trim()}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      {isVerifying ? "Verifying..." : "Verify Death"}
-                    </button>
-                  </div>
-                )}
+                  {deathVerification && (
+                    <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                      <h4 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Death Verification Status
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs font-semibold text-amber-700 uppercase mb-1">Verified At</p>
+                          <p className="text-sm text-amber-900">{new Date(deathVerification.verifiedAt * 1000).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-amber-700 uppercase mb-1">Verified By</p>
+                          <p className="text-sm font-mono text-amber-900">{deathVerification.verifiedBy.slice(0, 10)}...{deathVerification.verifiedBy.slice(-8)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-amber-700 uppercase mb-1">Certificate Hash</p>
+                          <p className="text-sm font-mono text-amber-900 break-all">{deathVerification.deathCertificateHash}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-amber-700 uppercase mb-1">Waiting Period Ends</p>
+                          <p className="text-sm text-amber-900">{new Date(deathVerification.waitingPeriodEnd * 1000).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className={`mt-3 pt-3 border-t border-amber-300 ${deathVerification.canExecute ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        <p className={`text-sm font-semibold flex items-center gap-2 ${deathVerification.canExecute ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {deathVerification.canExecute ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4" />
+                              Ready to Execute
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-4 h-4" />
+                              Waiting Period Active
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                {deathVerification && deathVerification.canExecute && willDetails && !willDetails.isExecuted && (
-                  <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-semibold text-green-900 mb-2">Execute Last Will</h4>
-                    <p className="text-sm text-green-800 mb-3">The waiting period has ended. You can now execute this last will to transfer the property to the beneficiary.</p>
-                    <button
-                      onClick={handleExecuteWill}
-                      disabled={isExecuting}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      {isExecuting ? "Executing..." : "Execute Last Will"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+                  {!deathVerification && (
+                    <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                      <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        Verify Owner Death
+                      </h4>
+                      <p className="text-sm text-red-800 mb-3">To execute this last will, you must first verify the owner's death with a death certificate.</p>
+                      <input
+                        type="text"
+                        value={deathCertHash}
+                        onChange={(e) => setDeathCertHash(e.target.value)}
+                        placeholder="Enter death certificate hash (IPFS hash or document hash)"
+                        className="w-full px-4 py-2 border border-red-300 rounded-lg mb-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      />
+                      <button
+                        onClick={handleVerifyDeath}
+                        disabled={isVerifying || !deathCertHash.trim()}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                      >
+                        {isVerifying ? "Verifying..." : "Verify Death"}
+                      </button>
+                    </div>
+                  )}
 
-            <div className="flex justify-end gap-3 mt-6">
+                  {deathVerification && deathVerification.canExecute && willDetails && !willDetails.isExecuted && (
+                    <div className="mb-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                      <h4 className="font-semibold text-emerald-900 mb-2 flex items-center gap-2">
+                        <Shield className="w-5 h-5" />
+                        Execute Last Will
+                      </h4>
+                      <p className="text-sm text-emerald-800 mb-3">The waiting period has ended. You can now execute this last will to transfer the property to the beneficiary.</p>
+                      <button
+                        onClick={handleExecuteWill}
+                        disabled={isExecuting}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                      >
+                        {isExecuting ? "Executing..." : "Execute Last Will"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
                 onClick={() => {
                   setSelectedCert(null);
@@ -301,17 +730,27 @@ const NotaryCertificates: React.FC = () => {
                   setWillDetails(null);
                   setDeathCertHash("");
                 }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
               >
                 Close
               </button>
-              {selectedCert.type !== "last_will" && (
+              {selectedCert.type !== "last_will" && !selectedCert.verified && (
                 <button
                   onClick={() => handleVerify(selectedCert._id)}
-                  disabled={isVerifyingCert}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isVerifyingCert || selectedCert.rejected}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
                 >
-                  {isVerifyingCert ? "Verifying..." : "Verify Certificate"}
+                  {isVerifyingCert ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Verify Certificate
+                    </>
+                  )}
                 </button>
               )}
             </div>
