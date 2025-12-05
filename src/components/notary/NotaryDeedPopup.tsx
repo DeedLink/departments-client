@@ -386,12 +386,16 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
                 <MapContainer
                   center={mapCenter}
                   zoom={13}
+                  minZoom={3}
+                  maxZoom={24}
                   scrollWheelZoom={true}
                   className="h-full w-full"
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution="&copy; OpenStreetMap contributors"
+                    maxZoom={24}
+                    maxNativeZoom={19}
                   />
                   <FitBounds coords={mapCoords} />
                   {mapCoords.map((coord, index) => (
