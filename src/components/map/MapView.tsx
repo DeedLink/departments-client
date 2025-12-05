@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -20,10 +20,12 @@ interface MapViewProps {
 
 const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   const map = useMap();
-  if (coords.length > 0) {
-    const bounds = L.latLngBounds(coords);
-    map.fitBounds(bounds, { padding: [50, 50] });
-  }
+  useEffect(() => {
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [coords, map]);
   return null;
 };
 
@@ -33,9 +35,13 @@ const MapView = ({ center, zoom, children, className = "h-full w-full", bounds }
       <style>{`
         .leaflet-container {
           z-index: 0;
+          font-family: inherit;
         }
         .leaflet-top,
         .leaflet-bottom {
+          z-index: 1000;
+        }
+        .leaflet-control {
           z-index: 1000;
         }
         .leaflet-popup {
@@ -44,13 +50,25 @@ const MapView = ({ center, zoom, children, className = "h-full w-full", bounds }
         .leaflet-popup-content-wrapper {
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          padding: 0;
+        }
+        .leaflet-popup-content {
+          margin: 0;
         }
         .custom-plan-marker {
           background: transparent !important;
           border: none !important;
         }
         .plan-popup .leaflet-popup-content {
-          margin: 12px;
+          padding: 12px;
+        }
+        .leaflet-popup-close-button {
+          padding: 4px 8px;
+          font-size: 18px;
+          color: #6b7280;
+        }
+        .leaflet-popup-close-button:hover {
+          color: #1f2937;
         }
       `}</style>
       <MapContainer
@@ -58,6 +76,7 @@ const MapView = ({ center, zoom, children, className = "h-full w-full", bounds }
         zoom={zoom}
         scrollWheelZoom={true}
         className={className}
+        zoomControl={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

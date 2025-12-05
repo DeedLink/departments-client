@@ -5,10 +5,11 @@ import type { Deed } from "../../types/deed";
 interface PlanDetailsPopupProps {
   plan: Plan;
   deed?: Deed | null;
+  loading?: boolean;
   onClose: () => void;
 }
 
-const PlanDetailsPopup = ({ plan, deed, onClose }: PlanDetailsPopupProps) => {
+const PlanDetailsPopup = ({ plan, deed, loading = false, onClose }: PlanDetailsPopupProps) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 lg:ml-64" onClick={onClose}>
       <div className="bg-white rounded-lg w-full max-w-2xl shadow-xl relative max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -118,7 +119,18 @@ const PlanDetailsPopup = ({ plan, deed, onClose }: PlanDetailsPopupProps) => {
               </div>
             )}
 
-            {deed && (
+            {loading ? (
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-emerald-600" />
+                  Related Deed Information
+                </h3>
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-3 text-sm text-gray-600">Loading deed details...</span>
+                </div>
+              </div>
+            ) : deed ? (
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   <Hash className="w-4 h-4 text-emerald-600" />
@@ -149,7 +161,7 @@ const PlanDetailsPopup = ({ plan, deed, onClose }: PlanDetailsPopupProps) => {
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
 
             {plan.details && (
               <div>
