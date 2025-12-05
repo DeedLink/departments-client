@@ -17,6 +17,7 @@ import NotaryDeeds from "./pages/notary/NotaryDeeds";
 import Contact from "./pages/Contact";
 import Services from "./pages/Services";
 import NotaryCertificates from "./pages/notary/NotaryCertificates";
+import PlansMapPage from "./pages/PlansMapPage";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/services" element = {<Services/>}/>
                     <Route path="/notary/certificates" element={<NotaryCertificates />} />
+                    <Route path="/plans/map" element={<PlansMapPage />} />
                   </Routes>
                 </LoaderProvider>
               </div>
