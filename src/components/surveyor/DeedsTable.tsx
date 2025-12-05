@@ -912,11 +912,15 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
               <MapContainer
                 center={center}
                 zoom={10}
+                minZoom={3}
+                maxZoom={24}
                 scrollWheelZoom={true}
                 className="h-full w-full"
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maxZoom={24}
+                  maxNativeZoom={19}
                   attribution="&copy; OpenStreetMap contributors"
                 />
                 {allCoords.length > 0 && <FitBounds coords={allCoords} />}

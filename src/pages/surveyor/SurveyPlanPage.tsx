@@ -56,7 +56,33 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   useEffect(() => {
     if (coords.length > 0) {
       const bounds = L.latLngBounds(coords);
-      map.fitBounds(bounds, { padding: [50, 50] });
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      const latDiff = ne.lat - sw.lat;
+      const lngDiff = ne.lng - sw.lng;
+      const avgLat = (ne.lat + sw.lat) / 2;
+      const latMeters = latDiff * 111320;
+      const lngMeters = lngDiff * 111320 * Math.cos(avgLat * Math.PI / 180);
+      const diagonalMeters = Math.sqrt(latMeters * latMeters + lngMeters * lngMeters);
+      
+      let padding: [number, number];
+      let maxZoom: number;
+      
+      if (diagonalMeters < 10) {
+        padding = [120, 120];
+        maxZoom = 24;
+      } else if (diagonalMeters < 50) {
+        padding = [100, 100];
+        maxZoom = 23;
+      } else if (diagonalMeters < 200) {
+        padding = [80, 80];
+        maxZoom = 22;
+      } else {
+        padding = [60, 60];
+        maxZoom = 21;
+      }
+      
+      map.fitBounds(bounds, { padding, maxZoom });
     }
   }, [coords, map]);
   return null;
@@ -582,11 +608,15 @@ const SurveyPlanPage = () => {
                   <MapContainer
                     center={plan.coordinates.length > 0 ? coordinateToLatLng(plan.coordinates[0]) : [7.8731, 80.7718]}
                     zoom={plan.coordinates.length > 0 ? 15 : 8}
+                    minZoom={3}
+                    maxZoom={24}
                     className="h-full w-full"
                   >
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution="&copy; OpenStreetMap contributors"
+                      maxZoom={24}
+                      maxNativeZoom={19}
                     />
 
                     {/* Fit bounds to show all polygons */}
