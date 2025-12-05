@@ -60,16 +60,6 @@ function getMidpoint(start: [number, number], end: [number, number]): [number, n
   return [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
 }
 
-function getBearing(start: [number, number], end: [number, number]): number {
-  const lat1 = start[0] * Math.PI / 180;
-  const lat2 = end[0] * Math.PI / 180;
-  const dLng = (end[1] - start[1]) * Math.PI / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  let bearing = Math.atan2(y, x) * 180 / Math.PI;
-  return (bearing + 360) % 360;
-}
-
 function findSideIndex(coords: [number, number][], targetSide: "N"|"S"|"E"|"W"): number {
   let bestIndex = 0;
   let bestScore = -Infinity;

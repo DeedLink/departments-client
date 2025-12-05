@@ -32,46 +32,6 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   return null;
 };
 
-function offsetPoint([lat, lng]: [number, number], dx: number, dy: number): [number, number] {
-  const latOffset = dy / 111320;
-  const lngOffset = dx / (111320 * Math.cos((lat * Math.PI) / 180));
-  return [lat + latOffset, lng + lngOffset];
-}
-
-function createAngledPolygon(start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W") {
-  const dx = end[1] - start[1];
-  const dy = end[0] - start[0];
-  const length = Math.sqrt(dx * dx + dy * dy) * 111320;
-  const offset = length * 0.3;
-
-  if (direction === "N") {
-    const p1 = offsetPoint(start, -offset, offset);
-    const p2 = offsetPoint(end, offset, offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "S") {
-    const p1 = offsetPoint(start, offset, -offset);
-    const p2 = offsetPoint(end, -offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "E") {
-    const p1 = offsetPoint(start, offset, offset);
-    const p2 = offsetPoint(end, offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "W") {
-    const p1 = offsetPoint(start, -offset, -offset);
-    const p2 = offsetPoint(end, -offset, offset);
-    return [start, end, p2, p1];
-  }
-  return [];
-}
-
-function getCentroid(coords: [number, number][]): [number, number] {
-  let lat = 0, lng = 0;
-  coords.forEach(([la, lo]) => { lat += la; lng += lo; });
-  return [lat / coords.length, lng / coords.length];
-}
 
 const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   if (!deed) return null;
@@ -122,16 +82,6 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
 
   const getMidpoint = (start: [number, number], end: [number, number]): [number, number] => {
     return [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
-  };
-
-  const getBearing = (start: [number, number], end: [number, number]): number => {
-    const lat1 = start[0] * Math.PI / 180;
-    const lat2 = end[0] * Math.PI / 180;
-    const dLng = (end[1] - start[1]) * Math.PI / 180;
-    const y = Math.sin(dLng) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-    let bearing = Math.atan2(y, x) * 180 / Math.PI;
-    return (bearing + 360) % 360;
   };
 
   const findSideIndex = (coords: [number, number][], targetSide: "N"|"S"|"E"|"W"): number => {
