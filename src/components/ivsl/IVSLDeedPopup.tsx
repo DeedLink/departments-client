@@ -5,7 +5,7 @@ import { signProperty, getSignatures } from "../../web3.0/contractService";
 import { estimateValuation, signDeed, getNearbyLandSales } from "../../api/api";
 import { BrowserProvider } from "ethers";
 import { formatToETH, parseETHString } from "../../utils/formatCurrency";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 type Props = {
   deed: Deed | null;
@@ -211,118 +211,234 @@ const IVSLDeedPopup = ({ deed, onClose }: Props) => {
             </div>
 
             <div className="lg:col-span-2 mt-4">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Nearby Land Sales Analysis</h3>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600">Radius (km):</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={radiusKm}
-                      onChange={(e) => setRadiusKm(Number(e.target.value))}
-                      className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
-                    />
-                    <button
-                      onClick={loadNearbySales}
-                      disabled={loadingSales}
-                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {loadingSales ? "Loading..." : "Refresh"}
-                    </button>
+              <div className="bg-white rounded-lg border border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Nearby Land Sales & Valuation Analysis</h3>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600">Radius (km):</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={radiusKm}
+                          onChange={(e) => setRadiusKm(Number(e.target.value))}
+                          className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        />
+                      </div>
+                      <button
+                        onClick={loadNearbySales}
+                        disabled={loadingSales}
+                        className="px-4 py-1.5 bg-emerald-600 text-white rounded text-sm font-medium hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {loadingSales ? "Loading..." : "Refresh"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {loadingSales ? (
-                  <div className="text-center py-8 text-gray-500">Loading nearby sales data...</div>
-                ) : nearbySales && chartData.length > 0 ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1">Nearby Properties Found</p>
-                        <p className="text-2xl font-bold text-blue-600">{nearbySales.nearbyDeedsCount}</p>
+                <div className="p-6">
+                  {loadingSales ? (
+                    <div className="text-center py-8 text-gray-500">Loading nearby properties data...</div>
+                  ) : nearbySales ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">Properties Found</p>
+                          <p className="text-lg font-semibold text-gray-900">{nearbySales.nearbyDeedsCount || 0}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">Avg Estimated Value</p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {nearbySales.averageEstimatedValue ? formatToETH(nearbySales.averageEstimatedValue) : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">Avg Requested Value</p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {nearbySales.averageRequestedValue ? formatToETH(nearbySales.averageRequestedValue) : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">Search Radius</p>
+                          <p className="text-lg font-semibold text-gray-900">{radiusKm} km</p>
+                        </div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1">Search Radius</p>
-                        <p className="text-2xl font-bold text-indigo-600">{radiusKm} km</p>
-                      </div>
-                    </div>
 
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Average Sale Price by Transaction Type</h4>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="type" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                          <YAxis label={{ value: 'ETH', angle: -90, position: 'insideLeft' }} />
-                          <Tooltip formatter={(value: number) => `${value.toFixed(4)} ETH`} />
-                          <Legend />
-                          <Bar dataKey="average" fill="#3b82f6" name="Average Price (ETH)" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
+                      {nearbySales.nearbyDeeds && nearbySales.nearbyDeeds.length > 0 && (
+                        <div className="border border-gray-200 rounded">
+                          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                            <h4 className="text-sm font-semibold text-gray-800">
+                              Property Details ({nearbySales.nearbyDeeds.length} properties)
+                            </h4>
+                          </div>
+                          <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Deed Number</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Owner</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Land Type</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estimated Value</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Requested Value</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Registration Date</th>
+                                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Last Valuation</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {nearbySales.nearbyDeeds.map((nearbyDeed: any, index: number) => {
+                                  const latestValuation = nearbyDeed.valuation && nearbyDeed.valuation.length > 0
+                                    ? nearbyDeed.valuation.slice().sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))[0]
+                                    : null;
+                                  const regDate = nearbyDeed.registrationDate 
+                                    ? new Date(nearbyDeed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                    : 'N/A';
+                                  const valuationDate = latestValuation?.timestamp
+                                    ? new Date(latestValuation.timestamp * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                    : 'N/A';
+                                  
+                                  return (
+                                    <tr key={nearbyDeed._id || index} className="hover:bg-gray-50">
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-sm font-mono text-gray-900">{nearbyDeed.deedNumber}</span>
+                                      </td>
+                                      <td className="px-4 py-2.5">
+                                        <span className="text-sm text-gray-900">{nearbyDeed.ownerFullName || 'N/A'}</span>
+                                      </td>
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-sm text-gray-700">{nearbyDeed.landType || 'N/A'}</span>
+                                      </td>
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-sm font-medium text-gray-900">
+                                          {formatToETH(latestValuation?.estimatedValue ?? null)}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-sm text-gray-700">
+                                          {formatToETH(latestValuation?.requestedValue ?? null)}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-xs text-gray-600">{regDate}</span>
+                                      </td>
+                                      <td className="px-4 py-2.5 whitespace-nowrap">
+                                        <span className="text-xs text-gray-600">{valuationDate}</span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="block md:hidden p-4 space-y-3">
+                            {nearbySales.nearbyDeeds.map((nearbyDeed: any, index: number) => {
+                              const latestValuation = nearbyDeed.valuation && nearbyDeed.valuation.length > 0
+                                ? nearbyDeed.valuation.slice().sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))[0]
+                                : null;
+                              const regDate = nearbyDeed.registrationDate 
+                                ? new Date(nearbyDeed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                : 'N/A';
+                              const valuationDate = latestValuation?.timestamp
+                                ? new Date(latestValuation.timestamp * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                : 'N/A';
+                              
+                              return (
+                                <div key={nearbyDeed._id || index} className="bg-gray-50 rounded p-3 border border-gray-200">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <p className="text-sm font-mono text-gray-900">{nearbyDeed.deedNumber}</p>
+                                      <p className="text-sm text-gray-700 mt-1">{nearbyDeed.ownerFullName || 'N/A'}</p>
+                                    </div>
+                                    <span className="text-xs text-gray-600">{nearbyDeed.landType || 'N/A'}</span>
+                                  </div>
+                                  <div className="space-y-1.5 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Estimated:</span>
+                                      <span className="font-medium text-gray-900">
+                                        {formatToETH(latestValuation?.estimatedValue ?? null)}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Requested:</span>
+                                      <span className="text-gray-700">
+                                        {formatToETH(latestValuation?.requestedValue ?? null)}
+                                      </span>
+                                    </div>
+                                    <div className="pt-2 border-t border-gray-200 text-xs text-gray-600">
+                                      <div>Registered: {regDate}</div>
+                                      <div>Last Valuation: {valuationDate}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Number of Sales by Type</h4>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={(props: any) => {
-                              const entry = chartData[props.index];
-                              return entry ? `${entry.type}: ${entry.count}` : '';
-                            }}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="count"
-                          >
-                            {chartData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
+                      {chartData.length > 0 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="border border-gray-200 rounded p-4">
+                            <h4 className="text-sm font-semibold text-gray-800 mb-3">Average Estimated Value by Land Type</h4>
+                            <ResponsiveContainer width="100%" height={200}>
+                              <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis 
+                                  dataKey="type" 
+                                  angle={-45} 
+                                  textAnchor="end" 
+                                  height={80} 
+                                  fontSize={11}
+                                />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => `${value.toFixed(4)} ETH`} />
+                                <Bar dataKey="average" fill="#10b981" name="Avg Estimated (ETH)" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
 
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Transaction Details by Type</h4>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {Object.entries(nearbySales.salesByType || {})
-                          .filter(([_, data]: [string, any]) => data.count > 0)
-                          .map(([type, data]: [string, any]) => (
-                            <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div>
-                                <p className="text-sm font-medium text-gray-800">
-                                  {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                </p>
-                                <p className="text-xs text-gray-500">{data.count} transaction(s)</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm font-semibold text-green-600">
-                                  {formatToETH(data.averageAmount)}
-                                </p>
-                                <p className="text-xs text-gray-500">avg</p>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
+                          <div className="border border-gray-200 rounded p-4">
+                            <h4 className="text-sm font-semibold text-gray-800 mb-3">Properties Count by Land Type</h4>
+                            <ResponsiveContainer width="100%" height={200}>
+                              <PieChart>
+                                <Pie
+                                  data={chartData}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={(props: any) => {
+                                    const entry = chartData[props.index];
+                                    return entry ? `${entry.type}: ${entry.count}` : '';
+                                  }}
+                                  outerRadius={70}
+                                  fill="#8884d8"
+                                  dataKey="count"
+                                >
+                                  {chartData.map((_, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value: number) => `${value} properties`} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      )}
+
+                      {(!nearbySales.nearbyDeeds || nearbySales.nearbyDeeds.length === 0) && chartData.length === 0 && (
+                        <div className="text-center py-8 text-gray-500 border border-gray-200 rounded">
+                          <p className="font-medium mb-1">No nearby properties found</p>
+                          <p className="text-sm">Try increasing the search radius</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : nearbySales ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No nearby land sales found within {radiusKm} km radius.</p>
-                    <p className="text-sm mt-2">Try increasing the search radius.</p>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>Unable to load nearby sales data.</p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>Unable to load nearby properties data</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
