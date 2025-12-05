@@ -336,7 +336,6 @@ const NotaryCertificates: React.FC = () => {
                     {paginatedCertificates.map((cert) => {
                       const isVerified = cert.verified === true;
                       const isRejected = cert.rejected === true;
-                      const isPending = !isVerified && !isRejected;
                       const createdDate = cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
                       
                       return (
@@ -396,7 +395,6 @@ const NotaryCertificates: React.FC = () => {
                 {paginatedCertificates.map((cert) => {
                   const isVerified = cert.verified === true;
                   const isRejected = cert.rejected === true;
-                  const isPending = !isVerified && !isRejected;
                   const createdDate = cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
                   
                   return (

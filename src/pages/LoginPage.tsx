@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, Wallet, Shield, FileText, CheckCircle, TrendingUp, Globe, Zap, Users } from "lucide-react";
+import { Lock, Mail, Wallet, Shield, FileText, CheckCircle, TrendingUp, Users } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress, isValidEmail, isValidPassword } from "../utils/functions";
 import { useEffect, useState } from "react";

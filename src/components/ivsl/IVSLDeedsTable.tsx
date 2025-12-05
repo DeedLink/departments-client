@@ -35,12 +35,10 @@ const IVSLDeedsTable = () => {
   }, [account]);
 
   const [ivslSignatures, setIvslSignatures] = useState<Record<string, boolean>>({});
-  const [loadingSignatures, setLoadingSignatures] = useState(false);
 
   useEffect(() => {
     const checkSignatures = async () => {
       if (deeds.length === 0) return;
-      setLoadingSignatures(true);
       const signatures: Record<string, boolean> = {};
       const promises = deeds.map(async (deed) => {
         if (deed.tokenId) {
@@ -57,7 +55,6 @@ const IVSLDeedsTable = () => {
       });
       await Promise.all(promises);
       setIvslSignatures(signatures);
-      setLoadingSignatures(false);
     };
     checkSignatures();
   }, [deeds]);
