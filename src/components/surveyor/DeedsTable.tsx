@@ -265,9 +265,8 @@ const getLatestValuation = (deed: Deed) => {
         </div>
       )}
 
-      {/* Overlap Alert Banner */}
       {!loadingOverlaps && overlaps.length > 0 && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b-2 border-red-300 p-4">
+        <div className="bg-red-50 border-b-2 border-red-300 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-full">
@@ -389,68 +388,106 @@ const getLatestValuation = (deed: Deed) => {
         {paginatedDeeds.map((deed) => {
           const { requested, estimated } = getLatestValuation(deed);
           const deedHasOverlaps = hasOverlaps(deed.deedNumber);
+          const hasPlan = !!getDisplayPlanId(deed);
+          const isSigned = !!deed.surveySignature;
+          const regDate = deed.registrationDate ? new Date(deed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+          
           return (
-            <div key={deed.deedNumber} className={`bg-gray-50 border rounded-xl p-4 hover:shadow-md transition-shadow ${deedHasOverlaps ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-green-600 font-mono">{deed.deedNumber}</h3>
-                  {deedHasOverlaps && (
-                    <span className="flex items-center gap-1 text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                      <AlertTriangle className="w-3 h-3" />
-                      Overlap
-                    </span>
-                  )}
+            <div key={deed.deedNumber} className={`bg-white border-2 rounded-lg p-4 shadow-sm hover:shadow-md transition-all ${deedHasOverlaps ? 'border-red-300' : 'border-gray-200'}`}>
+              <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-200">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-emerald-700 font-mono text-base">{deed.deedNumber}</h3>
+                    {deedHasOverlaps && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+                        <AlertTriangle className="w-3 h-3" />
+                        Overlap
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">Registered: {regDate}</p>
                 </div>
-                <span className="text-xs text-gray-600 px-2 py-1 bg-gray-200 rounded-full">{deed.landType}</span>
+                <span className="text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 px-2 py-1 rounded">{deed.landType}</span>
               </div>
-              <div className="space-y-2 text-sm mb-4">
-                <p className="text-black"><strong>Owner:</strong> {deed.ownerFullName}</p>
-                <p className="text-black"><strong>Requested Value:</strong> {formatToETH(requested)}</p>
-                <p className="text-black"><strong>Estimated Value:</strong> {formatToETH(estimated)}</p>
-                <div className="pt-2 border-t border-gray-200">
-                  <p className="text-black font-semibold mb-1">Status:</p>
+              
+              <div className="space-y-2.5 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Owner</span>
+                  <span className="text-sm font-semibold text-gray-900">{deed.ownerFullName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Area</span>
+                  <span className="text-sm font-medium text-gray-900">{deed.landArea ? `${deed.landArea} ${deed.landSizeUnit || 'Perches'}` : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Estimated Value</span>
+                  <span className="text-sm font-mono font-semibold text-emerald-700">{formatToETH(estimated)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Requested Value</span>
+                  <span className="text-sm font-mono text-gray-700">{formatToETH(requested)}</span>
+                </div>
+              </div>
+              
+              <div className="pt-3 border-t border-gray-200 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-600 uppercase">Status</span>
                   {deedHasOverlaps ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1 rounded-full">
                       <AlertTriangle className="w-3 h-3" />
-                      {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                      {getOverlappingDeeds(deed.deedNumber).length} Overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      No issues
+                      Verified
                     </span>
                   )}
-                  {(() => {
-                    const displayPlanId = getDisplayPlanId(deed);
-                    return displayPlanId ? (
-                      <p className="text-xs text-blue-600 font-medium mt-1">
-                        Plan: {displayPlanId}
-                      </p>
-                    ) : null;
-                  })()}
+                </div>
+                <div className="flex items-center gap-2">
+                  {isSigned ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Signed
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      Pending Signature
+                    </span>
+                  )}
+                  {hasPlan && (
+                    <span className="text-xs text-blue-600 font-medium">Plan Available</span>
+                  )}
                 </div>
               </div>
+              
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => setSelectedDeed(deed)}
-                  className="w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
-                  Open Details
+                  View Details
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleOpenSurvey(deed)}
-                    className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    disabled={!hasPlan}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     <Map className="w-4 h-4" />
-                    View Plan
+                    Plan
                   </button>
                   <button
                     onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                    className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     <FileText className="w-4 h-4" />
                     Survey
@@ -462,84 +499,112 @@ const getLatestValuation = (deed: Deed) => {
         })}
       </div>
 
-      <div className="hidden md:block overflow-x-auto p-4">
-        <table className="w-full">
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="border border-gray-200 bg-green-50">
-              <th className="px-4 py-3 text-left font-medium text-black">Deed Number</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Owner</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Land Type</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Requested Value (ETH)</th>
-              <th className="px-4 py-3 text-left font-medium text-black">Estimated Value (ETH)</th>
-              <th className="px-4 py-3 text-center font-medium text-black min-w-[140px]">Status</th>
-              <th className="px-4 py-3 text-center font-medium text-black">Actions</th>
+            <tr className="bg-emerald-600 border-b-2 border-emerald-700">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Deed Number</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Owner</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Land Type</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Area</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">Value (ETH)</th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider min-w-[160px]">Status</th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="bg-white divide-y divide-gray-200">
             {paginatedDeeds.map((deed) => {
               const { requested, estimated } = getLatestValuation(deed);
               const deedHasOverlaps = hasOverlaps(deed.deedNumber);
+              const hasPlan = !!getDisplayPlanId(deed);
+              const isSigned = !!deed.surveySignature;
+              const regDate = deed.registrationDate ? new Date(deed.registrationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+              
               return (
-                <tr key={deed.deedNumber} className={`hover:bg-gray-50 text-black transition-colors ${deedHasOverlaps ? 'bg-red-50' : ''}`}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-600 font-mono font-medium">{deed.deedNumber}</span>
-                      {deedHasOverlaps && (
-                        <span className="flex items-center gap-1 text-xs text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
-                          <AlertTriangle className="w-3 h-3" />
-                          Overlap
-                        </span>
-                      )}
+                <tr key={deed.deedNumber} className={`hover:bg-emerald-50 transition-colors ${deedHasOverlaps ? 'bg-red-50' : ''}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-emerald-700 font-mono font-semibold text-sm">{deed.deedNumber}</span>
+                      <span className="text-xs text-gray-500">{regDate}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3">{deed.ownerFullName}</td>
-                  <td className="px-4 py-3">{deed.landType}</td>
-                  <td className="px-4 py-3 font-mono">{formatToETH(requested)}</td>
-                  <td className="px-4 py-3 font-mono">{formatToETH(estimated)}</td>
-                  <td className="px-4 py-3 text-center min-w-[140px]">
-                    <div className="flex flex-col items-center gap-1.5">
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">{deed.ownerFullName}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-300">
+                      {deed.landType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {deed.landArea ? `${deed.landArea} ${deed.landSizeUnit || 'Perches'}` : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-mono font-semibold text-gray-900">{formatToETH(estimated)}</span>
+                      <span className="text-xs text-gray-500">Req: {formatToETH(requested)}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center min-w-[160px]">
+                    <div className="flex flex-col items-center gap-2">
                       {deedHasOverlaps ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                          {getOverlappingDeeds(deed.deedNumber).length} overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-full">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          {getOverlappingDeeds(deed.deedNumber).length} Overlap{getOverlappingDeeds(deed.deedNumber).length !== 1 ? 's' : ''}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border border-green-300 px-2.5 py-1.5 rounded-full whitespace-nowrap">
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full">
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          No issues
+                          Verified
                         </span>
                       )}
-                      {(() => {
-                        const displayPlanId = getDisplayPlanId(deed);
-                        return displayPlanId ? (
-                          <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
-                            Plan: {displayPlanId}
+                      <div className="flex items-center gap-2">
+                        {isSigned ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Signed
                           </span>
-                        ) : null;
-                      })()}
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            Pending
+                          </span>
+                        )}
+                        {hasPlan && (
+                          <span className="text-xs text-blue-600 font-medium">Plan</span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center gap-2">
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex justify-center gap-1.5">
                       <button
                         onClick={() => setSelectedDeed(deed)}
-                        className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 shadow-sm"
+                        className="p-2 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200"
+                        title="View Details"
                       >
-                        <Eye className="w-3 h-3" /> Open
+                        <Eye className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleOpenSurvey(deed)}
-                        className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 shadow-sm"
+                        className="p-2 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                        title="View Plan"
+                        disabled={!hasPlan}
                       >
-                        <Map className="w-3 h-3" /> Plan
+                        <Map className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => navigate(`/surveyor/plan/${deed.deedNumber}`)}
-                        className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1 shadow-sm"
+                        className="p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors border border-amber-200"
+                        title="Create Survey"
                       >
-                        <FileText className="w-3 h-3" /> Survey
+                        <FileText className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -551,30 +616,37 @@ const getLatestValuation = (deed: Deed) => {
       </div>
 
       {filteredDeeds.length === 0 && (
-        <div className="p-8 text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg font-medium">No deeds found</p>
-          <p className="text-black text-sm mt-1">Try adjusting your search criteria</p>
+        <div className="p-12 text-center">
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-700 text-lg font-semibold mb-1">No deeds found</p>
+          <p className="text-gray-500 text-sm">Try adjusting your search criteria or check back later</p>
         </div>
       )}
 
       {totalPages > 0 && (
-        <div className="p-4 border-t border-gray-200 flex justify-center gap-4">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-          >
-            <ChevronLeft className="w-4 h-4" /> Previous
-          </button>
-          <span className="text-black text-sm font-medium">Page {page} of {totalPages}</span>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </button>
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+          <div className="text-sm text-gray-700">
+            Showing <span className="font-semibold">{(page - 1) * rowsPerPage + 1}</span> to <span className="font-semibold">{Math.min(page * rowsPerPage, filteredDeeds.length)}</span> of <span className="font-semibold">{filteredDeeds.length}</span> deeds
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-50 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 flex items-center gap-2 transition-colors font-medium"
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous
+            </button>
+            <span className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-50 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 flex items-center gap-2 transition-colors font-medium"
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -729,7 +801,7 @@ const OverlapDetailsModal: React.FC<OverlapDetailsModalProps> = ({ overlaps, dee
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 lg:ml-64" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 px-6 py-4 border-b border-red-200">
+        <div className="bg-red-50 px-6 py-4 border-b border-red-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-red-600" />
