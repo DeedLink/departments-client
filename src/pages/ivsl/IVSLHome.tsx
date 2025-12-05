@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Award, Camera } from "lucide-react";
+import { User, Mail, Wallet, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, Award, Camera } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -304,9 +304,15 @@ const IVSLHome = () => {
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900">Monthly Growth</h3>
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  {analytics.monthlyGrowth >= 0 ? (
+                    <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  ) : (
+                    <TrendingDown className="w-5 h-5 text-red-600" />
+                  )}
                 </div>
-                <p className="text-3xl font-bold text-green-600">+{analytics.monthlyGrowth}%</p>
+                <p className={`text-3xl font-bold ${analytics.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {analytics.monthlyGrowth >= 0 ? '+' : ''}{analytics.monthlyGrowth}%
+                </p>
                 <p className="text-sm text-gray-500 mt-1">Compared to last month</p>
               </div>
               
