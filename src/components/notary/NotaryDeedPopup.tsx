@@ -32,46 +32,6 @@ const FitBounds: React.FC<{ coords: [number, number][] }> = ({ coords }) => {
   return null;
 };
 
-function offsetPoint([lat, lng]: [number, number], dx: number, dy: number): [number, number] {
-  const latOffset = dy / 111320;
-  const lngOffset = dx / (111320 * Math.cos((lat * Math.PI) / 180));
-  return [lat + latOffset, lng + lngOffset];
-}
-
-function createAngledPolygon(start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W") {
-  const dx = end[1] - start[1];
-  const dy = end[0] - start[0];
-  const length = Math.sqrt(dx * dx + dy * dy) * 111320;
-  const offset = length * 0.3;
-
-  if (direction === "N") {
-    const p1 = offsetPoint(start, -offset, offset);
-    const p2 = offsetPoint(end, offset, offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "S") {
-    const p1 = offsetPoint(start, offset, -offset);
-    const p2 = offsetPoint(end, -offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "E") {
-    const p1 = offsetPoint(start, offset, offset);
-    const p2 = offsetPoint(end, offset, -offset);
-    return [start, end, p2, p1];
-  }
-  if (direction === "W") {
-    const p1 = offsetPoint(start, -offset, -offset);
-    const p2 = offsetPoint(end, -offset, offset);
-    return [start, end, p2, p1];
-  }
-  return [];
-}
-
-function getCentroid(coords: [number, number][]): [number, number] {
-  let lat = 0, lng = 0;
-  coords.forEach(([la, lo]) => { lat += la; lng += lo; });
-  return [lat / coords.length, lng / coords.length];
-}
 
 const NotaryDeedPopup = ({ deed, onClose }: Props) => {
   if (!deed) return null;
@@ -120,22 +80,57 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
     fetchSurveyPlan();
   }, [deed.surveyPlanNumber, activeTab]);
 
-  const renderSide = (label: string, start: [number, number], end: [number, number], direction: "N"|"S"|"E"|"W", color: string) => {
-    const poly = createAngledPolygon(start, end, direction);
-    if (poly.length === 0) return null;
-    const centroid = getCentroid(poly);
+  const getMidpoint = (start: [number, number], end: [number, number]): [number, number] => {
+    return [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
+  };
 
+  const findSideIndex = (coords: [number, number][], targetSide: "N"|"S"|"E"|"W"): number => {
+    let bestIndex = 0;
+    let bestScore = -Infinity;
+    
+    for (let i = 0; i < coords.length; i++) {
+      const start = coords[i];
+      const end = coords[(i + 1) % coords.length];
+      const avgLat = (start[0] + end[0]) / 2;
+      const avgLng = (start[1] + end[1]) / 2;
+      
+      let score = 0;
+      
+      if (targetSide === "N") {
+        score = avgLat;
+      } else if (targetSide === "S") {
+        score = -avgLat;
+      } else if (targetSide === "E") {
+        score = avgLng;
+      } else if (targetSide === "W") {
+        score = -avgLng;
+      }
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestIndex = i;
+      }
+    }
+    
+    return bestIndex;
+  };
+
+  const renderSide = (label: string, targetSide: "N"|"S"|"E"|"W", color: string) => {
+    if (mapCoords.length < 4) return null;
+    
+    const sideIndex = findSideIndex(mapCoords, targetSide);
+    const start = mapCoords[sideIndex];
+    const end = mapCoords[(sideIndex + 1) % mapCoords.length];
+    const midpoint = getMidpoint(start, end);
+    
     const divIcon = L.divIcon({
-      className: "custom-label",
-      html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:4px;font-size:12px;white-space:nowrap;">${label}</div>`,
+      className: "custom-boundary-label",
+      html: `<div style="background:${color};color:white;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);text-align:center;display:inline-block;">${targetSide}: ${label}</div>`,
+      iconSize: [200, 35],
+      iconAnchor: [100, 17],
     });
 
-    return (
-      <>
-        <Polygon positions={poly} pathOptions={{ color, fillOpacity: 0.4 }} />
-        <Marker position={centroid} icon={divIcon} />
-      </>
-    );
+    return <Marker position={midpoint} icon={divIcon} />;
   };
 
   const checkSignatures = async () => {
@@ -417,10 +412,10 @@ const NotaryDeedPopup = ({ deed, onClose }: Props) => {
                   )}
                   {planSides && mapCoords.length >= 4 && (
                     <>
-                      {planSides.North && renderSide(planSides.North, mapCoords[0], mapCoords[1], "N", "red")}
-                      {planSides.East && renderSide(planSides.East, mapCoords[1], mapCoords[2], "E", "blue")}
-                      {planSides.South && renderSide(planSides.South, mapCoords[2], mapCoords[3], "S", "orange")}
-                      {planSides.West && renderSide(planSides.West, mapCoords[3], mapCoords[0], "W", "purple")}
+                      {planSides.North && renderSide(planSides.North, "N", "#ef4444")}
+                      {planSides.East && renderSide(planSides.East, "E", "#3b82f6")}
+                      {planSides.South && renderSide(planSides.South, "S", "#f97316")}
+                      {planSides.West && renderSide(planSides.West, "W", "#8b5cf6")}
                     </>
                   )}
                 </MapContainer>
