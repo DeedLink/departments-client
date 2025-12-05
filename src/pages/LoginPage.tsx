@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, Wallet, Shield, FileText, CheckCircle, TrendingUp, Globe, Zap, Users } from "lucide-react";
+import { Lock, Mail, Wallet, Shield, FileText, CheckCircle, TrendingUp, Users } from "lucide-react";
 import { useWallet } from "../contexts/WalletContext";
 import { compressAddress, isValidEmail, isValidPassword } from "../utils/functions";
 import { useEffect, useState } from "react";
@@ -73,69 +73,68 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 p-12 flex-col justify-center text-white">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-white/20 backdrop-blur-sm w-16 h-16 rounded-2xl flex items-center justify-center">
-              <Shield className="w-8 h-8" />
+      <div className="hidden lg:flex lg:w-1/2 bg-emerald-600 p-6 flex-col justify-center text-white overflow-y-auto">
+        <div className="max-w-md mx-auto">
+          <div className="mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl mb-4">
+              <Shield className="w-7 h-7" />
             </div>
-            <h1 className="text-4xl font-bold">Land Registry System</h1>
+            <h1 className="text-3xl font-bold mb-1 text-white">
+              Land Registry System
+            </h1>
+            <div className="w-16 h-0.5 bg-white/40 rounded-full"></div>
           </div>
           
-          <p className="text-xl mb-12 text-white/90 leading-relaxed">
+          <p className="text-base mb-6 text-white/90 leading-relaxed">
             A blockchain-integrated platform for secure land deed management, property valuation, and certificate verification.
           </p>
 
-          <div className="space-y-6 mb-12">
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <FileText className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Deed Management</h3>
-                <p className="text-white/80 text-sm">Manage and track land deeds with blockchain verification for enhanced security and transparency.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Property Valuation</h3>
-                <p className="text-white/80 text-sm">Comprehensive property assessment and valuation services with market analysis integration.</p>
+          <div className="space-y-2.5 mb-6">
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">Deed Management</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Manage and track land deeds with blockchain verification.</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Certificate Verification</h3>
-                <p className="text-white/80 text-sm">Verify and manage legal certificates with immutable blockchain records.</p>
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">Property Valuation</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Comprehensive property assessment and valuation services.</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Blockchain Security</h3>
-                <p className="text-white/80 text-sm">All transactions are secured on the blockchain with cryptographic verification.</p>
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">Certificate Verification</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Verify and manage legal certificates with blockchain records.</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-sm text-white/80">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              <span>Department Users</span>
+          <div className="flex items-center gap-5 pt-3 border-t border-white/20">
+            <div className="flex items-center gap-2 text-white/80">
+              <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+              <span className="text-xs">Secure Platform</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              <span>IPFS Storage</span>
+            <div className="flex items-center gap-2 text-white/80">
+              <Users className="w-3.5 h-3.5" />
+              <span className="text-xs">Department Users</span>
             </div>
           </div>
         </div>

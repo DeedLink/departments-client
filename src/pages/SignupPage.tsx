@@ -56,79 +56,90 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 p-12 flex-col justify-center text-white">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-white/20 backdrop-blur-sm w-16 h-16 rounded-2xl flex items-center justify-center">
-              <Shield className="w-8 h-8" />
+      <div className="hidden lg:flex lg:w-1/2 bg-emerald-600 p-6 flex-col justify-center text-white overflow-y-auto">
+        <div className="max-w-md mx-auto">
+          <div className="mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl mb-4">
+              <Shield className="w-7 h-7" />
             </div>
-            <h1 className="text-4xl font-bold">Join Our Platform</h1>
+            <h1 className="text-3xl font-bold mb-1 text-white">
+              Join Our Platform
+            </h1>
+            <div className="w-16 h-0.5 bg-white/40 rounded-full"></div>
           </div>
           
-          <p className="text-xl mb-12 text-white/90 leading-relaxed">
+          <p className="text-base mb-6 text-white/90 leading-relaxed">
             Create your department account to access secure land registry management, property valuation, and certificate services.
           </p>
 
-          <div className="space-y-6 mb-12">
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <Users className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">For Department Users</h3>
-                <p className="text-white/80 text-sm">Exclusive access for Surveyors, IVSL Officers, and Notaries to manage land-related operations.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Survey Plan Management</h3>
-                <p className="text-white/80 text-sm">Create, update, and manage survey plans with digital mapping and blockchain verification.</p>
+          <div className="space-y-2.5 mb-6">
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">For Department Users</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Exclusive access for Surveyors, IVSL Officers, and Notaries.</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">KYC Verification</h3>
-                <p className="text-white/80 text-sm">Secure identity verification process ensures only authorized personnel can access the system.</p>
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">Survey Plan Management</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Create, update, and manage survey plans with digital mapping.</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl flex-shrink-0">
-                <Wallet className="w-6 h-6" />
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">KYC Verification</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Secure identity verification for authorized personnel only.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Wallet Integration</h3>
-                <p className="text-white/80 text-sm">Connect your blockchain wallet for secure, decentralized authentication and transaction signing.</p>
+            </div>
+
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-0.5 text-white">Wallet Integration</h3>
+                  <p className="text-white/80 text-xs leading-relaxed">Connect your blockchain wallet for secure authentication.</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <h3 className="font-semibold text-lg mb-3">Account Requirements</h3>
-            <ul className="space-y-2 text-sm text-white/90">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-300" />
-                Valid department email address
+          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+            <h3 className="font-semibold text-sm mb-2.5 text-white">Account Requirements</h3>
+            <ul className="space-y-2 text-xs">
+              <li className="flex items-center gap-2 text-white/90">
+                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                <span>Valid department email address</span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-300" />
-                Blockchain wallet connection
+              <li className="flex items-center gap-2 text-white/90">
+                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                <span>Blockchain wallet connection</span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-300" />
-                OTP verification from admin
+              <li className="flex items-center gap-2 text-white/90">
+                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                <span>OTP verification from admin</span>
               </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-300" />
-                Strong password (8+ characters)
+              <li className="flex items-center gap-2 text-white/90">
+                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                <span>Strong password (8+ characters)</span>
               </li>
             </ul>
           </div>
