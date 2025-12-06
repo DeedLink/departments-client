@@ -56,89 +56,97 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-emerald-600 p-6 flex-col justify-center text-white overflow-y-auto">
-        <div className="max-w-md mx-auto">
+      <div 
+        className="hidden lg:flex lg:w-1/2 p-6 flex-col justify-center overflow-y-auto border-r border-gray-200 relative"
+        style={{ 
+          backgroundImage: `url('/images/bg.png')`, 
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-white/40"></div>
+        <div className="max-w-md mx-auto relative z-10">
           <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl mb-4">
-              <Shield className="w-7 h-7" />
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-100 rounded-xl mb-4">
+              <Shield className="w-7 h-7 text-emerald-600" />
             </div>
-            <h1 className="text-3xl font-bold mb-1 text-white">
+            <h1 className="text-3xl font-bold mb-1 text-gray-900">
               Join Our Platform
             </h1>
-            <div className="w-16 h-0.5 bg-white/40 rounded-full"></div>
+            <div className="w-16 h-0.5 bg-emerald-600 rounded-full"></div>
           </div>
           
-          <p className="text-base mb-6 text-white/90 leading-relaxed">
+          <p className="text-base mb-6 text-gray-600 leading-relaxed">
             Create your department account to access secure land registry management, property valuation, and certificate services.
           </p>
 
           <div className="space-y-2.5 mb-6">
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <Users className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <Users className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">For Department Users</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Exclusive access for Surveyors, IVSL Officers, and Notaries.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">For Department Users</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Exclusive access for Surveyors, IVSL Officers, and Notaries.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <MapPin className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">Survey Plan Management</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Create, update, and manage survey plans with digital mapping.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">Survey Plan Management</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Create, update, and manage survey plans with digital mapping.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <Award className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <Award className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">KYC Verification</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Secure identity verification for authorized personnel only.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">KYC Verification</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Secure identity verification for authorized personnel only.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <Wallet className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <Wallet className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">Wallet Integration</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Connect your blockchain wallet for secure authentication.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">Wallet Integration</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Connect your blockchain wallet for secure authentication.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-            <h3 className="font-semibold text-sm mb-2.5 text-white">Account Requirements</h3>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h3 className="font-semibold text-sm mb-2.5 text-gray-900">Account Requirements</h3>
             <ul className="space-y-2 text-xs">
-              <li className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                 <span>Valid department email address</span>
               </li>
-              <li className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                 <span>Blockchain wallet connection</span>
               </li>
-              <li className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                 <span>OTP verification from admin</span>
               </li>
-              <li className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                 <span>Strong password (8+ characters)</span>
               </li>
             </ul>
@@ -146,8 +154,16 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-gradient-to-br p-4">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div 
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 relative"
+        style={{ 
+          backgroundImage: `url('/images/bg.png')`, 
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-white/40"></div>
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10">
           <div className="p-8 text-center">
             <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-emerald-600" />

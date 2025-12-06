@@ -73,75 +73,91 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-emerald-600 p-6 flex-col justify-center text-white overflow-y-auto">
-        <div className="max-w-md mx-auto">
+      <div 
+        className="hidden lg:flex lg:w-1/2 p-6 flex-col justify-center overflow-y-auto border-r border-gray-200 relative"
+        style={{ 
+          backgroundImage: `url('/images/bg.png')`, 
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-white/40"></div>
+        <div className="max-w-md mx-auto relative z-10">
           <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl mb-4">
-              <Shield className="w-7 h-7" />
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-100 rounded-xl mb-4">
+              <Shield className="w-7 h-7 text-emerald-600" />
             </div>
-            <h1 className="text-3xl font-bold mb-1 text-white">
+            <h1 className="text-3xl font-bold mb-1 text-gray-900">
               Land Registry System
             </h1>
-            <div className="w-16 h-0.5 bg-white/40 rounded-full"></div>
+            <div className="w-16 h-0.5 bg-emerald-600 rounded-full"></div>
           </div>
           
-          <p className="text-base mb-6 text-white/90 leading-relaxed">
+          <p className="text-base mb-6 text-gray-600 leading-relaxed">
             A blockchain-integrated platform for secure land deed management, property valuation, and certificate verification.
           </p>
 
           <div className="space-y-2.5 mb-6">
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <FileText className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <FileText className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">Deed Management</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Manage and track land deeds with blockchain verification.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">Deed Management</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Manage and track land deeds with blockchain verification.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <TrendingUp className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">Property Valuation</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Comprehensive property assessment and valuation services.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">Property Valuation</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Comprehensive property assessment and valuation services.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3.5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 hover:border-emerald-300 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="bg-white/20 p-2 rounded-lg flex-shrink-0">
-                  <CheckCircle className="w-4 h-4" />
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-0.5 text-white">Certificate Verification</h3>
-                  <p className="text-white/80 text-xs leading-relaxed">Verify and manage legal certificates with blockchain records.</p>
+                  <h3 className="font-semibold text-sm mb-0.5 text-gray-900">Certificate Verification</h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">Verify and manage legal certificates with blockchain records.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-5 pt-3 border-t border-white/20">
-            <div className="flex items-center gap-2 text-white/80">
-              <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+          <div className="flex items-center gap-5 pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-gray-600">
+              <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
               <span className="text-xs">Secure Platform</span>
             </div>
-            <div className="flex items-center gap-2 text-white/80">
-              <Users className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2 text-gray-600">
+              <Users className="w-3.5 h-3.5 text-emerald-600" />
               <span className="text-xs">Department Users</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div 
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 relative"
+        style={{ 
+          backgroundImage: `url('/images/bg.png')`, 
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-white/40"></div>
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10">
           <div className="p-8 text-center">
             <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-emerald-600" />
