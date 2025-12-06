@@ -121,15 +121,14 @@ export const calculateCertificateAnalytics = (certificates: Certificate[]) => {
   const completionRate = totalDeeds ? Math.round((signedDeeds / totalDeeds) * 100) : 0;
 
   const monthlyGrowth = 0;
-  const avgProcessingTime = totalDeeds
-    ? Math.round(certificates.reduce((acc, c) => {
-        if (c.createdAt && c.verifiedAt) {
-          const created = new Date(c.createdAt).getTime();
-          const verified = new Date(c.verifiedAt).getTime();
-          return acc + (verified - created) / (1000 * 60 * 60 * 24);
-        }
-        return acc;
-      }, 0) / signedDeeds)
+  const verifiedCerts = certificates.filter(c => c.verified && c.createdAt && c.verifiedAt);
+  const avgProcessingTime = verifiedCerts.length > 0
+    ? Math.round(verifiedCerts.reduce((acc, c) => {
+        if (!c.createdAt || !c.verifiedAt) return acc;
+        const created = new Date(c.createdAt).getTime();
+        const verified = new Date(c.verifiedAt).getTime();
+        return acc + (verified - created) / (1000 * 60 * 60 * 24);
+      }, 0) / verifiedCerts.length)
     : 0;
 
   return { totalDeeds, signedDeeds, rejectedDeeds, pendingDeeds, completionRate, monthlyGrowth, avgProcessingTime };

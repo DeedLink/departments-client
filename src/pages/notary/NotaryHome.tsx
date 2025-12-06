@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
-import { User, Mail, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, Award, Wallet, Camera } from "lucide-react";
+import { User, Mail, Shield, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, Award, Wallet, Camera, ArrowRight } from "lucide-react";
 import { useLogin } from "../../contexts/LoginContext";
 import { useWallet } from "../../contexts/WalletContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useLoader } from "../../contexts/LoaderContext";
+import { useNavigate } from "react-router-dom";
 import { compressAddress, calculateCertificateAnalytics } from "../../utils/functions";
-import { uploadProfilePicture, IPFS_MICROSERVICE_URL } from "../../api/api";
-//import { getCertificatesByNotaryWalletAddress } from "../../api/api";
+import { uploadProfilePicture, IPFS_MICROSERVICE_URL, getAllCertificates } from "../../api/api";
 import { type AnalaticsType } from "../../types/analatics";
 
 const sampleAnalatics: AnalaticsType = {
@@ -24,19 +24,64 @@ const NotaryHome = () => {
   const { account } = useWallet();
   const { showToast } = useToast();
   const { showLoader, hideLoader } = useLoader();
+  const navigate = useNavigate();
   const [analytics, setAnalytics] = useState<AnalaticsType>(sampleAnalatics);
   const [file, setFile] = useState<File | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [objectUrl, setObjectUrl] = useState<string>("");
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
   const fetchCertificates = async () => {
     if (account) {
-      //const res = await getCertificatesByNotaryWalletAddress(account);
+      try {
+        setLoading(true);
+        showLoader();
+        const allCertificates = await getAllCertificates();
+        const filteredCertificates = Array.isArray(allCertificates) 
+          ? allCertificates.filter((cert: any) => 
+              cert.createdBy?.toLowerCase() === account.toLowerCase() ||
+              cert.notaryWalletAddress?.toLowerCase() === account.toLowerCase()
+            )
+          : [];
+        const calculatedAnalytics = calculateCertificateAnalytics(filteredCertificates);
+        
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        const currentMonthCerts = filteredCertificates.filter((cert: any) => {
+          if (!cert.createdAt) return false;
+          const certDate = new Date(cert.createdAt);
+          return certDate.getMonth() === currentMonth && certDate.getFullYear() === currentYear;
+        }).length;
+
+        const lastMonthCerts = filteredCertificates.filter((cert: any) => {
+          if (!cert.createdAt) return false;
+          const certDate = new Date(cert.createdAt);
+          return certDate.getMonth() === lastMonth && certDate.getFullYear() === lastMonthYear;
+        }).length;
+
+        const monthlyGrowth = lastMonthCerts > 0 
+          ? Math.round(((currentMonthCerts - lastMonthCerts) / lastMonthCerts) * 100)
+          : (currentMonthCerts > 0 ? 100 : 0);
+
+        setAnalytics({ ...calculatedAnalytics, monthlyGrowth });
+      } catch (error: any) {
+        console.error("Error fetching certificates:", error);
+        showToast("Failed to load certificates", "error");
+        setAnalytics(calculateCertificateAnalytics([]));
+      } finally {
+        setLoading(false);
+        hideLoader();
+      }
+    } else {
       setAnalytics(calculateCertificateAnalytics([]));
+      setLoading(false);
     }
   };
 
@@ -98,7 +143,7 @@ const NotaryHome = () => {
 
   useEffect(() => {
     fetchCertificates();
-  }, []);
+  }, [account]);
 
   useEffect(() => {
     return () => {
@@ -111,9 +156,9 @@ const NotaryHome = () => {
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+            <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
               {profileImage ? (
                 <img 
                   src={profileImage} 
@@ -126,28 +171,28 @@ const NotaryHome = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.name}</h1>
-              <p className="text-blue-700 font-medium">Licensed Notary</p>
+              <p className="text-emerald-700 font-medium">Licensed Notary</p>
               <p className="text-gray-600 text-sm mt-1">Manage and verify assigned certificates</p>
             </div>
-            <div className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full">
-              <Shield className="w-4 h-4 text-blue-600" />
-              <span className="text-blue-700 text-sm font-medium">Verified</span>
+            <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200">
+              <Shield className="w-4 h-4 text-emerald-700" />
+              <span className="text-emerald-700 text-sm font-medium">Verified</span>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-emerald-600 px-6 py-4 border-b border-emerald-700">
+                <h2 className="text-lg font-semibold text-white">Profile Information</h2>
               </div>
               <div className="p-6 space-y-4">
                 <div className="text-center mb-6">
                   <div className="relative mx-auto mb-4 w-24 h-24">
                     <div 
                       onClick={handleProfilePictureClick}
-                      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto cursor-pointer hover:opacity-90 transition-opacity relative overflow-hidden bg-gradient-to-br from-blue-500 to-cyan-600"
+                      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto cursor-pointer hover:opacity-90 transition-opacity relative overflow-hidden bg-emerald-600"
                     >
                       {profileImage ? (
                         <img 
@@ -161,7 +206,7 @@ const NotaryHome = () => {
                     </div>
                     <div 
                       onClick={handleProfilePictureClick}
-                      className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-lg"
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-700 transition-colors shadow-lg border-2 border-white"
                     >
                       <Camera className="w-4 h-4 text-white" />
                     </div>
@@ -177,13 +222,13 @@ const NotaryHome = () => {
                     <button
                       onClick={handleUpload}
                       disabled={isUploading}
-                      className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isUploading ? "Uploading..." : "Upload Picture"}
                     </button>
                   )}
                   <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
-                  <p className="text-blue-600 font-medium">Licensed Notary</p>
+                  <p className="text-emerald-700 font-medium">Licensed Notary</p>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -216,11 +261,11 @@ const NotaryHome = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <Wallet className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <Wallet className="w-5 h-5 text-emerald-700" />
                     <div>
-                      <p className="text-xs text-blue-600 font-medium">Wallet Status</p>
-                      <p className="text-sm font-bold text-blue-700">Connected</p>
+                      <p className="text-xs text-emerald-700 font-medium">Wallet Status</p>
+                      <p className="text-sm font-bold text-emerald-800">Connected</p>
                       <p className="text-xs font-mono text-gray-600 mt-1">{compressAddress(account ?? "")}</p>
                     </div>
                   </div>
@@ -230,49 +275,70 @@ const NotaryHome = () => {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
+            {loading ? (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12">
+                <div className="flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-3 text-gray-600">Loading analytics...</span>
+                </div>
+              </div>
+            ) : (
+              <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-blue-600" />
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer" onClick={() => navigate("/notary/certificates")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{analytics.totalDeeds}</p>
+                      <p className="text-sm text-gray-500">Total Certificates</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.totalDeeds}</p>
-                    <p className="text-sm text-gray-500">Total Certificates</p>
-                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer" onClick={() => navigate("/notary/certificates")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{analytics.signedDeeds}</p>
+                      <p className="text-sm text-gray-500">Verified</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.signedDeeds}</p>
-                    <p className="text-sm text-gray-500">Verified</p>
-                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <XCircle className="w-5 h-5 text-red-600" />
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer" onClick={() => navigate("/notary/certificates")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{analytics.rejectedDeeds}</p>
+                      <p className="text-sm text-gray-500">Rejected</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.rejectedDeeds}</p>
-                    <p className="text-sm text-gray-500">Rejected</p>
-                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-amber-600" />
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer" onClick={() => navigate("/notary/certificates")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{analytics.pendingDeeds}</p>
+                      <p className="text-sm text-gray-500">Pending Verification</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{analytics.pendingDeeds}</p>
-                    <p className="text-sm text-gray-500">Pending Verification</p>
-                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
             </div>
@@ -295,20 +361,60 @@ const NotaryHome = () => {
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900">Completion Rate</h3>
-                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
                 </div>
-                <p className="text-3xl font-bold text-blue-600">{analytics.completionRate}%</p>
+                <p className="text-3xl font-bold text-emerald-600">{analytics.completionRate}%</p>
                 <p className="text-sm text-gray-500 mt-1">Certificate verification rate</p>
               </div>
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900">Avg Processing</h3>
-                  <Clock className="w-5 h-5 text-purple-500" />
+                  <Clock className="w-5 h-5 text-emerald-600" />
                 </div>
-                <p className="text-3xl font-bold text-purple-600">{analytics.avgProcessingTime}</p>
+                <p className="text-3xl font-bold text-emerald-600">{analytics.avgProcessingTime}</p>
                 <p className="text-sm text-gray-500 mt-1">Days per certificate</p>
               </div>
             </div>
+
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => navigate("/notary/certificates")}
+                  className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-900">View All Certificates</p>
+                      <p className="text-xs text-gray-600">Manage certificates</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-emerald-600 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => navigate("/notary/deeds")}
+                  className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-900">View Deeds</p>
+                      <p className="text-xs text-gray-600">Notarize deeds</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-600 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
