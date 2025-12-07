@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { getCertificatesByTokenId } from "../../../api/api";
-import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, hasActiveWill } from "../../../web3.0/lastWillIntegration";
+import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, hasActiveWill, isWillReadyForExecution } from "../../../web3.0/lastWillIntegration";
 import { useToast } from "../../../contexts/ToastContext";
 import WillDetails from "./WillDetails";
 import DeathVerificationDisplay from "./DeathVerification";
@@ -19,6 +19,7 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
   const [deathCertHash, setDeathCertHash] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isReadyForExecution, setIsReadyForExecution] = useState(false);
   const { showToast } = useToast();
 
   const loadWillData = async (tokenId: number) => {
@@ -43,6 +44,9 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
         } else {
           setDeathVerification(null);
         }
+
+        const ready = await isWillReadyForExecution(tokenId);
+        setIsReadyForExecution(ready);
 
         try {
           const certRes = await getCertificatesByTokenId(tokenId);
@@ -94,6 +98,8 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
       showToast(result.message, "success");
       await loadWillData(tokenId);
       setDeathCertHash("");
+      const ready = await isWillReadyForExecution(tokenId);
+      setIsReadyForExecution(ready);
     } catch (error: any) {
       showToast(error.message || "Failed to verify death", "error");
     } finally {
@@ -114,6 +120,7 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
       const result = await executeWill(tokenId);
       showToast(result.message, "success");
       await loadWillData(tokenId);
+      setIsReadyForExecution(false);
     } catch (error: any) {
       showToast(error.message || "Failed to execute will", "error");
     } finally {
@@ -149,14 +156,70 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
               isVerifying={isVerifying}
             />
           )}
-          {deathVerification &&
-            deathVerification.canExecute &&
-            willDetails &&
-            !willDetails.isExecuted && (
+          {willDetails &&
+            !willDetails.isExecuted &&
+            willDetails.witness1Status === 1 &&
+            willDetails.witness2Status === 1 &&
+            isReadyForExecution && (
               <ExecuteWillButton
                 onExecute={handleExecuteWill}
                 isExecuting={isExecuting}
               />
+            )}
+          {willDetails &&
+            !willDetails.isExecuted &&
+            (willDetails.witness1Status !== 1 || willDetails.witness2Status !== 1) && (
+              <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Waiting for Witness Signatures
+                </h4>
+                <p className="text-sm text-yellow-800 mb-2">
+                  Both witnesses must sign the will before it can be executed.
+                </p>
+                <div className="text-xs text-yellow-700 space-y-1">
+                  <p>
+                    Witness 1: {willDetails.witness1Status === 1 ? "✓ Signed" : willDetails.witness1Status === 2 ? "✗ Rejected" : "⏳ Pending"}
+                  </p>
+                  <p>
+                    Witness 2: {willDetails.witness2Status === 1 ? "✓ Signed" : willDetails.witness2Status === 2 ? "✗ Rejected" : "⏳ Pending"}
+                  </p>
+                </div>
+              </div>
+            )}
+          {willDetails &&
+            !willDetails.isExecuted &&
+            willDetails.witness1Status === 1 &&
+            willDetails.witness2Status === 1 &&
+            deathVerification &&
+            !deathVerification.canExecute && (
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Waiting Period Active
+                </h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Both witnesses have signed and death has been verified. The 30-day waiting period must complete before execution.
+                </p>
+                <p className="text-xs text-blue-700">
+                  Waiting period ends: {new Date(deathVerification.waitingPeriodEnd * 1000).toLocaleString()}
+                </p>
+              </div>
+            )}
+          {willDetails &&
+            !willDetails.isExecuted &&
+            willDetails.witness1Status === 1 &&
+            willDetails.witness2Status === 1 &&
+            !deathVerification && (
+              <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Ready for Death Verification
+                </h4>
+                <p className="text-sm text-green-800">
+                  Both witnesses have signed. You can now verify the owner's death to proceed with execution.
+                </p>
+              </div>
             )}
         </>
       ) : (
