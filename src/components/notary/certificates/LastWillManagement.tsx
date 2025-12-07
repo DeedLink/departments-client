@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { getCertificatesByTokenId } from "../../../api/api";
-import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, hasActiveWill, isWillReadyForExecution } from "../../../web3.0/lastWillIntegration";
+import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, hasActiveWill, isWillReadyForExecution, witnessWill } from "../../../web3.0/lastWillIntegration";
 import { useToast } from "../../../contexts/ToastContext";
+import { useWallet } from "../../../contexts/WalletContext";
 import WillDetails from "./WillDetails";
 import DeathVerificationDisplay from "./DeathVerification";
 import VerifyDeathForm from "./VerifyDeathForm";
@@ -19,8 +20,10 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
   const [deathCertHash, setDeathCertHash] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isWitnessing, setIsWitnessing] = useState(false);
   const [isReadyForExecution, setIsReadyForExecution] = useState(false);
   const { showToast } = useToast();
+  const { account } = useWallet();
 
   const loadWillData = async (tokenId: number) => {
     if (!tokenId) return;
@@ -128,6 +131,50 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
     }
   };
 
+  const handleWitnessSign = async (approve: boolean) => {
+    if (!tokenId || !account) return;
+    
+    if (!window.confirm(
+      approve 
+        ? "Are you sure you want to approve this Last Will? This action cannot be undone."
+        : "Are you sure you want to reject this Last Will? This action cannot be undone."
+    )) {
+      return;
+    }
+
+    setIsWitnessing(true);
+    try {
+      const result = await witnessWill(tokenId, approve);
+      showToast(result.message, "success");
+      await loadWillData(tokenId);
+      const ready = await isWillReadyForExecution(tokenId);
+      setIsReadyForExecution(ready);
+    } catch (error: any) {
+      showToast(error.message || error.reason || "Failed to witness will", "error");
+    } finally {
+      setIsWitnessing(false);
+    }
+  };
+
+  const isCurrentUserWitness = () => {
+    if (!willDetails || !account) return { isWitness: false, witnessNumber: 0, status: -1 };
+    
+    const accountLower = account.toLowerCase();
+    const witness1Lower = willDetails.witness1?.toLowerCase();
+    const witness2Lower = willDetails.witness2?.toLowerCase();
+    
+    if (witness1Lower && accountLower === witness1Lower) {
+      return { isWitness: true, witnessNumber: 1, status: willDetails.witness1Status };
+    }
+    if (witness2Lower && accountLower === witness2Lower) {
+      return { isWitness: true, witnessNumber: 2, status: willDetails.witness2Status };
+    }
+    
+    return { isWitness: false, witnessNumber: 0, status: -1 };
+  };
+
+  const witnessInfo = isCurrentUserWitness();
+
   return (
     <div className="mb-6 border-t border-gray-200 pt-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -145,6 +192,51 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
       ) : willDetails ? (
         <>
           <WillDetails willDetails={willDetails} />
+          {witnessInfo.isWitness && witnessInfo.status === 0 && (
+            <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-300">
+              <h4 className="text-lg font-bold text-yellow-900 mb-3">You are a Witness</h4>
+              <p className="text-sm text-yellow-800 mb-4">
+                You have been designated as Witness {witnessInfo.witnessNumber} for this Last Will. 
+                Please review and sign the will to proceed.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleWitnessSign(true)}
+                  disabled={isWitnessing}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition"
+                >
+                  {isWitnessing ? "Signing..." : "Approve & Sign"}
+                </button>
+                <button
+                  onClick={() => handleWitnessSign(false)}
+                  disabled={isWitnessing}
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition"
+                >
+                  {isWitnessing ? "Rejecting..." : "Reject"}
+                </button>
+              </div>
+            </div>
+          )}
+          {witnessInfo.isWitness && witnessInfo.status !== 0 && (
+            <div className={`mb-4 border-2 p-4 rounded-lg ${
+              witnessInfo.status === 1 
+                ? "bg-green-50 border-green-300" 
+                : "bg-red-50 border-red-300"
+            }`}>
+              <h4 className={`text-lg font-bold mb-2 ${
+                witnessInfo.status === 1 ? "text-green-900" : "text-red-900"
+              }`}>
+                Your Witness Status: {witnessInfo.status === 1 ? "Signed" : "Rejected"}
+              </h4>
+              <p className={`text-sm ${
+                witnessInfo.status === 1 ? "text-green-800" : "text-red-800"
+              }`}>
+                {witnessInfo.status === 1 
+                  ? "You have signed this Last Will. Waiting for the other witness to sign."
+                  : "You have rejected this Last Will."}
+              </p>
+            </div>
+          )}
           {deathVerification && (
             <DeathVerificationDisplay deathVerification={deathVerification} />
           )}
