@@ -76,7 +76,7 @@ const WillDetails: React.FC<WillDetailsProps> = ({ willDetails }) => {
               }`}
             >
               {willDetails.witness1Status === 1
-                ? "Approved"
+                ? "Signed"
                 : willDetails.witness1Status === 2
                 ? "Rejected"
                 : "Pending"}
@@ -97,7 +97,7 @@ const WillDetails: React.FC<WillDetailsProps> = ({ willDetails }) => {
               }`}
             >
               {willDetails.witness2Status === 1
-                ? "Approved"
+                ? "Signed"
                 : willDetails.witness2Status === 2
                 ? "Rejected"
                 : "Pending"}
