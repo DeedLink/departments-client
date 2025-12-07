@@ -364,8 +364,14 @@ certificatesApi.interceptors.request.use((config) => {
 });
 
 export const getAllCertificates = async (): Promise<any[]> => {
-  const res: AxiosResponse<any[]> = await certificatesApi.get(`/`);
-  return res.data;
+  const res: AxiosResponse<any> = await certificatesApi.get(`/`);
+  if (res.data && res.data.results && Array.isArray(res.data.results)) {
+    return res.data.results;
+  }
+  if (Array.isArray(res.data)) {
+    return res.data;
+  }
+  return [];
 };
 
 export const getCertificateById = async (certificateId: string): Promise<any> => {
@@ -390,5 +396,11 @@ export const getNearbyLandSales = async (deedId: string, radiusKm: number = 10):
 
 export const getCertificatesByTokenId = async (tokenId: number): Promise<any> => {
   const res: AxiosResponse<any> = await certificatesApi.get(`/token/${tokenId}`);
-  return res.data;
+  if (res.data && res.data.results && Array.isArray(res.data.results) && res.data.results.length > 0) {
+    return res.data.results[0];
+  }
+  if (res.data && !res.data.results) {
+    return res.data;
+  }
+  return null;
 };

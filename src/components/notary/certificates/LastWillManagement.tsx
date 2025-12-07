@@ -34,7 +34,9 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
           getDeathVerification(tokenId).catch(() => null),
         ]);
 
-        setWillDetails(will);
+        if (will) {
+          setWillDetails(will);
+        }
 
         if (deathVer && deathVer.isVerified) {
           setDeathVerification(deathVer);
@@ -44,7 +46,9 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
 
         try {
           const certRes = await getCertificatesByTokenId(tokenId);
-          if (certRes && !will) {
+          if (certRes && will) {
+            setWillDetails({ ...will, certificateData: certRes });
+          } else if (certRes && !will) {
             setWillDetails(certRes);
           }
         } catch (err) {
