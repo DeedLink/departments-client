@@ -4,7 +4,7 @@ import { getCertificatesByTokenId } from "../../../api/api";
 import { verifyOwnerDeath, getDeathVerification, executeWill, getWill, hasActiveWill } from "../../../web3.0/lastWillIntegration";
 import { useToast } from "../../../contexts/ToastContext";
 import WillDetails from "./WillDetails";
-import DeathVerificationComponent from "./DeathVerification";
+import DeathVerificationDisplay from "./DeathVerification";
 import VerifyDeathForm from "./VerifyDeathForm";
 import ExecuteWillButton from "./ExecuteWillButton";
 
@@ -135,7 +135,7 @@ const LastWillManagement: React.FC<LastWillManagementProps> = ({ tokenId }) => {
         <>
           <WillDetails willDetails={willDetails} />
           {deathVerification && (
-            <DeathVerificationComponent deathVerification={deathVerification} />
+            <DeathVerificationDisplay deathVerification={deathVerification} />
           )}
           {!deathVerification && (
             <VerifyDeathForm

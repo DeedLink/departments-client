@@ -3,11 +3,11 @@ import { CheckCircle2, Clock } from "lucide-react";
 import { shortAddress } from "../../../utils/formatCurrency";
 import type { DeathVerification } from "./types";
 
-interface DeathVerificationProps {
+interface DeathVerificationDisplayProps {
   deathVerification: DeathVerification;
 }
 
-const DeathVerification: React.FC<DeathVerificationProps> = ({ deathVerification }) => {
+const DeathVerificationDisplay: React.FC<DeathVerificationDisplayProps> = ({ deathVerification }) => {
   return (
     <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
       <h4 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
@@ -67,5 +67,5 @@ const DeathVerification: React.FC<DeathVerificationProps> = ({ deathVerification
   );
 };
 
-export default DeathVerification;
+export default DeathVerificationDisplay;
 
