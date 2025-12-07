@@ -1,4 +1,5 @@
 export type Party = {
+  _id?: string;
   name: string;
   role: string;
   contact: string;
@@ -10,14 +11,29 @@ export type Certificate = {
   title: string;
   description?: string;
   parties?: Party[];
-  data?: Record<string, any>;
+  data?: {
+    tokenId?: number;
+    deedNumber?: string;
+    estimatedValue?: number;
+    stampDuty?: number;
+    fixedFee?: number;
+    totalFee?: number;
+    txHash?: string;
+    [key: string]: any;
+  };
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
-  tokenId?: number;
   verified?: boolean;
   rejected?: boolean;
   verifiedAt?: string;
+  __v?: number;
+};
+
+export type CertificatesResponse = {
+  page: number;
+  limit: number;
+  results: Certificate[];
 };
 
 export type DeathVerification = {

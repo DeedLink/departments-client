@@ -60,8 +60,8 @@ const CertificateModal: React.FC<CertificateModalProps> = ({
           {certificate.data && Object.keys(certificate.data).length > 0 && (
             <AdditionalDataSection data={certificate.data} />
           )}
-          {certificate.type === "last_will" && certificate.tokenId && (
-            <LastWillManagement tokenId={certificate.tokenId} />
+          {certificate.type === "last_will" && certificate.data?.tokenId && (
+            <LastWillManagement tokenId={certificate.data.tokenId} />
           )}
         </div>
 
