@@ -387,3 +387,8 @@ export const getNearbyLandSales = async (deedId: string, radiusKm: number = 10):
   const res: AxiosResponse<any> = await deedApi.get(`/${deedId}/nearby-sales?radiusKm=${radiusKm}`);
   return res.data;
 };
+
+export const getCertificatesByTokenId = async (tokenId: number): Promise<any> => {
+  const res: AxiosResponse<any> = await certificatesApi.get(`/token/${tokenId}`);
+  return res.data;
+};

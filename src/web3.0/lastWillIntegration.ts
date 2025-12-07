@@ -15,6 +15,72 @@ async function getLastWillContract() {
   return new ethers.Contract(LAST_WILL_ADDRESS, LastWillABI.abi, signer);
 }
 
+export async function createWill(
+  tokenId: number,
+  beneficiary: string,
+  witness1: string,
+  witness2: string,
+  ipfsHash: string
+) {
+  try {
+    const contract = await getLastWillContract();
+    const tx = await contract.createWill(tokenId, beneficiary, witness1, witness2, ipfsHash);
+    const receipt = await tx.wait();
+
+    return {
+      success: true,
+      txHash: receipt.hash,
+      message: `Will created for token #${tokenId}`
+    };
+  } catch (error: any) {
+    console.error("Error in createWill:", error);
+    
+    if (error?.reason) {
+      throw new Error(error.reason);
+    } else if (error?.message) {
+      throw error;
+    } else {
+      throw new Error("Failed to create will on blockchain");
+    }
+  }
+}
+
+export async function witnessWill(tokenId: number, approve: boolean) {
+  const contract = await getLastWillContract();
+  const tx = await contract.witnessWill(tokenId, approve);
+  const receipt = await tx.wait();
+
+  return {
+    success: true,
+    txHash: receipt.hash,
+    message: `Will witnessed for token #${tokenId}`
+  };
+}
+
+export async function revokeWill(tokenId: number) {
+  const contract = await getLastWillContract();
+  const tx = await contract.revokeWill(tokenId);
+  const receipt = await tx.wait();
+
+  return {
+    success: true,
+    txHash: receipt.hash,
+    message: `Will revoked for token #${tokenId}`
+  };
+}
+
+export async function updateBeneficiary(tokenId: number, newBeneficiary: string) {
+  const contract = await getLastWillContract();
+  const tx = await contract.updateBeneficiary(tokenId, newBeneficiary);
+  const receipt = await tx.wait();
+
+  return {
+    success: true,
+    txHash: receipt.hash,
+    message: `Beneficiary updated for token #${tokenId}`
+  };
+}
+
 export async function verifyOwnerDeath(tokenId: number, deathCertificateHash: string) {
   const contract = await getLastWillContract();
   const tx = await contract.verifyOwnerDeath(tokenId, deathCertificateHash);
@@ -79,5 +145,15 @@ export async function getWill(tokenId: number) {
 export async function isWillReadyForExecution(tokenId: number) {
   const contract = await getLastWillContract();
   return await contract.isWillReadyForExecution(tokenId);
+}
+
+export async function hasActiveWill(tokenId: number) {
+  try {
+    const contract = await getLastWillContract();
+    return await contract.hasActiveWill(tokenId);
+  } catch (error) {
+    console.error("Error checking active will:", error);
+    return false;
+  }
 }
 
